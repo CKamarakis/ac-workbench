@@ -1,0 +1,4 @@
+# Licensed third-party material (PM-OS). Local reference only, never commit.
+# Matches any version or spelling: PM-OS-v1.1, PM-OS-v2.1, pm_os, PMOS 3.0, ...
+[Pp][Mm][-_ ][Oo][Ss]*/
+[Pp][Mm][Oo][Ss]*/

@@ -1,0 +1,15 @@
+schema: spec-driven
+
+# Project context, shown to AI when creating artifacts.
+context: |
+  Project: prd-pipeline, a reusable Claude Code plugin (voice idea -> PRD in Notion -> repo -> OpenSpec).
+  Full living context, decisions and open ideas: docs/project-context.md. Read it before any proposal.
+  Deliverable: Claude Code plugin (skills/<name>/SKILL.md, .claude-plugin/plugin.json + marketplace.json), installed from GitHub.
+  Constraints: free to run beyond the paid Claude plan; set up once, works in every project.
+  PM-OS (licensed, local reference outside repo): adapt its logic, never copy its files into this repo.
+  First test consumer: Toughbubble (Next.js, already on OpenSpec).
+
+rules:
+  proposal:
+    - Include a visual aid (Mermaid diagram or ASCII flow) for any architecture or workflow change
+    - Mark anything unverified against official docs as "unverified"

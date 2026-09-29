@@ -1,0 +1,11 @@
+{
+  "name": "ac-workbench",
+  "owner": { "name": "Chris Kamarakis" },
+  "plugins": [
+    {
+      "name": "kit",
+      "source": "./plugins/kit",
+      "description": "Personal Claude Code kit: project starter, next-step routing, feedback inbox, harness review"
+    }
+  ]
+}

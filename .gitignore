@@ -2,3 +2,13 @@
 # Matches any version or spelling: PM-OS-v1.1, PM-OS-v2.1, pm_os, PMOS 3.0, ...
 [Pp][Mm][-_ ][Oo][Ss]*/
 [Pp][Mm][Oo][Ss]*/
+
+# Dev tooling
+node_modules/
+
+# Generated cockpit page (rebuild with: node tools/build-cockpit.mjs)
+cockpit/
+
+# Eval sandboxes (temp folders created by tools/run-evals.mjs)
+evals/**/sandbox/
+.eval-sandbox*/

@@ -2,11 +2,15 @@ schema: spec-driven
 
 # Project context, shown to AI when creating artifacts.
 context: |
-  Project: prd-pipeline, a reusable Claude Code plugin (voice idea -> PRD in Notion -> repo -> OpenSpec).
+  Project: ac-workbench, a personal Claude Code kit (formerly prd-pipeline).
   Full living context, decisions and open ideas: docs/project-context.md. Read it before any proposal.
-  Deliverable: Claude Code plugin (skills/<name>/SKILL.md, .claude-plugin/plugin.json + marketplace.json), installed from GitHub.
-  Constraints: free to run beyond the paid Claude plan; set up once, works in every project.
-  PM-OS (licensed, local reference outside repo): adapt its logic, never copy its files into this repo.
+  Deliverable: a marketplace repo (.claude-plugin/marketplace.json) whose main plugin is `kit`
+  (plugins/kit: skills, zero-dependency scripts, templates, generated data/toolkit.json).
+  Kit pieces: toolkit registry (toolkit.yaml), project starter, cockpit, skill evals, harness review,
+  kit feedback, skill routing. prd-pipeline (voice -> PRD -> Notion) is a later plugin.
+  MVP is local-only and free: no paid services beyond the Claude plan; set up once, works in every project.
+  Platform: Windows 11, Git Bash + PowerShell; global npm bins are not on the agent shell PATH.
+  PM-OS (licensed, local reference, gitignored): adapt its logic, never copy its files into this repo.
   First test consumer: Toughbubble (Next.js, already on OpenSpec).
 
 rules:

@@ -1,0 +1,12 @@
+{
+  "name": "ac-workbench",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling for the kit (validator, cockpit build, evals). Runtime scripts in plugins/kit use no dependencies.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "yaml": "^2.5.0"
+  }
+}

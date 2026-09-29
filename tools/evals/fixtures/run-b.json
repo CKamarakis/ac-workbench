@@ -1,0 +1,11 @@
+{
+  "skill": "registry", "date": "2026-10-01T14:00:00.000Z", "setup": "superspec",
+  "interventions": 1, "duration_ms": 4200000,
+  "summary": { "pass": 3, "fail": 0, "pending": 1 },
+  "cases": [
+    { "id": "valid-entry", "outcome": "pass", "duration_ms": 100, "checks": [], "rubric": [] },
+    { "id": "missing-field", "outcome": "pass", "duration_ms": 90, "checks": [], "rubric": [] },
+    { "id": "phase-conflict", "outcome": "pass", "duration_ms": 95, "checks": [], "rubric": [] },
+    { "id": "artifact-quality", "outcome": "pending", "duration_ms": 1, "checks": [], "rubric": [] }
+  ]
+}

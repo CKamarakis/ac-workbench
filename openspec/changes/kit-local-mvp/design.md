@@ -151,7 +151,7 @@ ac-workbench/
 ## Risks / Trade-offs
 
 - [Generated `toolkit.json` drifts from YAML] → Eval check plus the validator run as the documented edit step. A pre-commit hook can be added later.
-- [Plugin install might not be a plain checkout, or `${CLAUDE_PLUGIN_ROOT}` might not resolve scripts as expected, **unverified**] → Verify in the sandbox smoke test before building the starter.
+- [Plugin script paths] → Checked 2026-09-29 (`evals/trials/plugin-install-check.md`). `${CLAUDE_PLUGIN_ROOT}` is replaced in the SKILL.md text, but it is **not** set as an environment variable for Bash. So skills pass the path in the command, and scripts find their own folder from `import.meta.url`. Whether a GitHub install copies the plugin into a cache is still **unverified**.
 - [PATH resolution differs between Git Bash, PowerShell and the Claude shell] → Keep one resolver in `prereqs.mjs` (PATH, `%APPDATA%\npm`, `npm prefix -g`) and cover it with an eval case.
 - [The secret scrub misses a pattern] → The user confirms the text before filing, and file contents are never included (paths only).
 - [Marker blocks get hand-edited or deleted] → The planner treats a missing block as "append" and a damaged block (start marker without end) as a conflict to show, never to guess.

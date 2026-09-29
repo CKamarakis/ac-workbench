@@ -11,17 +11,17 @@
 ## 2. Trial prerequisites and sandbox smoke test
 
 - [ ] 2.1 Install `gh` and `jq` (winget; record the exact commands used) and verify `gh --version` and `jq --version` run in Git Bash
-- [ ] 2.2 Create a throwaway `kit-sandbox` repo, add this repo as a local-directory marketplace there, install `kit`, and verify a stub skill in `plugins/kit/skills/` appears as `/kit:<name>` and can run a script via `${CLAUDE_PLUGIN_ROOT}` (resolves design risk on plugin install/script paths)
+- [x] 2.2 Create a throwaway `kit-sandbox` repo, add this repo as a local-directory marketplace there, install `kit`, and verify a stub skill in `plugins/kit/skills/` appears as `/kit:<name>` and can run a script via `${CLAUDE_PLUGIN_ROOT}` (resolves design risk on plugin install/script paths)
 - [ ] 2.3 Enable Superpowers in the sandbox only and run the smoke checks (session start time, input not frozen, skills listed); record results in `evals/trials/superpowers-smoke.md` with pass/fail per check
 - [ ] 2.4 If 2.3 passes, install SuperSpec's schema and the OpenSpec custom profile with verify in the sandbox, and verify `openspec schemas` lists it; if 2.3 fails, record the WSL2/drop decision in the same file and skip setup B in group 4
 
 ## 3. Eval framework
 
-- [ ] 3.1 Define the eval case format (`evals/<skill>/cases.yaml`: id, setup, input, checks with `deterministic` kinds and `rubric` criteria) in `evals/README.md` and verify a sample case file loads with the documented fields
-- [ ] 3.2 Implement deterministic checks (file-exists, command-exit, git-ignored, content-match) in `tools/run-evals.mjs` with a temp sandbox per case, and verify with `node --test` unit tests for each check kind
-- [ ] 3.3 Implement run records (`evals/<skill>/runs/<date>-<setup>.json`: date, setup, per-case outcomes, duration, interventions, per-criterion rubric pass/fail with reason) and verify a test run writes a file matching the format
-- [ ] 3.4 Add the "skill without evals" check (every folder in `plugins/kit/skills/` needs `evals/<skill>/cases.yaml`) and verify the run fails naming the stub skill from 2.2 until it has a case
-- [ ] 3.5 Add `tools/compare-runs.mjs` that prints two runs side by side (per-case outcome, time, interventions) and verify it on two fixture runs
+- [x] 3.1 Define the eval case format (`evals/<skill>/cases.yaml`: id, setup, input, checks with `deterministic` kinds and `rubric` criteria) in `evals/README.md` and verify a sample case file loads with the documented fields
+- [x] 3.2 Implement deterministic checks (file-exists, command-exit, git-ignored, content-match) in `tools/run-evals.mjs` with a temp sandbox per case, and verify with `node --test` unit tests for each check kind
+- [x] 3.3 Implement run records (`evals/<skill>/runs/<date>-<setup>.json`: date, setup, per-case outcomes, duration, interventions, per-criterion rubric pass/fail with reason) and verify a test run writes a file matching the format
+- [x] 3.4 Add the "skill without evals" check (every folder in `plugins/kit/skills/` needs `evals/<skill>/cases.yaml`) and verify the run fails naming the stub skill from 2.2 until it has a case
+- [x] 3.5 Add `tools/compare-runs.mjs` that prints two runs side by side (per-case outcome, time, interventions) and verify it on two fixture runs
 
 ## 4. Toolkit registry + validator (A/B trial slice)
 

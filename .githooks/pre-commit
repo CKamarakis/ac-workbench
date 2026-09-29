@@ -1,0 +1,22 @@
+#!/bin/sh
+# Block commits that contain secrets (design D15). The repo is public.
+# Enable once per clone: git config core.hooksPath .githooks
+
+GL=$(command -v gitleaks 2>/dev/null)
+if [ -z "$GL" ] && [ -n "$LOCALAPPDATA" ]; then
+  # winget install location, when the shell's PATH was not refreshed
+  for f in "$LOCALAPPDATA"/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*/gitleaks.exe; do
+    [ -x "$f" ] && GL="$f" && break
+  done
+fi
+
+if [ -z "$GL" ]; then
+  echo "pre-commit: gitleaks not found. Install it (winget install --id Gitleaks.Gitleaks -e) or run /kit:setup." >&2
+  echo "pre-commit: commit blocked. Bypass only if you are sure: git commit --no-verify" >&2
+  exit 1
+fi
+
+"$GL" git --pre-commit --staged --redact --no-banner -l warn || {
+  echo "pre-commit: gitleaks found a possible secret in staged changes. Commit blocked." >&2
+  exit 1
+}

@@ -86,5 +86,6 @@ The original idea: voice idea -> transcript -> PRD in Notion -> repo copy -> Ope
 - The `openspec` CLI lives in `%APPDATA%\npm`, which is not on the agent shell's PATH.
   - Git Bash: use `"$(npm prefix -g)/openspec"`.
   - PowerShell: prepend `$env:APPDATA\npm` to `$env:PATH`.
-- `gh` 2.101.0 is installed at `C:/Program Files/GitHub CLI/gh.exe` and signed in (checked 2026-09-29), but it is not on the Git Bash PATH. `jq` is not installed (task 2.1).
+- `gh` 2.101.0 is installed at `C:/Program Files/GitHub CLI/gh.exe` and signed in (checked 2026-09-29), but it is not on the Git Bash PATH. `jq` 1.8.2 and gitleaks 8.30.1 were installed via winget on 2026-09-29 (`winget install --id jqlang.jq -e`, `winget install --id Gitleaks.Gitleaks -e`). winget adds them to the user PATH, so shells opened before the install need the full path under `%LOCALAPPDATA%MicrosoftWinGetPackages`.
+- **Secret scan (D15):** `.githooks/pre-commit` runs gitleaks on staged changes. Enable it once per clone with `git config core.hooksPath .githooks`. Full history scan: `gitleaks git --redact .`
 - GitHub remote: https://github.com/CKamarakis/ac-workbench (public since 2026-09-29).

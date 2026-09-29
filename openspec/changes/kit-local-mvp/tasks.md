@@ -7,11 +7,11 @@
 - [x] 1.3 Create `.claude-plugin/marketplace.json` listing `kit` at `plugins/kit`, and `plugins/kit/.claude-plugin/plugin.json` with version `0.1.0`; verify both parse as JSON and the layout matches design D1
 - [x] 1.4 Add root `package.json` (dev-only, `"type": "module"`, `yaml` dev dependency, `test` script using `node --test`) and verify `npm install` and `npm test` succeed with zero tests
 - [x] 1.5 Extend `.gitignore` with `node_modules/`, `cockpit/` and eval sandboxes, and verify `git check-ignore` matches each while the PM-OS patterns still match `PM-OS-v2.1/`
-- [ ] 1.6 Install gitleaks (record the command), add `.githooks/pre-commit` running `gitleaks protect --staged`, enable it with `git config core.hooksPath .githooks`, document it in `docs/project-context.md`, and verify a commit with a fake `ghp_` token is blocked while a clean commit passes; run `gitleaks detect` on the full history and verify it reports no leaks (design D15)
+- [x] 1.6 Install gitleaks (record the command), add `.githooks/pre-commit` running `gitleaks git --pre-commit --staged` (v8.30 dropped `protect`), enable it with `git config core.hooksPath .githooks`, document it in `docs/project-context.md`, and verify a commit with a fake `ghp_` token is blocked while a clean commit passes; run `gitleaks git .` on the full history and verify it reports no leaks (design D15)
 
 ## 2. Trial prerequisites and sandbox smoke test
 
-- [ ] 2.1 Install `jq` (winget or direct download; record the exact command) and verify `jq --version` runs in Git Bash; `gh` is already present (2.101.0, signed in); verify it is callable via its full path
+- [x] 2.1 Install `jq` (winget or direct download; record the exact command) and verify `jq --version` runs in Git Bash; `gh` is already present (2.101.0, signed in); verify it is callable via its full path
 - [x] 2.2 Create a throwaway `kit-sandbox` repo, add this repo as a local-directory marketplace there, install `kit`, and verify a stub skill in `plugins/kit/skills/` appears as `/kit:<name>` and can run a script via `${CLAUDE_PLUGIN_ROOT}` (resolves design risk on plugin install/script paths)
 - [ ] 2.3 Enable Superpowers in the sandbox only and run the smoke checks (session start time, input not frozen, skills listed); record results in `evals/trials/superpowers-smoke.md` with pass/fail per check
 - [ ] 2.4 If 2.3 passes, install SuperSpec's schema and the OpenSpec custom profile with verify in the sandbox, and verify `openspec schemas` lists it; if 2.3 fails, record the WSL2/drop decision in the same file and skip setup B in group 4

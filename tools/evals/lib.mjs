@@ -122,9 +122,9 @@ export function scoreRubric(check, caseScores = {}) {
 
 // ---------- cases & runs ----------
 
-export function runCase(c, { scores = {}, keep = false, repo = REPO } = {}) {
+export function runCase(c, { scores = {}, keep = false, repo = REPO, vars: extra = {} } = {}) {
   const started = Date.now();
-  const vars = { kit: path.join(repo, 'plugins', 'kit'), repo };
+  const vars = { kit: path.join(repo, 'plugins', 'kit'), repo, ...extra };
   const result = { id: c.id, outcome: 'pass', duration_ms: 0, checks: [], rubric: [] };
   let dir;
   try {
@@ -159,16 +159,20 @@ export function runCase(c, { scores = {}, keep = false, repo = REPO } = {}) {
   return result;
 }
 
-export function runSkill(caseFile, { setup = 'default', interventions = 0, scores = {}, keep = false, repo = REPO, now = new Date() } = {}) {
+export function runSkill(caseFile, { setup = 'default', interventions = 0, scores = {}, keep = false, repo = REPO, vars = {}, now = new Date() } = {}) {
   const doc = loadCases(caseFile);
   const started = Date.now();
-  const cases = doc.cases.map(c => runCase(c, { scores, keep, repo }));
+  // File-level `vars` are defaults (they may use {{repo}}/{{kit}}); run-level --var values win.
+  const base = { kit: path.join(repo, 'plugins', 'kit'), repo };
+  const defaults = Object.fromEntries(Object.entries(doc.vars ?? {}).map(([k, v]) => [k, expand(v, base)]));
+  const cases = doc.cases.map(c => runCase(c, { scores, keep, repo, vars: { ...defaults, ...vars } }));
   const summary = { pass: 0, fail: 0, pending: 0 };
   for (const c of cases) summary[c.outcome]++;
   return {
     skill: doc.skill,
     date: now.toISOString(),
     setup,
+    ...(Object.keys(vars).length ? { vars } : {}),
     interventions,
     duration_ms: Date.now() - started,
     summary,

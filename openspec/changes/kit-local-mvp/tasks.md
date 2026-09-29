@@ -27,7 +27,7 @@
 
 ## 4. Toolkit registry + validator (A/B trial slice)
 
-- [ ] 4.1 Write eval cases for the registry slice (valid entry, missing field, bad enum, status/verdict mismatch, unresolved phase conflict, resolved overlap, missing install data on an adopted entry, `later` entry without install data, stale `toolkit.json`) and verify they fail before the validator exists
+- [x] 4.1 Write eval cases for the registry slice (valid entry, missing field, bad enum, status/verdict mismatch, unresolved phase conflict, resolved overlap, missing install data on an adopted entry, `later` entry without install data, stale `toolkit.json`) and verify they fail before the validator exists
 - [ ] 4.2 Setup A: build `toolkit.yaml` schema + `tools/validate-registry.mjs` in the sandbox with plain OpenSpec spec-driven; record time and interventions and verify an eval run file exists for setup A
 - [ ] 4.3 Setup B: build the same slice from the same starting commit with SuperSpec (skip if 2.4 dropped it); verify an eval run file exists for setup B
 - [ ] 4.4 Score both runs with `tools/compare-runs.mjs` plus the harness-review rubric criteria for artifact quality, and verify the comparison is saved in `evals/trials/workflow-ab.md`

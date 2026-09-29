@@ -1,0 +1,134 @@
+# Acceptance cases for the toolkit registry validator (spec: toolkit-registry; tasks 4.1–4.6).
+# Shared by both A/B setups: point them at a build with  --var validator=<path to validate-registry.mjs>
+#
+# Validator contract these cases fix:
+#   node validate-registry.mjs <registry.yaml> [--out <file.json>] [--check]
+#   exit 0 = valid, exit 1 = any error; each error printed on stdout, one line, naming the entry and field
+#   --out   writes the JSON only when valid; an invalid registry leaves an existing file untouched
+#   --check compares the JSON it would write with --out and exits 1 printing "stale" if they differ (writes nothing)
+#   entries with installed_version newer than reviewed_version are printed as "needs review" (not an error)
+skill: registry
+vars:
+  validator: '{{repo}}/tools/validate-registry.mjs'
+
+cases:
+  - id: valid-registry
+    description: A complete registry passes
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/valid.yaml
+        expect: 0
+        stdout_match: '[Vv]alid'
+
+  - id: missing-field
+    description: Missing required field names the entry and the field
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/missing-field.yaml
+        expect: 1
+        stdout_match: '^(?=.*openspec)(?=.*reason).*$'
+
+  - id: bad-enum
+    description: Invalid status lists the allowed values
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/bad-enum.yaml
+        expect: 1
+        stdout_match: '^(?=.*maybe)(?=.*trial)(?=.*adopted)(?=.*dropped)(?=.*later).*$'
+
+  - id: status-verdict-mismatch
+    description: Status that differs from the latest verdict fails
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/status-mismatch.yaml
+        expect: 1
+        stdout_match: '^(?=.*openspec)(?=.*verdict).*$'
+
+  - id: unresolved-phase-conflict
+    description: Two active tools owning one phase without an overlap record fail, naming both and the phase
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/phase-conflict.yaml
+        expect: 1
+        stdout_match: '^(?=.*superpowers)(?=.*openspec)(?=.*artifacts).*$'
+
+  - id: resolved-overlap
+    description: Shared phase passes when one tool lists the other under overlaps with skip_skills
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/resolved-overlap.yaml
+        expect: 0
+
+  - id: missing-install-data
+    description: Adopted entry without install instructions fails
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/missing-install.yaml
+        expect: 1
+        stdout_match: '^(?=.*openspec)(?=.*install).*$'
+
+  - id: later-without-install
+    description: A "later" entry needs no scope, check or install
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/later-no-install.yaml
+        expect: 0
+
+  - id: needs-review-flag
+    description: Installed version newer than reviewed version is flagged, not an error
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/needs-review.yaml
+        expect: 0
+        stdout_match: '^(?=.*superpowers)(?=.*[Nn][Ee][Ee][Dd][Ss] [Rr][Ee][Vv][Ii][Ee][Ww]).*$'
+
+  - id: writes-json-on-success
+    description: A valid registry writes the runtime JSON, and --check then reports it fresh
+    setup: { copy: [evals/registry/fixtures] }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/valid.yaml --out toolkit.json
+        expect: 0
+      - kind: content-match
+        path: toolkit.json
+        pattern: '"openspec"'
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/valid.yaml --out toolkit.json --check
+        expect: 0
+
+  - id: failure-keeps-previous-json
+    description: An invalid registry leaves the existing JSON untouched
+    setup:
+      copy: [evals/registry/fixtures]
+      files: { toolkit.json: '{"previous": true}' }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/missing-field.yaml --out toolkit.json
+        expect: 1
+        stdout_match: 'reason'
+      - kind: content-match
+        path: toolkit.json
+        pattern: '^\{"previous": true\}$'
+
+  - id: stale-json-detected
+    description: --check fails with "stale" when the JSON does not match the registry, and writes nothing
+    setup:
+      copy: [evals/registry/fixtures]
+      files: { toolkit.json: '{"stale": true}' }
+    checks:
+      - kind: command-exit
+        command: node "{{validator}}" evals/registry/fixtures/valid.yaml --out toolkit.json --check
+        expect: 1
+        stdout_match: '[Ss]tale'
+      - kind: content-match
+        path: toolkit.json
+        pattern: '^\{"stale": true\}$'

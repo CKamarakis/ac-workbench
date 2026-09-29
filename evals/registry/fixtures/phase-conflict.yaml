@@ -1,0 +1,91 @@
+# Fixture: superpowers also owns "artifacts" (OpenSpec owns it) and records no overlap
+
+# Fixture: a complete, valid registry. Variants in this folder each break one rule.
+version: 1
+
+phases: [ brainstorm, artifacts, plan, build, verify, review, close ]
+
+situations:
+  - when: something is broken
+    use: superpowers:systematic-debugging
+  - when: start a new feature
+    phase: artifacts
+
+tools:
+  - name: openspec
+    source: npm:@fission-ai/openspec
+    tier: global
+    reason: Spec-driven change workflow (proposal, specs, design, tasks)
+    cost: free
+    status: adopted
+    scope: machine
+    check: openspec --version
+    install:
+      win32: npm install -g @fission-ai/openspec
+    rubric:
+      problem_fit: Structured planning with artifacts
+      overlap: Plans like Superpowers; resolved via skip_skills there
+      context_cost: Low; skills load on demand
+      run_cost: Free CLI
+      trust: Active open-source project
+      reversibility: Remove openspec/ folder
+      license: MIT
+    reviewed_version: 1.13.2
+    reviewed_on: 2026-09-29
+    phases: [ artifacts, verify, close ]
+    verdicts:
+      - date: 2026-09-29
+        status: adopted
+        rationale: Already in use in this repo and Toughbubble
+
+  - name: superpowers
+    source: github:obra/superpowers-marketplace
+    tier: global
+    reason: Brainstorming, plan writing and TDD build loop
+    cost: uses-claude-quota
+    status: trial
+    scope: project
+    check: claude plugin list
+    install:
+      win32: claude plugin install superpowers@superpowers-marketplace
+    rubric:
+      problem_fit: Strong build discipline (TDD, subagents)
+      overlap: Its planning overlaps OpenSpec artifacts
+      context_cost: Medium; session-start hook
+      run_cost: Uses Claude quota
+      trust: Widely used; Windows hook issues reported
+      reversibility: Disable per project
+      license: MIT
+    reviewed_version: 5.0.0
+    reviewed_on: 2026-09-29
+    phases:
+      - brainstorm
+      - plan
+      - build
+      - artifacts
+    verdicts:
+      - date: 2026-09-29
+        status: trial
+        rationale: Smoke test passed on Windows; A/B trial pending
+        evidence: evals/trials/superpowers-smoke.md
+
+  - name: context7
+    source: github:upstash/context7
+    tier: project
+    reason: Up-to-date library docs
+    cost: free-tier
+    status: later
+    rubric:
+      problem_fit: Fewer stale API answers
+      overlap: None known
+      context_cost: Unknown
+      run_cost: Free tier
+      trust: Unverified
+      reversibility: Easy
+      license: Unverified
+    reviewed_version: none
+    reviewed_on: 2026-09-29
+    verdicts:
+      - date: 2026-09-29
+        status: later
+        rationale: Not needed for the MVP

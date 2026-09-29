@@ -48,6 +48,8 @@ Placeholders in `run`, `command` and paths:
 - `{{repo}}`: the repo root.
 - `{{sandbox}}`: the case's temp folder.
 
+A case file may set default placeholders at the top level (`vars: { validator: '{{repo}}/tools/validate-registry.mjs' }`). Extra placeholders can be passed per run with `--var name=value`, e.g. `--var validator=C:/…/sandbox/tools/validate-registry.mjs`. This points the same cases at another build (A/B). The values are recorded in the run file.
+
 Commands run through the platform shell (`cmd.exe` on Windows). Keep them simple, or call `node`.
 
 ## Case outcomes

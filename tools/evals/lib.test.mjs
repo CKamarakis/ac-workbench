@@ -91,6 +91,29 @@ test('placeholders expand; unknown ones are left alone', () => {
   assert.equal(runCheck({ kind: 'file-exists', path: '{{sandbox}}/a.txt' }, d).pass, true);
 });
 
+test('extra vars override placeholders per run (A/B: point cases at another build)', () => {
+  const r = runCase({ id: 'v', checks: [{ kind: 'command-exit', command: 'node "{{tool}}"' }] }, { vars: { tool: 'does-not-exist.mjs' } });
+  assert.equal(r.outcome, 'fail');
+  const d = tmp();
+  const tool = write(d, 'ok.mjs', 'process.exit(0)');
+  assert.equal(runCase({ id: 'v2', checks: [{ kind: 'command-exit', command: 'node "{{tool}}"' }] }, { vars: { tool } }).outcome, 'pass');
+});
+
+test('file-level vars are defaults and --var overrides them', () => {
+  const d = tmp();
+  write(d, 'ok.mjs', 'process.exit(0)');
+  const f = write(d, 'c/cases.yaml', [
+    'skill: c',
+    'vars:',
+    "  tool: '{{repo}}/no-such-validator.mjs'",
+    'cases:',
+    '  - id: a',
+    `    checks: [ { kind: command-exit, command: 'node "{{tool}}"' } ]`,
+  ].join('\n'));
+  assert.equal(runSkill(f).cases[0].outcome, 'fail');
+  assert.equal(runSkill(f, { vars: { tool: path.join(d, 'ok.mjs') } }).cases[0].outcome, 'pass');
+});
+
 // ---- rubric + case outcomes ----
 
 test('rubric criteria are scored individually; unscored is null', () => {

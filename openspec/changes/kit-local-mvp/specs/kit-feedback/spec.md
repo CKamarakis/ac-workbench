@@ -22,11 +22,15 @@ The user SHALL confirm the text before it is filed.
 - **THEN** the drafted item includes the description, project, kit version and component `project-starter`, and is shown for confirmation
 
 ### Requirement: Feedback goes to the kit inbox
-Confirmed feedback SHALL be filed to the kit inbox as an issue labelled `feedback` in the kit's repository. It SHALL NOT change any file in the kit repository or in the consuming project.
+Confirmed feedback SHALL be filed as an issue labelled `feedback` in the kit inbox: a private repository separate from the kit repository, which is public. It SHALL NOT change any file in the kit repository or in the consuming project.
 
 #### Scenario: Filed as issue
 - **WHEN** the user confirms a feedback draft
-- **THEN** an issue labelled `feedback` exists in the kit repository and its link is shown
+- **THEN** an issue labelled `feedback` exists in the private inbox repository and its link is shown
+
+#### Scenario: Inbox is not private
+- **WHEN** the configured inbox repository is public
+- **THEN** the skill does not file the issue, saves the draft locally, and tells the user the inbox must be private
 
 #### Scenario: No kit edits from projects
 - **WHEN** feedback is filed from a consuming project

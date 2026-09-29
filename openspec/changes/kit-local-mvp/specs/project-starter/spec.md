@@ -14,6 +14,7 @@ When run in a project folder, the starter SHALL ensure the following exist:
 - a CLAUDE.md starter with routing rules
 - a project context doc
 - a kit stamp file recording the kit version and setup date
+- the project's workflow plugins enabled in the project's own settings
 
 #### Scenario: Empty folder
 - **WHEN** the starter runs in an empty folder
@@ -33,6 +34,24 @@ The starter SHALL ask for the project type (or accept it as an argument) and SHA
 #### Scenario: Dropped tool excluded
 - **WHEN** a registry entry for the selected type has status `dropped`
 - **THEN** the starter does not apply it
+
+### Requirement: Machine tools are checked first
+Before changing the project, the starter SHALL run the machine tool setup check. If machine-scope tools are missing, it SHALL offer to install them through tool setup, and SHALL continue with the project only when the required ones are present.
+
+#### Scenario: Missing machine tool
+- **WHEN** the starter runs on a machine where an adopted machine-scope tool is missing
+- **THEN** it lists the tool, offers to install it, and does not change the project until the user has answered
+
+### Requirement: Workflow plugins are enabled per project
+The starter SHALL enable the registry's project-scope plugins for the selected project type in the project's own Claude Code settings, and SHALL NOT enable them in the user-level settings. It SHALL change only the plugin and marketplace entries it manages, leaving other settings in that file untouched.
+
+#### Scenario: Plugins active only in the bootstrapped project
+- **WHEN** the starter has enabled Superpowers for a project
+- **THEN** a session in that project lists Superpowers skills, and a session in a repository the kit did not set up does not
+
+#### Scenario: Existing project settings preserved
+- **WHEN** the project's settings file already contains user-written permissions
+- **THEN** after the starter runs, those permissions are unchanged
 
 ### Requirement: Re-runs never overwrite existing files
 If a file the starter would create already exists and differs, the starter SHALL show the proposed change as a diff and apply it only after explicit confirmation. It SHALL NOT delete project files.

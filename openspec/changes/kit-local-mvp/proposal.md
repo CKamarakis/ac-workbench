@@ -33,14 +33,15 @@ How the pieces connect:
 - **Skill evals:** every kit skill ships with fixed test cases and automatic checks. Results feed registry verdicts.
 - **Harness review (checklist only):** a guided review of an agent system across 8 layers (context, tools, memory, loops, verification, guardrails, feedback, observability), giving a scorecard and the top 3 fixes. It is kept simple on purpose and will grow with experience.
 
-- **Kit feedback:** a `/kit:feedback` skill, used inside any consuming project, that captures what happened (project, files, context, suggestion) at the moment it happens and files it to a kit inbox (GitHub Issues, label `feedback`). Triage happens later in the kit repo.
+- **Kit feedback:** a `/kit:feedback` skill, used inside any consuming project, that captures what happened (project, files, context, suggestion) at the moment it happens and files it to a kit inbox (GitHub Issues, label `feedback`) in a **private** repository separate from the public kit repo. Triage happens later in the kit repo.
+- **Tool setup:** one command (`/kit:setup`, also run by `/kit:start`) installs the machine toolset from the registry (CLIs, the kit plugin, known marketplaces). It is safe to re-run. Workflow plugins are enabled per project, never globally.
 - **Skill routing:** a lane map (one owner per phase) stored in the registry and written into each project's routing rules, plus a `/kit:next` skill that suggests the next step based on the current OpenSpec change status.
 
 ### Update and feedback model
 
 ```
   PROJECT X                                  KIT REPO
-  /kit:feedback --> KIT INBOX (GitHub Issues) --> triage --> /opsx:explore
+  /kit:feedback --> KIT INBOX (private repo, Issues) --> triage --> /opsx:explore
                                                              --> change --> release (tag)
   project updates plugin <------------------------------------------------+
 ```
@@ -51,8 +52,9 @@ Rules:
 3. **Capture feedback when it happens,** with context, so nothing needs re-explaining later.
 4. **Dev mode vs stable mode.** On the main PC, the kit clone is added as a local-directory marketplace, so edits apply immediately (verified: in-place local plugins are not version-pinned). Elsewhere, install from GitHub pinned to a release. Exact update commands are **unverified**.
 5. **Drift is visible.** Each project stores `.claude/kit.json` (kit version, setup date). The cockpit shows projects that are behind. Starter re-runs suggest changes as a diff and never overwrite files.
+6. **Kit global, tools per project.** Only the kit plugin, CLIs and known marketplaces are installed for the whole machine. Workflow plugins (e.g. Superpowers) are enabled in each kit-set-up project's own settings, so repos the user works in but doesn't own are unaffected.
 
-- `gh` CLI is required for the inbox and is **not installed** yet.
+- `gh` CLI is required for the inbox. It is installed and signed in, but not on the Git Bash PATH (checked 2026-09-29).
 
 ### Skill routing and overlap
 
@@ -96,6 +98,7 @@ Several tools claim the same phase (e.g. Superpowers and OpenSpec both plan). Ov
 - `harness-review`: checklist-based review of an agent system across 8 layers, producing a scorecard and top fixes
 - `kit-feedback`: capture of improvement requests from consuming projects into the kit inbox, with context
 - `skill-routing`: lane map (one owner per phase), overlap detection, and `/kit:next` step suggestions
+- `tool-setup`: one-command, registry-driven, idempotent install of the machine toolset; workflow plugins never enabled globally
 
 ### Modified Capabilities
 - None (no existing specs).
@@ -145,6 +148,10 @@ The proposal is tested by building its first slice with it, not by debate.
 Workaround suggested in those issues: WSL2. The fix status of each issue in the current version is **unverified**, so the smoke test comes first. A hook installed for the whole user profile would affect every session, so the trial stays isolated in the sandbox.
 
 **Prerequisites for the trial:**
-- `gh` and `jq` (e.g. via winget; commands **unverified**)
+- `jq` (e.g. via winget; command **unverified**). `gh` is already present.
 - OpenSpec custom profile with verify
 - Superpowers installed for the sandbox project only
+
+**Step 1 results so far (2026-09-29, `evals/trials/`):**
+- Local plugin install works, and `${CLAUDE_PLUGIN_ROOT}` is replaced in the skill text (it is not an environment variable).
+- The Superpowers install landed at user scope by default and was moved to project scope. Session start and input were fine (user report). The skill listing and per-project enablement are still to be confirmed.

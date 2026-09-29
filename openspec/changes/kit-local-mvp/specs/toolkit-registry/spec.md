@@ -51,6 +51,22 @@ Entries MAY declare the workflow phases they own, the skills of theirs that are 
 - **WHEN** two tools touch the same phase and one lists the other under `overlaps` with the conflicting skill under `skip_skills`
 - **THEN** validation passes
 
+### Requirement: Entries declare how to check and install
+Each entry with status `adopted` or `trial` SHALL declare:
+- a scope: `machine` (installed once per machine: command-line tools, the kit plugin, plugin marketplaces) or `project` (enabled per project by the starter)
+- a check that tells whether the tool is present
+- install instructions for the supported platform
+
+Validation SHALL fail when an adopted or trial entry lacks any of these, or has a scope value other than `machine` or `project`.
+
+#### Scenario: Missing install data
+- **WHEN** an adopted entry has no check or no install instructions
+- **THEN** validation fails and names the entry and the missing field
+
+#### Scenario: Later entry without install data
+- **WHEN** an entry with status `later` has no install instructions
+- **THEN** validation passes for that entry
+
 ### Requirement: Registry is human-readable and hand-editable
 The registry SHALL be a single plain-text file in the kit repository that a person can read and edit in any text editor, and SHALL be validated by one command that exits non-zero on any error.
 

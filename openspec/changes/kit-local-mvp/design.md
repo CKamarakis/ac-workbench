@@ -36,7 +36,7 @@ ac-workbench/
  |-- plugins/kit/
  |    |-- .claude-plugin/plugin.json     version = kit version
  |    |-- data/toolkit.json              generated from toolkit.yaml, committed
- |    |-- skills/  start/ next/ feedback/ harness-review/
+ |    |-- skills/  setup/ start/ next/ feedback/ harness-review/
  |    |-- scripts/ *.mjs                 zero-dependency runtime
  |    +-- templates/                     CLAUDE.md, project-context, .gitignore
  |-- tools/                             dev-only (may use npm deps)
@@ -124,7 +124,7 @@ ac-workbench/
 ### D9. Feedback: `gh` first, local pending file as fallback
 
 - The skill drafts the issue and scrubs it: paths only; drop anything matching key/token/`=`-secret patterns and env values. The user confirms the text.
-- Then `gh issue create --label feedback` runs on the kit repo, whose repo slug is read from plugin data.
+- Then `gh issue create --label feedback` runs on the **inbox repo** (`ac-workbench-inbox`, private). Its slug is read from plugin data. Before filing, the skill checks that the repo is private (`gh repo view --json visibility`), because the kit repo itself is public and project details must not leak.
 - On any failure (no `gh`, not signed in, offline) the draft is saved to `~/.claude/kit/feedback-pending/<timestamp>.md` and the user gets the install and retry steps. A later `/kit:feedback --flush` files the pending items.
 - **Why:** feedback must never be lost, and no kit files are ever written from a project.
 
@@ -137,16 +137,49 @@ ac-workbench/
 ### D11. Build order follows the Validation Plan
 
 ```
- sandbox smoke test -> A/B build of registry+validator (D2) -> verdict
-   -> starter (D4,D5) -> next (D6) -> cockpit (D7) -> feedback (D9) -> harness-review (D10)
+ secret-scan hook (D15) -> sandbox smoke test -> A/B build of registry+validator (D2) -> verdict
+   -> tool setup (D13) -> lanes (D6) -> starter (D4,D5,D14) -> next -> cockpit (D7) -> feedback (D9) -> harness-review (D10)
    evals (D8) scaffold first, and each skill's cases ship with it
 ```
 
 - The registry and validator come first because every other piece reads them, and they are the A/B trial task.
+- Tool setup comes right after the registry because it reads `toolkit.json`. Its fields (`scope`, `check`, `install`) are in the registry spec, so the validator covers them from the start.
 
 ### D12. Rename housekeeping
 
 - Update `openspec/config.yaml` context and `docs/project-context.md` to the kit framing as the first task, so later artifacts stop receiving the stale prd-pipeline context.
+
+### D13. Tool setup: one command, registry-driven
+
+```
+ /kit:setup  (also step 0 of /kit:start)
+   scripts/setup.mjs plan   -> for each adopted|trial entry with scope: machine
+                                 run entry.check  -> present | missing
+                                 (known locations too: npm prefix -g, Program Files)
+   show list, confirm
+   scripts/setup.mjs apply  -> run entry.install for each missing one; one failure never stops the rest
+   summary: installed / present / failed (+ fix hint)
+```
+
+- Registry fields per entry: `scope: machine | project`, `check` (a command, exit 0 = present) and `install` (commands keyed by platform, starting with `win32`).
+- Machine scope covers CLIs (git, gh, jq, gitleaks, openspec), the kit plugin, and known marketplaces (`claude plugin marketplace add`).
+- **Why:** it uses the same plan / confirm / apply pattern as the starter (D4), so it is idempotent and testable without Claude.
+- **Bootstrap on a new machine:** `/kit:setup` needs the kit installed first. Two documented lines cover that: `claude plugin marketplace add CKamarakis/ac-workbench` and `claude plugin install kit@ac-workbench`. After that, everything goes through the kit.
+- **Alternative:** a PowerShell/winget script outside Claude. Rejected because it can't read the registry without its own parser and duplicates the starter's logic.
+
+### D14. Workflow plugins enabled per project
+
+- The starter writes the project-scope entries for the chosen project type into `<project>/.claude/settings.json`: `enabledPlugins` plus `extraKnownMarketplaces` for their marketplaces.
+- It merges these keys and never touches other keys (permissions, env, …). A key the kit set is recorded in the stamp (`.claude/kit.json`), so a re-run can tell kit keys from user keys.
+- `~/.claude/settings.json` is never given project-scope plugins. Setup only registers marketplaces and the kit there.
+- **Why:** the user works in repos they don't own. Kit tools must be active only where the kit set the project up. This was the user's decision on 2026-09-29, after the Superpowers install defaulted to user scope.
+- **Alternative:** `claude plugin install --scope project`. Its flags and non-interactive behavior are **unverified** (task 5.1). Writing the settings directly works either way. The CLI is only needed to fetch the plugin into the cache, if Claude Code doesn't offer that itself when it sees an enabled plugin that isn't installed (**unverified**).
+
+### D15. Secret scanning from the start
+
+- The kit repo is public (since 2026-09-29). A `gitleaks` pre-commit hook lives in `.githooks/`, enabled with `git config core.hooksPath .githooks`. It blocks commits that contain secrets.
+- gitleaks is a registry entry (machine scope, free, MIT). The starter can offer the same hook to projects as a Tier 1 check.
+- **Alternative:** a custom regex scan. Rejected because gitleaks is maintained and has far better rule coverage. The feedback scrub (D9) still uses its own patterns, since it runs on text, not commits.
 
 ## Risks / Trade-offs
 
@@ -156,6 +189,8 @@ ac-workbench/
 - [The secret scrub misses a pattern] → The user confirms the text before filing, and file contents are never included (paths only).
 - [Marker blocks get hand-edited or deleted] → The planner treats a missing block as "append" and a damaged block (start marker without end) as a conflict to show, never to guess.
 - [Rubric evals are subjective] → Named criteria with a reason each. Deterministic checks are preferred wherever the outcome allows.
+- [Plugin cache fetch for per-project plugins, **unverified**] → Task 5.1 checks it. If Claude Code doesn't install a missing enabled plugin by itself, setup pre-fetches every project-scope plugin into the cache without enabling it.
+- [A user-scope install slips in, e.g. through `/plugin install` defaulting to user scope] → Setup's plan flags any project-scope plugin found in `~/.claude/settings.json` `enabledPlugins` and offers to move it.
 - [Installed-version detection for "needs review" depends on where Claude Code records plugin versions, **unverified**] → Start with a manual `installed_version` field and automate once the location is confirmed.
 
 ## Migration Plan
@@ -167,4 +202,4 @@ ac-workbench/
 
 - Which engine drives Claude-in-the-loop eval cases: `claude plugin eval` or the user's harness tool? This doesn't affect the case format (D8).
 - Exact location of Claude Code's installed plugin version data (for automating "needs review").
-- Whether `enabledPlugins` works per project (affects enforcement strength only, not this design).
+- Whether per-project `enabledPlugins` alone is enough, or plugins also need a cache fetch. Task 2.5 and task 5.1 settle this; D14 works either way.

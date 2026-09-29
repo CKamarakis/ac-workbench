@@ -87,4 +87,4 @@ The original idea: voice idea -> transcript -> PRD in Notion -> repo copy -> Ope
   - Git Bash: use `"$(npm prefix -g)/openspec"`.
   - PowerShell: prepend `$env:APPDATA\npm` to `$env:PATH`.
 - `gh` 2.101.0 is installed at `C:/Program Files/GitHub CLI/gh.exe` and signed in (checked 2026-09-29), but it is not on the Git Bash PATH. `jq` is not installed (task 2.1).
-- There is no GitHub remote yet.
+- GitHub remote: https://github.com/CKamarakis/ac-workbench (public since 2026-09-29).

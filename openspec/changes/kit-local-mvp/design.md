@@ -103,12 +103,9 @@ ac-workbench/
   The owner for each phase is looked up in the lane map, never hard-coded.
 - **Why:** the only part that changes when the SuperSpec trial wins is the registry data, not the code.
 
-### D7. Cockpit: static HTML built by one command
+### D7. Moved
 
-- `node tools/build-cockpit.mjs` validates the registry, reads `toolkit.json`, `projects.json` and each project stamp, and writes one self-contained `cockpit/index.html` (inline CSS/JS, gitignored). Filters (status, tier) are client-side JS.
-- If validation fails, the build exits non-zero and writes nothing.
-- **Why:** this decides the proposal's open item. The spec requires offline use, no account and no network, which rules out a published artifact for v0. An artifact can come later as an optional share view.
-- The situation-to-skill guide comes from a `situations` list in `toolkit.yaml`, so no guidance is written by hand in the page.
+Cockpit moved to the change `kit-overview-feedback` on 2026-10-01 (see `docs/roadmap.md`, drift log).
 
 ### D8. Evals: kit-owned case format, pluggable runner
 
@@ -121,24 +118,16 @@ ac-workbench/
 - A missing `cases.yaml` for any skill in `plugins/kit/skills/` fails the run.
 - **Why:** the case and result format is ours and stable. The engine that drives Claude sessions (`claude plugin eval`, **unverified**, or the user's harness tool) can be swapped in later without changing cases or verdicts.
 
-### D9. Feedback: `gh` first, local pending file as fallback
+### D9–D10. Moved
 
-- The skill drafts the issue and scrubs it: paths only; drop anything matching key/token/`=`-secret patterns and env values. The user confirms the text.
-- Then `gh issue create --label feedback` runs on the **inbox repo** (`ac-workbench-inbox`, private). Its slug is read from plugin data. Before filing, the skill checks that the repo is private (`gh repo view --json visibility`), because the kit repo itself is public and project details must not leak.
-- On any failure (no `gh`, not signed in, offline) the draft is saved to `~/.claude/kit/feedback-pending/<timestamp>.md` and the user gets the install and retry steps. A later `/kit:feedback --flush` files the pending items.
-- **Why:** feedback must never be lost, and no kit files are ever written from a project.
-
-### D10. Harness review: skill-only checklist
-
-- `skills/harness-review/SKILL.md` plus `checklist.md` (questions per layer, memory types, scorecard template).
-- The skill uses read-only tools only, and says so in its instructions. The overlap check calls `scripts/lanes.mjs` against the project's enabled plugins.
-- **Why:** the spec says checklist-only for the MVP. Automation is out of scope.
+Feedback (D9) and harness review (D10) moved to the change `kit-overview-feedback` on 2026-10-01 (see `docs/roadmap.md`, drift log).
 
 ### D11. Build order follows the Validation Plan
 
 ```
  secret-scan hook (D15) -> sandbox smoke test -> A/B build of registry+validator (D2) -> verdict
-   -> tool setup (D13) -> lanes (D6) -> starter (D4,D5,D14) -> next -> cockpit (D7) -> feedback (D9) -> harness-review (D10)
+   -> tool setup (D13) -> lanes (D6) -> starter (D4,D5,D14) -> next -> integration + tag v0.1.0
+   (cockpit, feedback, harness review: change kit-overview-feedback)
    evals (D8) scaffold first, and each skill's cases ship with it
 ```
 

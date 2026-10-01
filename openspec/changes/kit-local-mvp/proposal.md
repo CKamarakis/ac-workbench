@@ -6,6 +6,8 @@ Every new project costs about half a day of setup. Tool choices are made from gu
 
 ## What Changes
 
+> **Scope update 2026-10-01:** the cockpit, kit feedback and harness review moved to the change `kit-overview-feedback`. This change now ships the core kit: registry, evals, tool setup, routing, starter, `/kit:next`. Reason and order: `docs/roadmap.md` (drift log).
+
 The repo becomes a personal kit: a marketplace repo that holds several plugins. The MVP adds five local pieces:
 
 ```
@@ -93,12 +95,11 @@ Several tools claim the same phase (e.g. Superpowers and OpenSpec both plan). Ov
 ### New Capabilities
 - `toolkit-registry`: schema and rules for the tool registry (entries, tiers, rubric fields, status lifecycle, verdict history)
 - `project-starter`: bootstrap of a new or empty project from the registry (Tier 2 basics, Tier 3 by project type), safe to re-run
-- `cockpit`: local read-only overview of projects, toolkit and best practices, built from registry data
 - `skill-evals`: how kit skills declare eval cases, run them, and record results as verdicts
-- `harness-review`: checklist-based review of an agent system across 8 layers, producing a scorecard and top fixes
-- `kit-feedback`: capture of improvement requests from consuming projects into the kit inbox, with context
 - `skill-routing`: lane map (one owner per phase), overlap detection, and `/kit:next` step suggestions
 - `tool-setup`: one-command, registry-driven, idempotent install of the machine toolset; workflow plugins never enabled globally
+
+Moved to `kit-overview-feedback` (2026-10-01): `cockpit`, `harness-review`, `kit-feedback`.
 
 ### Modified Capabilities
 - None (no existing specs).

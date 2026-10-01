@@ -296,42 +296,60 @@ tools:
     tier: project-type:web-ui
     reason: Browser checks for web UI projects (verify phase)
     cost: free
-    status: later
+    status: trial
+    scope: project
+    check: playwright-cli --version
+    install:
+      win32: npm install -g @playwright/cli@latest && playwright-cli install --skills
+    install_note: The CLI is a machine-wide npm install; `install --skills` adds the skills to the project. Skill folder location unverified (check in the group 7 sandbox).
     rubric:
-      problem_fit: Lets the agent check real pages
-      overlap: Possible overlap with Claude in Chrome; unverified
-      context_cost: Unverified
+      problem_fit: Lets the agent check real pages and flows
+      overlap: Playwright MCP does the same with more tokens; Claude in Chrome is for the user's own browser
+      context_cost: Low; its docs say CLI + skills is more token-efficient than the MCP for coding agents
       run_cost: Free
       trust: Microsoft project
-      reversibility: Easy
+      reversibility: npm uninstall -g @playwright/cli; remove the skills folder
       license: Apache-2.0
-    reviewed_version: none
+    reviewed_version: readme 2026-10-01
     reviewed_on: 2026-10-01
     verdicts:
       - date: 2026-10-01
         status: later
         rationale: Not needed until a web UI project uses the kit; package name unverified
+      - date: 2026-10-01
+        status: trial
+        rationale: Full README read; package @playwright/cli verified; CLI + skills preferred over MCP; trial on the first web-ui project
+        evidence: evals/trials/tool-review-2026-10-01.md
 
   - name: context7
     source: github:upstash/context7
     tier: global
-    reason: Up-to-date library docs for the agent
+    reason: Up-to-date, version-specific library docs for the agent (fewer hallucinated APIs)
     cost: free-tier
-    status: later
+    status: trial
+    scope: project
+    check: npx --no-install ctx7 --version
+    install:
+      win32: npx ctx7 setup --claude
+    install_note: Interactive - OAuth sign-in generates a free API key; choose "CLI + Skills" mode. Remove with `npx ctx7 remove`.
     rubric:
-      problem_fit: Fewer stale API answers
-      overlap: None known
-      context_cost: Unverified
-      run_cost: Free tier
-      trust: Unverified
-      reversibility: Easy
-      license: Unverified
-    reviewed_version: none
+      problem_fit: Fewer stale API answers during build
+      overlap: None; a docs source, not a phase owner
+      context_cost: Low in CLI + Skills mode; docs are fetched on demand
+      run_cost: Free API key (higher rate limits); the backend is a hosted service
+      trust: Upstash; community-contributed library docs (its disclaimer says it can't guarantee accuracy)
+      reversibility: npx ctx7 remove
+      license: MIT
+    reviewed_version: readme 2026-10-01
     reviewed_on: 2026-10-01
     verdicts:
       - date: 2026-10-01
         status: later
         rationale: Not needed for the MVP
+      - date: 2026-10-01
+        status: trial
+        rationale: Full README read; cheap insurance against outdated APIs; trial on the next build
+        evidence: evals/trials/tool-review-2026-10-01.md
 
   - name: lint-hook
     source: tbd
@@ -353,3 +371,204 @@ tools:
       - date: 2026-10-01
         status: later
         rationale: Which linter depends on project type; decide when the first typed project uses the starter
+
+  # --- Added 2026-10-01 from the full review of the user's tool list (evals/trials/tool-review-2026-10-01.md) ---
+
+  - name: notion-mcp
+    source: https://mcp.notion.com/mcp
+    tier: project
+    reason: Context store outside the repo - capture, PRDs and retrieval in Notion (prd-pipeline)
+    cost: free
+    status: trial
+    scope: project
+    check: claude mcp get notion
+    install:
+      win32: claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local
+    install_note: Interactive - then run /mcp in Claude Code and finish the OAuth flow. `--scope local` keeps it private to you in this project (not committed).
+    rubric:
+      problem_fit: Keeps long-lived product context in Notion and only pointers and final PRDs in the repo
+      overlap: The Notion plugin bundles the same server; use one of them per project
+      context_cost: Low; hosted server returns Markdown and only the relevant context
+      run_cost: Free plan covers search, fetch, create and update; AI search, meeting notes and agents need Notion AI
+      trust: Official Notion server; OAuth respects your existing Notion permissions
+      reversibility: claude mcp remove notion; revoke under Notion Settings > Connections
+      license: Hosted service (the deprecated local server is MIT)
+    reviewed_version: docs 2026-10-01
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: trial
+        rationale: Official hosted server, per-project scope, core tools on the free plan; adopt once prd-pipeline uses it
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: notion-plugin
+    source: github:makenotion/claude-code-notion-plugin
+    tier: project
+    reason: Official Notion plugin - hosted MCP plus skills (Knowledge Capture, Spec to Implementation, ...) and /Notion:* commands
+    cost: free
+    status: later
+    rubric:
+      problem_fit: Its skills may cover parts of prd-pipeline (capture, spec to implementation)
+      overlap: Same MCP server as notion-mcp; its skills overlap whatever prd-pipeline builds
+      context_cost: Unverified; 4 skills with reference files
+      run_cost: Free (same Notion plan limits)
+      trust: Official Notion repo, but no LICENSE file and last push 2026-01-22
+      reversibility: Uninstall the plugin
+      license: None published
+    reviewed_version: readme 2026-10-01
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: later
+        rationale: Read its skills during the prd-pipeline explore before building our own; no license file yet
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: impeccable
+    source: github:pbakaus/impeccable
+    tier: project-type:web-ui
+    reason: Design guidance for the agent - 24 commands (shape, critique, audit, polish, harden ...) and 61 deterministic checks
+    cost: free
+    status: trial
+    scope: project
+    check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))"
+    install:
+      win32: npx impeccable install --providers=claude --scope=project
+    install_note: Installs a project hook manifest too. Then run /impeccable init once (writes PRODUCT.md). Skill folder path unverified (check in the group 7 sandbox).
+    rubric:
+      problem_fit: Avoids generic AI-looking UI; gives a shared design vocabulary
+      overlap: Emil's skills on polish and animation; Impeccable owns ui-polish
+      context_cost: One skill loaded on demand, plus edit hooks
+      run_cost: Free; the deterministic rules run without an LLM
+      trust: Widely used (73k stars), active
+      reversibility: Remove the skill folder and hook manifest
+      license: Apache-2.0
+    reviewed_version: engine-v0.1.9
+    reviewed_on: 2026-10-01
+    phases: [ui-polish]
+    skills:
+      ui-polish: /impeccable critique, /impeccable audit, /impeccable polish
+    verdicts:
+      - date: 2026-10-01
+        status: trial
+        rationale: Full README read; per-project install; trial on the first web-ui project
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: emil-skills
+    source: github:emilkowalski/skills
+    tier: project-type:web-ui
+    reason: Animation and interface-detail skills (review/improve animations, apple-design, pick-ui-library, mobile-native)
+    cost: free
+    status: trial
+    scope: project
+    check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/review-animations'))"
+    install:
+      win32: npx skills@latest add emilkowalski/skills
+    install_note: Install location of the skills CLI (project vs user) unverified; check in the group 7 sandbox before relying on it.
+    rubric:
+      problem_fit: Strong on motion and the small details agents get wrong
+      overlap: Impeccable owns ui-polish; Emil is used for motion only
+      context_cost: 13 skills, loaded on demand
+      run_cost: Free
+      trust: Emil Kowalski (Vercel, Linear), 42k stars
+      reversibility: Remove the skill folders
+      license: MIT
+    reviewed_version: readme 2026-10-01
+    reviewed_on: 2026-10-01
+    phases: [ui-polish]
+    skills:
+      ui-polish: /review-animations, /improve-animations (motion only)
+    overlaps: [impeccable]
+    skip_skills: [emil-design-eng]
+    verdicts:
+      - date: 2026-10-01
+        status: trial
+        rationale: Full README read; motion specialist next to Impeccable; trial on the first web-ui project
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: task-observer
+    source: github:rebelytics/one-skill-to-rule-them-all
+    tier: global
+    reason: Meta-skill that logs your corrections and proposes improvements to your skills
+    cost: uses-claude-quota
+    status: later
+    rubric:
+      problem_fit: Keeps kit skills improving from real use
+      overlap: /kit:feedback covers kit issues; Claude memory covers small preferences
+      context_cost: Runs in every session (activation via CLAUDE.md or a hook)
+      run_cost: Uses Claude quota while observing
+      trust: 3k stars, 69 contributors, security audits listed on skills.sh
+      reversibility: Remove the skill folder and activation line
+      license: CC-BY-4.0
+    reviewed_version: readme 2026-10-01
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: later
+        rationale: Its own README says it pays off once there are many skills; revisit at the usage review
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: ecc
+    source: github:affaan-m/ecc
+    tier: project
+    reason: Large collection (68 agents, 293 skills, hooks, rules, AgentShield); a source of pieces, not an install
+    cost: free
+    status: later
+    rubric:
+      problem_fit: Some pieces fit (AgentShield security scan, TDD rules)
+      overlap: Overlaps almost everything already in the kit
+      context_cost: Very high as a bulk install
+      run_cost: Free
+      trust: Very popular, active
+      reversibility: Has an uninstall script; bulk installs are hard to unwind
+      license: MIT
+    reviewed_version: readme 2026-10-01 (structure and install sections only)
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: later
+        rationale: Adopt single pieces with recorded source and version, starting with AgentShield in quality-gates; never a bulk install
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: claude-mem
+    source: github:thedotmack/claude-mem
+    tier: global
+    reason: Hook-based automatic memory across sessions
+    cost: uses-claude-quota
+    status: dropped
+    rubric:
+      problem_fit: Long projects where context gets lost
+      overlap: Notion (context store) and Claude's built-in memory
+      context_cost: Hooks on every prompt and tool call
+      run_cost: Hosted observer is a 14-day trial, then uses your Anthropic plan unless you subscribe
+      trust: A third-party crypto token (CMEM) is endorsed by the author
+      reversibility: Uninstall; data in ~/.claude-mem
+      license: Apache-2.0
+    reviewed_version: readme 2026-10-01
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: dropped
+        rationale: Conflicts with "free to run" and raises trust concerns; Notion + Claude memory cover the need
+        evidence: evals/trials/tool-review-2026-10-01.md
+
+  - name: awesome-design
+    source: github:gztchan/awesome-design
+    tier: global
+    reason: Curated design resource links for the user (not agent input)
+    cost: free
+    status: dropped
+    rubric:
+      problem_fit: Inspiration for the user
+      overlap: None
+      context_cost: Not loaded by the agent
+      run_cost: Free
+      trust: Popular list, but last updated 2024-07-04
+      reversibility: N/A
+      license: None published
+    reviewed_version: readme 2026-10-01
+    reviewed_on: 2026-10-01
+    verdicts:
+      - date: 2026-10-01
+        status: dropped
+        rationale: Not a kit tool - kept as a personal bookmark only
+        evidence: evals/trials/tool-review-2026-10-01.md

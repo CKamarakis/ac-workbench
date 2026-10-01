@@ -57,37 +57,19 @@
 - [ ] 7.3 Implement `start-plan.mjs` (create / same / differs + diff per file, marker-block replace or append, damaged block = conflict, project-type entries filtered to adopted/trial) and verify tests for empty folder, edited CLAUDE.md, dropped tool excluded and damaged marker
 - [ ] 7.4 Plan the project's `.claude/settings.json`: merge `enabledPlugins` and `extraKnownMarketplaces` for the type's project-scope entries, touch no other keys, and record the kit-managed keys in the stamp; verify tests for a new file, existing user permissions preserved, and a re-run planning `same` (design D14)
 - [ ] 7.5 Implement `start-apply.mjs` (write confirmed items only, `git init`, `openspec init` with config pointing to the context doc, stamp `.claude/kit.json`, add to `~/.claude/kit/projects.json`) and verify it never deletes files, never writes `~/.claude/settings.json`, and a second plan is all `same`
-- [ ] 7.6 Write `skills/start/SKILL.md` (setup check → ask type → plan → show diffs → confirm → apply → summary) and verify its eval cases (empty folder, idempotent re-run, missing git stops before writes, plugins enabled only in the project) pass in a sandbox
-- [ ] 7.7 Re-run `/kit:start` on Toughbubble in re-run mode and verify it only shows diffs and changes nothing without confirmation
+- [ ] 7.6 Write `skills/start/SKILL.md` (setup check → ask type → plan → show diffs → confirm → apply → summary) and verify its eval cases (empty folder, idempotent re-run, missing git stops before writes, plugins enabled only in the project) pass, then run `/kit:start` live in a fresh throwaway folder `Projects/kit-start-sandbox` (never a real project)
+- [ ] 7.7 Clone Toughbubble into a temp folder and run `/kit:start` on the **copy** in re-run mode; verify it only shows diffs and changes nothing without confirmation. The real Toughbubble is never touched
 
 ## 8. Next-step skill
 
 - [ ] 8.1 Implement `plugins/kit/scripts/next.mjs` mapping `openspec status --json` states to phases (design D6) and owners from the lane map; verify tests for no active change, planning incomplete (names next artifact), tasks ready, all tasks done
 - [ ] 8.2 Write `skills/next/SKILL.md` and its eval cases and verify `/kit:next` in the sandbox gives a suggestion with owner and one-line reason
 
-## 9. Cockpit v0
+## 9. Integration
 
-- [ ] 9.1 Implement `tools/build-cockpit.mjs` (validate first, then read `toolkit.json`, `projects.json`, stamps) writing one self-contained `cockpit/index.html`; verify an invalid registry exits non-zero with errors and writes no file
-- [ ] 9.2 Render projects (name, path, links, kit version, "behind" and "not bootstrapped" states) and verify with fixtures for 0.3.0 vs 0.5.0 and a missing stamp
-- [ ] 9.3 Render toolkit table with client-side status/tier filters, lane map and situations guide; verify filtering by `adopted` shows only adopted rows and changing a phase owner in the registry changes the rebuilt page
-- [ ] 9.4 Verify offline: build and open with network disabled and confirm the page has no external URLs (`grep` for `http` in resources); document the build command in `docs/cockpit.md`
+- [ ] 9.1 Run `npm test` and `node tools/run-evals.mjs` for all skills and verify everything passes with no "missing evals"
+- [ ] 9.2 End-to-end on a fresh empty throwaway folder: `/kit:start` (including setup check) → `/kit:next`, and verify the project gets its stamp and routing block, appears in `~/.claude/kit/projects.json`, and its workflow plugins are active only there
+- [ ] 9.3 Tag `v0.1.0` in the kit repo and verify `plugin.json` version matches the tag
+- [ ] 9.4 After about two weeks of real use (target 2026-10-13), review the change against actual use: feedback inbox items, eval runs, registry verdicts, scoping and setup friction; record the findings in `evals/trials/usage-review-1.md` and open `/opsx:explore` for any follow-up change
 
-## 10. Kit feedback
-
-- [ ] 10.1 Create the private inbox repo `CKamarakis/ac-workbench-inbox` with a `feedback` label, store its slug in plugin data, and verify `gh repo view --json visibility` reports `PRIVATE`
-- [ ] 10.2 Implement the draft + scrub step (description, project, path, kit version, component, file paths, session summary; strip secret-like patterns and env values) and verify tests for a draft containing an API key and file contents
-- [ ] 10.3 Implement filing via `gh issue create --label feedback` on the inbox slug after a visibility check (refuse if not private), with fallback to `~/.claude/kit/feedback-pending/<timestamp>.md` and a `--flush` mode; verify the fallback when `gh` is absent and when the inbox reports `PUBLIC`
-- [ ] 10.4 Write `skills/feedback/SKILL.md` (draft → show → confirm → file) and its eval cases, and verify a filed issue link to the inbox repo is shown and that no file in the kit repo or project changes
-
-## 11. Harness review
-
-- [ ] 11.1 Write `skills/harness-review/checklist.md` (8 layers with questions, memory types, scorecard template with OK/PARTIAL/GAP and max 3 fixes with reasons), adapting PM-OS reviewer logic in our own words only; verify no PM-OS text is copied (the kit repo is public)
-- [ ] 11.2 Write `skills/harness-review/SKILL.md` (ASCII diagram first, read-only tools, overlap check via `lanes.mjs` under the loops layer) and verify it on a fixture project with a procedure stored in memory and two tools owning `plan`
-- [ ] 11.3 Add rubric eval cases (diagram first, 8 sections, ≤3 fixes with reasons, memory misplacement flagged, overlap flagged, no files changed) and verify a scored run file exists
-
-## 12. Integration
-
-- [ ] 12.1 Run `npm test` and `node tools/run-evals.mjs` for all skills and verify everything passes with no "missing evals"
-- [ ] 12.2 End-to-end on a fresh empty folder: `/kit:start` (including setup check) → `/kit:next` → `/kit:feedback` → rebuild cockpit, and verify the new project appears in the cockpit with the current kit version and its workflow plugins are active only there
-- [ ] 12.3 Tag `v0.1.0` in the kit repo and verify `plugin.json` version matches the tag and the cockpit shows no project as behind
-- [ ] 12.4 After about two weeks of real use (target 2026-10-13), review the change against actual use: feedback inbox items, eval runs, registry verdicts, scoping and setup friction; record the findings in `evals/trials/usage-review-1.md` and open `/opsx:explore` for any follow-up change
+> Groups formerly 9–11 (cockpit, kit feedback, harness review) moved to the change `kit-overview-feedback` on 2026-10-01; see `docs/roadmap.md`.

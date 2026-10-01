@@ -1,0 +1,73 @@
+# Roadmap
+
+**Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
+
+Last updated: 2026-10-01
+
+## North star: the workflow this kit exists for
+
+In the user's words (2026-10-01): *"I create context, it is formatted in a PRD or proper requirements, we make a plan, we make the task lists and development starts until delivery, while I am in the guiding position providing information, context, making decisions and testing. I want to know the code is solid, without over-engineering for each project's needs, but with test coverage and security. ... a pipeline of cool tools to help me build faster, with high quality and reliably, as a product builder with a mind for business and design."*
+
+| # | Stage | Your role | Tool(s) | Milestone | Status |
+|---|---|---|---|---|---|
+| 1 | Capture an idea (voice / text) | talk, type | `/voice`, dictation | M2 | ⬜ |
+| 2 | Shape into a PRD / requirements | decide, correct | PRD skill (PM-OS logic, our words); Notion plugin skills to compare | M2 | ⬜ |
+| 3 | Store and retrieve context in Notion | review | Notion MCP (hosted, per project) | M2 | ⬜ |
+| 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
+| 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
+| 6 | Build | answer, test | `/opsx:apply`; SuperSpec for big or risky changes; Context7 | M1 | ✅ |
+| 7 | Design | direct, judge | Impeccable (owner), Emil (motion), Figma/Miro MCP per project | M4 | ⬜ trial |
+| 8 | Tests, right-sized per project | set the bar | test policy per project type; Playwright CLI (web UI) | M3 | ⬜ |
+| 9 | Security | — | gitleaks ✅; `/security-review`; ECC AgentShield (candidate) | M3 | ◐ |
+| 10 | Code review | — | `/code-review` | M3 | ⬜ |
+| 11 | Delivery | test, accept | `/opsx:archive`; deploys out of scope for now | M1 | ◐ |
+| 12 | See everything in one place | look | cockpit | M5 | ⬜ |
+
+Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, `/kit:start`, `/kit:next`, lane map, evals.
+
+## Principles (every decision is checked against these)
+
+1. **The user guides; the agent proposes.** Reorders, scope changes and tool verdicts are the user's decisions.
+2. **Kit global, tools per project.** Only the kit, CLIs and marketplaces are global. Workflow plugins, MCPs and tool configs are per project, and never touch repos the user doesn't own.
+3. **Right-sized quality.** Every project gets tests and security checks, sized to its needs. No over-engineering.
+4. **Evidence before adoption.** Read the full docs; trial a tool before it becomes a default; record the verdict with its evidence in `toolkit.yaml`.
+5. **Free to run** beyond the Claude plan.
+
+## Milestones (in order)
+
+| # | Change | Delivers | Exit criteria | Status |
+|---|---|---|---|---|
+| M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **in progress**: groups 1–6 done (32/45 tasks); next is group 7 |
+| M2 | `prd-pipeline` (to create with `/opsx:explore`) | capture → PRD → Notion store and retrieve; the repo keeps a pointer plus the Ready PRD | An idea dictated by voice ends as a PRD in Notion, and `/opsx:propose` in a project uses it | not started |
+| M3 | `quality-gates` (to create) | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | not started |
+| M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
+| M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
+| M6 | usage review (~2026-10-13) | review after two weeks of real use; revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
+
+## Current position and next actions
+
+1. **Now:** M1 group 7, the project starter (`/kit:start`). Live tests only in throwaway folders: `Projects/kit-start-sandbox`, and a temp **copy** of Toughbubble.
+2. Then: M1 group 8 (`/kit:next`) and group 9 (integration, tag `v0.1.0`).
+3. Then: `/opsx:explore` for M2 prd-pipeline. Read the Notion plugin's skills and PM-OS `/prd-draft` first.
+
+Open decisions:
+- Review-phase owner: built-in `/code-review` + `/security-review`, or leave unowned until M3. Leaning: decide in M3.
+
+## Drift rules
+
+1. **Before starting work that isn't the current position or next actions above, stop.** Add a drift-log entry (date, what, why, the on-plan alternative, impact) and ask the user to decide.
+2. **Only the user changes order or scope.** After a decision: update this file, then the OpenSpec change (`/opsx:update`), in the same commit.
+3. **Start of every session:** read "Current position". End of a milestone: re-check the north-star table and update the statuses.
+4. **Sub-work found mid-task** (a bug, a missing helper) is not drift if it serves the current task. Note it in the commit message. New capabilities *are* drift.
+
+## Drift log
+
+| Date | What changed | Why | Decided by | Impact |
+|---|---|---|---|---|
+| 2026-09-29 | Scope grew from one plugin (prd-pipeline) into a personal kit; prd-pipeline deferred | The user wanted fast project setup and evidence-based tool choices first | user (proposal) | The front of the workflow (stages 1–3) waits |
+| 2026-09-29 | Added an A/B workflow trial (OpenSpec vs SuperSpec) before building | Settle the default workflow with evidence | user (proposal) | Result: OpenSpec default, SuperSpec trial |
+| 2026-09-29 | Added one-command tool setup and per-project tool scoping | The user wants one command, and tools never active in repos that aren't theirs | user | New spec `tool-setup`, group 5 |
+| 2026-10-01 | Feedback inbox moved to a private repo; secret scanning added early | The kit repo became public | user | gitleaks hook (1.6); inbox changes in M5 |
+| 2026-10-01 | **Drift noticed by the user:** stages 1–3 (capture → PRD → Notion) had slipped behind kit plumbing (cockpit, feedback, harness review) | Those stages are the reason the project exists | user | Cockpit, feedback and harness review moved to `kit-overview-feedback` (M5); prd-pipeline is M2 right after M1; quality gates M3 |
+| 2026-10-01 | Full re-review of the user's tool list (the earlier session only read summaries) | Choose tools from real docs | user | claude-mem dropped; Notion MCP, Impeccable, Emil, Playwright CLI, Context7 to trial; `evals/trials/tool-review-2026-10-01.md` |
+| 2026-10-01 | Group 7 tests run only in throwaway folders and a Toughbubble copy | Never risk a real project | user | Tasks 7.6 and 7.7 reworded |

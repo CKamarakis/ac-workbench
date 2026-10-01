@@ -13,7 +13,9 @@ Constraints:
 - Set up once, and it works in every project.
 - The MVP is local only.
 
-Active change: [`openspec/changes/kit-local-mvp/`](../openspec/changes/kit-local-mvp/). It contains the proposal, 7 capability specs, the design and the tasks.
+**Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
+
+Active changes: [`kit-local-mvp`](../openspec/changes/kit-local-mvp/) (core kit, M1) and [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). prd-pipeline (M2) is next after M1.
 
 ```
  ac-workbench (marketplace repo)

@@ -202,5 +202,5 @@ ac-workbench/
 ## Open Questions
 
 - Which engine drives Claude-in-the-loop eval cases: `claude plugin eval` or the user's harness tool? This doesn't affect the case format (D8).
-- Exact location of Claude Code's installed plugin version data (for automating "needs review").
+- ~~Exact location of Claude Code's installed plugin version data~~ Answered 2026-10-01: `~/.claude/plugins/installed_plugins.json` (version, scope, gitCommitSha per plugin). Automating `installed_version` from it remains a later step.
 - Whether per-project `enabledPlugins` alone is enough, or plugins also need a cache fetch. Task 2.5 and task 5.1 settle this; D14 works either way.

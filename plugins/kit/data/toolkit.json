@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "phases": [
+    "brainstorm",
+    "artifacts",
+    "plan",
+    "build",
+    "verify",
+    "review",
+    "ui-polish",
+    "close",
+    "kit-issues"
+  ],
+  "situations": [
+    {
+      "when": "I have a new idea or feature",
+      "phase": "brainstorm",
+      "use": "/opsx:explore"
+    },
+    {
+      "when": "I'm ready to write it down as a change",
+      "phase": "artifacts",
+      "use": "/opsx:propose"
+    },
+    {
+      "when": "the plan is done and I want to build",
+      "phase": "build",
+      "use": "/opsx:apply"
+    },
+    {
+      "when": "the change is big or risky",
+      "use": "SuperSpec flow (/opsx:ff -> /opsx:apply -> /opsx:verify), trial"
+    },
+    {
+      "when": "I'm about to commit",
+      "use": "gitleaks pre-commit hook (runs automatically)"
+    },
+    {
+      "when": "the kit itself got in my way",
+      "phase": "kit-issues",
+      "use": "/kit:feedback"
+    }
+  ],
+  "tools": [
+    {
+      "name": "openspec",
+      "source": "npm:@fission-ai/openspec",
+      "tier": "global",
+      "reason": "Spec-driven change workflow (explore, proposal, specs, design, tasks, apply, archive); the kit's default workflow",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "openspec --version",
+      "install": {
+        "win32": "npm install -g @fission-ai/openspec"
+      },
+      "rubric": {
+        "problem_fit": "Structured, reviewable planning that lives in the repo",
+        "overlap": "SuperSpec and Superpowers claim the same phases; resolved on their entries",
+        "context_cost": "Low; skills load on demand",
+        "run_cost": "Free CLI; only Claude usage while working",
+        "trust": "Active open-source project (Fission-AI)",
+        "reversibility": "Delete openspec/ and .claude/ generated files",
+        "license": "MIT"
+      },
+      "reviewed_version": "1.13.2",
+      "reviewed_on": "2026-10-01",
+      "phases": [
+        "brainstorm",
+        "artifacts",
+        "plan",
+        "build",
+        "verify",
+        "close"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-09-29",
+          "status": "trial",
+          "rationale": "In use for this repo's planning"
+        },
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "A/B trial - same result as SuperSpec at about 1/4 of the time and 1/5 of the cost; default workflow",
+          "evidence": "evals/registry/runs/2026-10-01-openspec.json"
+        }
+      ]
+    },
+    {
+      "name": "superspec",
+      "source": "github:danielhanold/superspec",
+      "tier": "project",
+      "reason": "OpenSpec schema that wires in Superpowers (worktree, subagent TDD, verify) for big or risky changes",
+      "cost": "uses-claude-quota",
+      "status": "trial",
+      "scope": "project",
+      "check": "openspec schemas",
+      "install": {
+        "win32": "copy openspec/schemas/superspec from the repo, then openspec init --tools claude --profile custom with XDG_CONFIG_HOME redirected (project-only; see evals/trials/workflow-ab-setup.md)"
+      },
+      "rubric": {
+        "problem_fit": "Strong process (isolation, audit trail, verify report), asks instead of guessing",
+        "overlap": "Same phases as OpenSpec spec-driven; used per change, never as the default",
+        "context_cost": "High; 165 requests and 13 subagents for a small change",
+        "run_cost": "About 5x plain OpenSpec on the trial task",
+        "trust": "Small MIT project; schema v4",
+        "reversibility": "Remove openspec/schemas/superspec and switch the change schema back",
+        "license": "MIT"
+      },
+      "reviewed_version": "e1c8f41",
+      "reviewed_on": "2026-10-01",
+      "phases": [
+        "brainstorm",
+        "artifacts",
+        "plan",
+        "build",
+        "verify",
+        "close"
+      ],
+      "overlaps": [
+        "openspec"
+      ],
+      "skip_skills": [
+        "opsx:propose"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "A/B trial - equal result, about 4x the time and 5x the cost on a small, tightly specified change; re-test on a big or risky one",
+          "evidence": "evals/registry/runs/2026-10-01-superspec.json"
+        }
+      ]
+    },
+    {
+      "name": "superpowers",
+      "source": "github:obra/superpowers-marketplace",
+      "tier": "project",
+      "reason": "Brainstorming, plan writing and subagent TDD; the build engine behind SuperSpec",
+      "cost": "uses-claude-quota",
+      "status": "trial",
+      "scope": "project",
+      "check": "claude plugin list",
+      "install": {
+        "win32": "enable superpowers@superpowers-marketplace in <project>/.claude/settings.json (never user scope)"
+      },
+      "rubric": {
+        "problem_fit": "Build discipline (TDD, small commits, worktrees)",
+        "overlap": "Planning skills overlap OpenSpec; used only through SuperSpec",
+        "context_cost": "Medium; session-start hook and many skills",
+        "run_cost": "Uses Claude quota; subagents add requests",
+        "trust": "Widely used; past Windows hook bugs, none seen here",
+        "reversibility": "Remove from the project's enabledPlugins",
+        "license": "MIT"
+      },
+      "reviewed_version": "6.4.2",
+      "reviewed_on": "2026-10-01",
+      "overlaps": [
+        "openspec",
+        "superspec"
+      ],
+      "skip_skills": [
+        "superpowers:writing-plans"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Windows smoke test passed (start, input, skills, per-project scoping); value shown in the SuperSpec build phase",
+          "evidence": "evals/trials/superpowers-smoke.md"
+        }
+      ]
+    },
+    {
+      "name": "gitleaks",
+      "source": "winget:Gitleaks.Gitleaks",
+      "tier": "global",
+      "reason": "Blocks commits that contain secrets; needed because the kit repo is public",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "gitleaks version",
+      "install": {
+        "win32": "winget install --id Gitleaks.Gitleaks -e"
+      },
+      "rubric": {
+        "problem_fit": "Catches tokens and keys before they reach a public repo",
+        "overlap": "The feedback skill's text scrub covers a different case (text, not commits)",
+        "context_cost": "None; runs as a git hook outside Claude",
+        "run_cost": "Free; about 1 s per commit",
+        "trust": "Widely used, maintained",
+        "reversibility": "Unset core.hooksPath",
+        "license": "MIT"
+      },
+      "reviewed_version": "8.30.1",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-09-29",
+          "status": "adopted",
+          "rationale": "Hook blocked a fake token and passed clean commits; full history scan found no leaks",
+          "evidence": "openspec/changes/kit-local-mvp/tasks.md (task 1.6)"
+        }
+      ]
+    },
+    {
+      "name": "playwright-cli",
+      "source": "npm:@playwright/cli",
+      "tier": "project-type:web-ui",
+      "reason": "Browser checks for web UI projects (verify phase)",
+      "cost": "free",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Lets the agent check real pages",
+        "overlap": "Possible overlap with Claude in Chrome; unverified",
+        "context_cost": "Unverified",
+        "run_cost": "Free",
+        "trust": "Microsoft project",
+        "reversibility": "Easy",
+        "license": "Apache-2.0"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Not needed until a web UI project uses the kit; package name unverified"
+        }
+      ]
+    },
+    {
+      "name": "context7",
+      "source": "github:upstash/context7",
+      "tier": "global",
+      "reason": "Up-to-date library docs for the agent",
+      "cost": "free-tier",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Fewer stale API answers",
+        "overlap": "None known",
+        "context_cost": "Unverified",
+        "run_cost": "Free tier",
+        "trust": "Unverified",
+        "reversibility": "Easy",
+        "license": "Unverified"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Not needed for the MVP"
+        }
+      ]
+    },
+    {
+      "name": "lint-hook",
+      "source": "tbd",
+      "tier": "project",
+      "reason": "Always-on lint check, proposed as a first default check",
+      "cost": "free",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Catches style and simple bugs early",
+        "overlap": "Project linters differ by stack; needs a per-type choice",
+        "context_cost": "None if run as a hook",
+        "run_cost": "Free",
+        "trust": "Depends on the linter chosen",
+        "reversibility": "Easy",
+        "license": "Depends on the linter chosen"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Which linter depends on project type; decide when the first typed project uses the starter"
+        }
+      ]
+    }
+  ]
+}

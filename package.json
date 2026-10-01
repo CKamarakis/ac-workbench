@@ -4,7 +4,10 @@
   "type": "module",
   "description": "Dev tooling for the kit (validator, cockpit build, evals). Runtime scripts in plugins/kit use no dependencies.",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "registry": "node tools/validate-registry.mjs toolkit.yaml --out plugins/kit/data/toolkit.json",
+    "registry:check": "node tools/validate-registry.mjs toolkit.yaml --out plugins/kit/data/toolkit.json --check",
+    "evals": "node tools/run-evals.mjs"
   },
   "devDependencies": {
     "yaml": "^2.5.0"

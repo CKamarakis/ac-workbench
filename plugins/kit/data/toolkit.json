@@ -73,6 +73,14 @@
         "verify",
         "close"
       ],
+      "skills": {
+        "brainstorm": "/opsx:explore",
+        "artifacts": "/opsx:propose",
+        "plan": "/opsx:continue",
+        "build": "/opsx:apply",
+        "verify": "openspec validate --strict + the change's tests",
+        "close": "/opsx:archive"
+      },
       "verdicts": [
         {
           "date": "2026-09-29",
@@ -118,11 +126,19 @@
         "verify",
         "close"
       ],
+      "skills": {
+        "brainstorm": "/opsx:new <name> --schema superspec",
+        "artifacts": "/opsx:continue (brainstorm -> proposal -> specs -> tasks)",
+        "plan": "/opsx:continue (plan artifact)",
+        "build": "/opsx:apply (worktree + subagent TDD)",
+        "verify": "/opsx:verify",
+        "close": "/opsx:archive"
+      },
       "overlaps": [
         "openspec"
       ],
       "skip_skills": [
-        "opsx:propose"
+        "superspec as the project default schema"
       ],
       "verdicts": [
         {
@@ -161,7 +177,9 @@
         "superspec"
       ],
       "skip_skills": [
-        "superpowers:writing-plans"
+        "superpowers:brainstorming",
+        "superpowers:writing-plans",
+        "superpowers:executing-plans"
       ],
       "verdicts": [
         {
@@ -322,6 +340,12 @@
       },
       "reviewed_version": "0.1.0",
       "reviewed_on": "2026-10-01",
+      "phases": [
+        "kit-issues"
+      ],
+      "skills": {
+        "kit-issues": "/kit:feedback"
+      },
       "verdicts": [
         {
           "date": "2026-10-01",

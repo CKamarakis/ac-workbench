@@ -27,3 +27,9 @@
 - `claude plugin eval` exists. It runs eval cases (`evals/**/case.yaml`, or `prompt.md` + graders) against a plugin, with a no-plugin baseline arm. This is the candidate engine for Claude-in-the-loop cases (design D8, open question).
 - `claude plugin details <name>` shows a plugin's component inventory and projected token cost. That's useful input for the rubric's `context_cost`.
 - Superpowers still has a **user-scope install record** from the first install. It is **not enabled** at user scope (removed 2026-09-29), so it doesn't load. Uninstalling that record is optional, since project installs share the cache.
+
+## Live check of `/kit:setup` (task 5.5), 2026-10-01
+
+- A new session in `ac-workbench` listed `/kit:setup` with no reinstall. Dev mode (local directory marketplace) picks up new skills immediately.
+- The skill ran `setup.mjs plan`. All 7 machine tools were `ok`, 5 were skipped as expected, there were no warnings, and it reported "Nothing to do". It installed and changed nothing.
+- The "install missing" path isn't exercised on this machine, since nothing is missing. It is covered by `evals/setup` (cases `apply-installs-and-isolates-failure` and `second-run-nothing-to-do`) and by `tests/kit/setup.test.mjs`.

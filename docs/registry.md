@@ -44,6 +44,7 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 | `check_match` | no | Regex the check's output must match too, e.g. `'"kit@ac-workbench"'` on `claude plugin list --json` |
 | `install` | adopted/trial | Install instructions by platform, e.g. `win32: …` |
 | `phases` | no | Phases this tool owns |
+| `skills` | no | Phase → the skill or command to use for it, e.g. `build: /opsx:apply`. Shown in the lane map and the CLAUDE.md routing block |
 | `overlaps` | no | Tools it overlaps with. Two active tools owning one phase need this on at least one of them |
 | `skip_skills` | no | That tool's skills which the kit does not use |
 | `verdicts` | yes | Ordered history: `date`, `status`, `rationale`, optional `evidence` (path to an eval run or trial note). Append only; never rewrite old entries |

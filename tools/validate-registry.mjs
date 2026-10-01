@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import YAML from 'yaml';
+import { laneMap, formatLanes } from '../plugins/kit/scripts/lanes.mjs';
 
 const USAGE = 'usage: node tools/validate-registry.mjs <registry.yaml> [--out <file.json>] [--check]';
 
@@ -225,6 +226,7 @@ export function main(argv) {
     }
   }
   console.log(`Registry valid (${doc.tools.length} tools)`);
+  console.log(formatLanes(laneMap(doc)));
   return 0;
 }
 

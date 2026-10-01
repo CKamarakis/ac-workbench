@@ -42,13 +42,13 @@
 - [x] 5.2 Implement `plugins/kit/scripts/locate.mjs` (zero-dependency) finding tools via PATH, `npm prefix -g`, `%APPDATA%\npm` and standard `Program Files` folders; verify tests for "on PATH", "only in npm prefix", "only in Program Files" (gh) and "missing"
 - [x] 5.3 Implement `plugins/kit/scripts/setup.mjs` plan/apply: machine-scope adopted/trial entries only, check → present/missing, install after confirmation, one failure never stops the rest, summary with fix hints, and a flag for project-scope plugins found in `~/.claude/settings.json`; verify tests for fresh machine, partial, all present (nothing to do), dropped entry skipped and one failing install
 - [x] 5.4 Add registry entries for the machine toolset (git, gh, jq, gitleaks, openspec, the kit plugin, the Superpowers marketplace) with check and install data for `win32`; verify validation passes
-- [ ] 5.5 Write `skills/setup/SKILL.md` (plan → show → confirm → apply → summary) and its eval cases, document the two-line bootstrap for a new machine in `docs/setup.md`, and verify `/kit:setup` on this machine installs what is missing and a second run reports nothing to do
+- [x] 5.5 Write `skills/setup/SKILL.md` (plan → show → confirm → apply → summary) and its eval cases, document the two-line bootstrap for a new machine in `docs/setup.md`, and verify `/kit:setup` on this machine installs what is missing and a second run reports nothing to do
 
 ## 6. Lane map
 
-- [ ] 6.1 Implement `plugins/kit/scripts/lanes.mjs` (zero-dependency): lane map from `toolkit.json`, unowned phases listed, overlaps and skip_skills; verify `node --test` cases for complete map, unowned phase and resolved overlap
-- [ ] 6.2 Render the lane map as a CLAUDE.md routing block between `<!-- kit:routing:start -->` / `<!-- kit:routing:end -->` (use / don't-use per phase) and verify the output matches a golden file
-- [ ] 6.3 Print the lane map and "needs review" flags from the validator and verify both appear in its output for a fixture with an updated tool
+- [x] 6.1 Implement `plugins/kit/scripts/lanes.mjs` (zero-dependency): lane map from `toolkit.json`, unowned phases listed, overlaps and skip_skills; verify `node --test` cases for complete map, unowned phase and resolved overlap
+- [x] 6.2 Render the lane map as a CLAUDE.md routing block between `<!-- kit:routing:start -->` / `<!-- kit:routing:end -->` (use / don't-use per phase) and verify the output matches a golden file
+- [x] 6.3 Print the lane map and "needs review" flags from the validator and verify both appear in its output for a fixture with an updated tool
 
 ## 7. Project starter
 

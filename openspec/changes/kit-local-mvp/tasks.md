@@ -28,9 +28,9 @@
 ## 4. Toolkit registry + validator (A/B trial slice)
 
 - [x] 4.1 Write eval cases for the registry slice (valid entry, missing field, bad enum, status/verdict mismatch, unresolved phase conflict, resolved overlap, missing install data on an adopted entry, `later` entry without install data, stale `toolkit.json`) and verify they fail before the validator exists
-- [ ] 4.2 Setup A: build `toolkit.yaml` schema + `tools/validate-registry.mjs` in the sandbox with plain OpenSpec spec-driven; record time and interventions and verify an eval run file exists for setup A
-- [ ] 4.3 Setup B: build the same slice from the same starting commit with SuperSpec (skip if 2.4 dropped it); verify an eval run file exists for setup B
-- [ ] 4.4 Score both runs with `tools/compare-runs.mjs` plus the harness-review rubric criteria for artifact quality, and verify the comparison is saved in `evals/trials/workflow-ab.md`
+- [x] 4.2 Setup A: build `toolkit.yaml` schema + `tools/validate-registry.mjs` in the sandbox with plain OpenSpec spec-driven; record time and interventions and verify an eval run file exists for setup A
+- [x] 4.3 Setup B: build the same slice from the same starting commit with SuperSpec (skip if 2.4 dropped it); verify an eval run file exists for setup B
+- [x] 4.4 Score both runs with `tools/compare-runs.mjs` plus the harness-review rubric criteria for artifact quality, and verify the comparison is saved in `evals/trials/workflow-ab.md`
 - [ ] 4.5 Port the winning validator into `tools/validate-registry.mjs` here: required fields, enums with allowed values in the message, verdict history append-only, status == latest verdict, phase conflicts, `scope`/`check`/`install` required for adopted and trial entries, `installed_version` > `reviewed_version` flagged "needs review"; verify all group-4 eval cases pass and exit code is non-zero on any error
 - [ ] 4.6 Validator writes `plugins/kit/data/toolkit.json` only on success; verify a failing registry leaves the previous JSON untouched
 - [ ] 4.7 Seed `toolkit.yaml` with the proposal's candidate tools (OpenSpec, Superpowers, SuperSpec, Playwright CLI, Context7, lint hook, gitleaks), each with scope, check and install data, plus the phase list, the `situations` guide, and verdicts from group 4 citing the eval run as evidence; verify validation passes

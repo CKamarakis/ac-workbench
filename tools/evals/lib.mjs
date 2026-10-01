@@ -159,7 +159,7 @@ export function runCase(c, { scores = {}, keep = false, repo = REPO, vars: extra
   return result;
 }
 
-export function runSkill(caseFile, { setup = 'default', interventions = 0, scores = {}, keep = false, repo = REPO, vars = {}, now = new Date() } = {}) {
+export function runSkill(caseFile, { setup = 'default', interventions = 0, scores = {}, keep = false, repo = REPO, vars = {}, sessionMinutes = null, now = new Date() } = {}) {
   const doc = loadCases(caseFile);
   const started = Date.now();
   // File-level `vars` are defaults (they may use {{repo}}/{{kit}}); run-level --var values win.
@@ -174,6 +174,7 @@ export function runSkill(caseFile, { setup = 'default', interventions = 0, score
     setup,
     ...(Object.keys(vars).length ? { vars } : {}),
     interventions,
+    ...(sessionMinutes != null ? { session_minutes: sessionMinutes } : {}),
     duration_ms: Date.now() - started,
     summary,
     cases,
@@ -200,8 +201,8 @@ export function compareRuns(a, b) {
     return { id, a: ca?.outcome ?? '-', b: cb?.outcome ?? '-', a_ms: ca?.duration_ms ?? null, b_ms: cb?.duration_ms ?? null };
   });
   return {
-    a: { setup: a.setup, date: a.date, duration_ms: a.duration_ms, interventions: a.interventions, summary: a.summary },
-    b: { setup: b.setup, date: b.date, duration_ms: b.duration_ms, interventions: b.interventions, summary: b.summary },
+    a: { setup: a.setup, date: a.date, duration_ms: a.duration_ms, session_minutes: a.session_minutes ?? null, interventions: a.interventions, summary: a.summary },
+    b: { setup: b.setup, date: b.date, duration_ms: b.duration_ms, session_minutes: b.session_minutes ?? null, interventions: b.interventions, summary: b.summary },
     rows,
   };
 }
@@ -217,7 +218,8 @@ export function formatComparison(cmp) {
     ...cmp.rows.map(r => `${col(r.id, w)}  ${col(r.a, cw)}  ${col(r.b, cw)}${r.a !== r.b ? '  <' : ''}`),
     `${'-'.repeat(w)}  ${'-'.repeat(cw)}  ${'-'.repeat(cw)}`,
     `${col('pass/fail/pending', w)}  ${col(`${cmp.a.summary.pass}/${cmp.a.summary.fail}/${cmp.a.summary.pending}`, cw)}  ${col(`${cmp.b.summary.pass}/${cmp.b.summary.fail}/${cmp.b.summary.pending}`, cw)}`,
-    `${col('time (s)', w)}  ${col((cmp.a.duration_ms / 1000).toFixed(1), cw)}  ${col((cmp.b.duration_ms / 1000).toFixed(1), cw)}`,
+    `${col('session (min)', w)}  ${col(cmp.a.session_minutes ?? '-', cw)}  ${col(cmp.b.session_minutes ?? '-', cw)}`,
+    `${col('eval run (s)', w)}  ${col((cmp.a.duration_ms / 1000).toFixed(1), cw)}  ${col((cmp.b.duration_ms / 1000).toFixed(1), cw)}`,
     `${col('interventions', w)}  ${col(cmp.a.interventions, cw)}  ${col(cmp.b.interventions, cw)}`,
   ];
   return lines.join('\n');

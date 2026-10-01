@@ -65,6 +65,7 @@ node tools/run-evals.mjs                       # all skills, setup "default"
 node tools/run-evals.mjs start next --setup superspec --interventions 2
 node tools/run-evals.mjs harness-review --scores scores.yaml
 node tools/run-evals.mjs --dry                 # run, but do not write run files
+node tools/run-evals.mjs registry --setup superspec --interventions 2 --session-minutes 28.5   # A/B: also record the session's wall time
 ```
 
 The run exits non-zero if any case fails or any skill is missing evals.

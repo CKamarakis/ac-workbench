@@ -159,6 +159,8 @@ test('runSkill + writeRun produce a record in the documented format', () => {
   for (const k of ['skill', 'date', 'setup', 'interventions', 'duration_ms', 'summary', 'cases']) assert.ok(k in rec, k);
   assert.deepEqual(rec.summary, { pass: 2, fail: 0, pending: 0 });
   assert.equal(rec.interventions, 2);
+  assert.equal('session_minutes' in rec, false);
+  assert.equal(runSkill(f, { sessionMinutes: 7.5 }).session_minutes, 7.5);
   assert.deepEqual(rec.cases[1].rubric, [{ name: 'clear', pass: true, reason: 'fine' }]);
   assert.equal(typeof rec.cases[0].duration_ms, 'number');
 });
@@ -183,5 +185,6 @@ test('compareRuns shows per-case outcomes, time and interventions for both setup
   const text = formatComparison(cmp);
   assert.match(text, /openspec\s+superspec/);
   assert.match(text, /interventions\s+3\s+1/);
-  assert.match(text, /time \(s\)\s+5400\.0\s+4200\.0/);
+  assert.match(text, /eval run \(s\)\s+5400\.0\s+4200\.0/);
+  assert.match(text, /session \(min\)\s+-\s+-/);
 });

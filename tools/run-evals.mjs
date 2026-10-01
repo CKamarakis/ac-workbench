@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Run kit skill evals and write run records. See evals/README.md.
-// Usage: node tools/run-evals.mjs [skill...] [--setup name] [--interventions N] [--scores file.yaml] [--var k=v]... [--keep] [--dry]
+// Usage: node tools/run-evals.mjs [skill...] [--setup name] [--interventions N] [--scores file.yaml] [--var k=v]... [--session-minutes N] [--keep] [--dry]
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
@@ -18,6 +18,7 @@ function parseArgs(argv) {
       if (!/^\w+$/.test(k) || !v.length) throw new Error('--var expects name=value');
       opts.vars[k] = v.join('=');
     }
+    else if (a === '--session-minutes') opts.sessionMinutes = Number(argv[++i]);
     else if (a === '--keep') opts.keep = true;
     else if (a === '--dry') opts.dry = true;
     else if (a.startsWith('--')) throw new Error(`unknown option ${a}`);

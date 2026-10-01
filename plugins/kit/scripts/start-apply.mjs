@@ -1,7 +1,7 @@
 // /kit:start apply step (design D4, D14; spec: project-starter). Re-plans, then applies only what is
 // allowed: new files, confirmed changes, init commands, per-project tool installs, the stamp, and the
 // machine's project list. Never deletes a file; never writes user-level Claude settings. Zero dependencies.
-// Usage: node start-apply.mjs --dir <project> [--type <t>] [--opt-in a,b] [--accept all|id,id] [--json]
+// Usage: node start-apply.mjs --dir <project> [--type <t>] [--opt-in a,b] [--accept all|id,id] [--json] [--home <dir>] [--registry <file.json>]
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -52,7 +52,7 @@ export function registerProject({ home = os.homedir(), name, dir, today }) {
  * Returns { written, skipped, ran, tools: { installed, failed, pending, present, fallback }, projectsFile, plan }.
  */
 export function applyProject(opts) {
-  const { accept = [], home = os.homedir(), deps = defaultDeps(), registry = loadRegistry(), version = kitVersion(), today = new Date().toISOString().slice(0, 10) } = opts;
+  const { accept = [], home = opts.home ?? os.homedir(), deps = defaultDeps(), registry = loadRegistry(), version = kitVersion(), today = new Date().toISOString().slice(0, 10) } = opts;
   const plan = planProject({ ...opts, registry, version, today, deps });
   const dir = plan.dir;
   const ok = id => accept === 'all' || (Array.isArray(accept) && (accept.includes('all') || accept.includes(id)));
@@ -97,6 +97,7 @@ export function applyProject(opts) {
     const check = deps.run(entry.check, { cwd: dir, timeout: 60000 });
     const present = check.status === 0 && (!entry.check_match || new RegExp(entry.check_match, 'm').test(check.stdout));
     if (r.status === 0 && present) { out.tools.installed.push(t.name); continue; }
+    if (r.status === 0 && entry.install_note) { out.tools.pending.push({ name: t.name, command: null, note: entry.install_note }); continue; }
     if (t.kind === 'plugin') {
       const f = enablePluginInSettings(dir, t.plugin);
       if (f.ok) { out.tools.fallback.push({ name: t.name, error: first(r.stderr) || first(r.stdout) || 'check failed after install' }); continue; }

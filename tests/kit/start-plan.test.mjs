@@ -112,3 +112,10 @@ test('managedBlock and lineDiff basics', () => {
   assert.equal(managedBlock('# kit:start foo\nx\n# kit:end\n', GI_START, GI_END, '# kit:start foo\nx\n# kit:end').action, 'same');
   assert.equal(lineDiff('a\nb\nc', 'a\nB\nc'), '  a\n- b\n+ B\n  c');
 });
+
+test('installed but waiting on the user (check runs, match fails) is pending, not reinstalled', () => {
+  const reg = { phases: [], tools: [{ name: 'mcpx', tier: 'project', status: 'trial', scope: 'project', check: 'check mcpx', check_match: 'Connected', install: { win32: 'install mcpx' }, install_note: 'run /mcp' }] };
+  const p = planProject({ dir: tmp(), registry: reg, optIn: ['mcpx'], version: '9.9.9', today: '2026-10-01', deps: { platform: 'win32', run: () => ({ status: 0, stdout: 'Status: ! Needs authentication', stderr: '' }) } });
+  assert.equal(p.tools[0].action, 'pending');
+  assert.equal(p.tools.filter(x => x.action === 'install').length, 0);
+});

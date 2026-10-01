@@ -306,7 +306,7 @@ tools:
     check: playwright-cli --version
     install:
       win32: npm install -g @playwright/cli@latest && playwright-cli install --skills
-    install_note: The CLI is a machine-wide npm install; `install --skills` adds the skills to the project. Skill folder location unverified (check in the group 7 sandbox).
+    install_note: Verified 2026-10-01 (sandbox) - the CLI (0.1.22) is a machine-wide npm install (a CLI, inert until called); `playwright-cli install --skills` adds .claude/skills/playwright-cli to the project and uses the installed Chrome. A small helper (winldd) goes to the shared Playwright cache in AppData/Local/ms-playwright.
     rubric:
       problem_fit: Lets the agent check real pages and flows
       overlap: Playwright MCP does the same with more tokens; Claude in Chrome is for the user's own browser
@@ -333,11 +333,11 @@ tools:
     cost: free-tier
     status: trial
     scope: project
-    check: npx --no-install ctx7 --version
+    check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/context7'))"
     interactive: true
     install:
-      win32: npx ctx7 setup --claude
-    install_note: Interactive - OAuth sign-in generates a free API key; choose "CLI + Skills" mode. Remove with `npx ctx7 remove`.
+      win32: npx -y ctx7@latest setup --claude --cli --project
+    install_note: Interactive (OAuth sign-in creates a free API key). ALWAYS --project - without it ctx7 configures Claude globally (verified from its --help 2026-10-01). Remove with `npx ctx7 remove`.
     rubric:
       problem_fit: Fewer stale API answers during build
       overlap: None; a docs source, not a phase owner
@@ -388,10 +388,10 @@ tools:
     status: trial
     scope: project
     check: claude mcp get notion
-    interactive: true
+    check_match: 'Status:.*[Cc]onnected'
     install:
       win32: claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local
-    install_note: Interactive - then run /mcp in Claude Code and finish the OAuth flow. `--scope local` keeps it private to you in this project (not committed).
+    install_note: Then run /mcp in Claude Code and finish the OAuth sign-in. Verified 2026-10-01 - `--scope local` is private to you in this project (kept in ~/.claude.json under this project's path, not committed); until sign-in, `claude mcp get notion` shows "Needs authentication". The connected status wording is unverified.
     rubric:
       problem_fit: Keeps long-lived product context in Notion and only pointers and final PRDs in the repo
       overlap: The Notion plugin bundles the same server; use one of them per project
@@ -439,8 +439,8 @@ tools:
     scope: project
     check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))"
     install:
-      win32: npx impeccable install --providers=claude --scope=project
-    install_note: Installs a project hook manifest too. Then run /impeccable init once (writes PRODUCT.md). Skill folder path unverified (check in the group 7 sandbox).
+      win32: npx -y impeccable install --providers=claude --scope=project
+    install_note: Verified 2026-10-01 (sandbox) - skill in .claude/skills/impeccable, 4 agents in .claude/agents, hooks in .claude/settings.local.json (personal, gitignored by the kit block), engine binary inside the skill folder. Then run /impeccable init once (writes PRODUCT.md). Its hooks use bash syntax; that they run on Windows is unverified.
     rubric:
       problem_fit: Avoids generic AI-looking UI; gives a shared design vocabulary
       overlap: Emil's skills on polish and animation; Impeccable owns ui-polish
@@ -469,8 +469,8 @@ tools:
     scope: project
     check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/review-animations'))"
     install:
-      win32: npx skills@latest add emilkowalski/skills
-    install_note: Install location of the skills CLI (project vs user) unverified; check in the group 7 sandbox before relying on it.
+      win32: npx -y skills@latest add emilkowalski/skills -a claude-code -s * -y --copy
+    install_note: Verified 2026-10-01 (sandbox) - project-level by default (-g would be user-level, never use it); 13 skills copied into .claude/skills (--copy avoids symlinks on Windows).
     rubric:
       problem_fit: Strong on motion and the small details agents get wrong
       overlap: Impeccable owns ui-polish; Emil is used for motion only

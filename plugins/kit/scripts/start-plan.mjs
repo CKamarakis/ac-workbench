@@ -1,6 +1,6 @@
 // /kit:start planner (design D4, D5, D14; spec: project-starter). Computes every file and tool action
 // for a project WITHOUT writing anything. Zero dependencies.
-// Usage: node start-plan.mjs --dir <project> [--type <t>] [--opt-in a,b] [--json]
+// Usage: node start-plan.mjs --dir <project> [--type <t>] [--opt-in a,b] [--json] [--registry <file.json>]
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -89,6 +89,8 @@ function toolAction(entry, dir, deps) {
   const check = deps.run(entry.check, { cwd: dir, timeout: 60000 });
   const present = check.status === 0 && (!entry.check_match || new RegExp(entry.check_match, 'm').test(check.stdout));
   if (present) return { ...base, action: 'present' };
+  // Installed but waiting on the user (e.g. OAuth not done): the check runs, its match fails. Don't reinstall.
+  if (check.status === 0 && entry.check_match && entry.install_note) return { ...base, action: 'pending', command: null, note: entry.install_note };
   const command = entry.plugin ? `claude plugin install ${entry.plugin} --scope project --json` : entry.install?.[deps.platform] ?? null;
   if (entry.interactive) return { ...base, action: 'pending', command, note: entry.install_note ?? 'needs you to complete it' };
   if (!command) return { ...base, action: 'pending', command: null, note: `no install command for ${deps.platform}` };
@@ -201,6 +203,7 @@ export function formatPlan(p) {
 
 export function parseArgs(argv) {
   const o = { dir: process.cwd(), type: null, optIn: [], json: false, accept: [] };
+  // --home and --registry exist for evals/tests: a sandbox home for projects.json, a fake registry.
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dir') o.dir = argv[++i];
@@ -208,6 +211,8 @@ export function parseArgs(argv) {
     else if (a === '--opt-in') o.optIn = argv[++i].split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--accept') o.accept = argv[++i].split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--json') o.json = true;
+    else if (a === '--home') o.home = argv[++i];
+    else if (a === '--registry') o.registry = loadRegistry(argv[++i]);
     else throw new Error(`unknown option ${a}`);
   }
   return o;

@@ -41,6 +41,11 @@ test('only in the npm global folder (openspec not on PATH)', () => {
   assert.deepEqual(locate('openspec', m.opts), { path: path.join(m.env.APPDATA, 'npm', 'openspec.cmd'), via: 'npm-prefix' });
 });
 
+test('any npm -g CLI is found in the npm global folder (not only openspec)', () => {
+  const m = machine(['AppData/Roaming/npm/playwright-cli.cmd']);
+  assert.equal(locate('playwright-cli', m.opts).via, 'npm-prefix');
+});
+
 test('npm prefix from `npm prefix -g` is searched too', () => {
   const m = machine(['custom-npm/openspec.cmd']);
   const r = locate('openspec', { ...m.opts, npmPrefix: () => path.join(m.root, 'custom-npm') });

@@ -17,7 +17,6 @@ const KNOWN_WIN32 = {
   claude: ['{USERPROFILE}/.local/bin/claude.exe'],
   winget: ['{LOCALAPPDATA}/Microsoft/WindowsApps/winget.exe'],
 };
-const NPM_GLOBAL = new Set(['openspec']); // tools installed with npm -g
 
 function expandPattern(pattern, env) {
   const filled = pattern.replace(/\{(\w+)\}/g, (_, k) => env[k] ?? `\0missing:${k}`);
@@ -83,7 +82,7 @@ export function locate(name, { env = process.env, platform = process.platform, n
   if (preferKnown) { const k = known(); if (k) return k; }
   const onPath = searchPath(name, env, platform);
   if (onPath) return { path: onPath, via: 'path' };
-  if (NPM_GLOBAL.has(name)) {
+  { // any npm -g CLI (openspec, playwright-cli, ...) lives in the npm global folder
     const exts = platform === 'win32' ? ['.cmd', '.exe', ''] : [''];
     for (const d of npmPrefixDirs(env, platform, npmPrefix)) for (const e of exts) {
       const p = path.join(d, name + e);

@@ -120,3 +120,12 @@ test('non-plugin install failure is reported with a fix and does not stop the re
   assert.deepEqual(r.tools.installed, ['sp']);
   assert.ok(r.written.includes('.claude/kit.json'));
 });
+
+test('install succeeds but needs a user step (e.g. OAuth) -> pending with its note, not failed', () => {
+  const dir = tmp('kit-apply-'), home = tmp('kit-home-');
+  const reg = { phases: [], tools: [{ name: 'mcpx', tier: 'project', status: 'trial', scope: 'project', check: 'check mcpx', check_match: 'Connected', install: { win32: 'install mcpx' }, install_note: 'run /mcp and sign in' }] };
+  const deps = fakeDeps(dir);
+  const r = applyProject({ dir, registry: reg, version: '9.9.9', today: '2026-10-01', deps, home, optIn: ['mcpx'] });
+  assert.deepEqual(r.tools.failed, []);
+  assert.deepEqual(r.tools.pending.map(p => [p.name, p.note]), [['mcpx', 'run /mcp and sign in']]);
+});

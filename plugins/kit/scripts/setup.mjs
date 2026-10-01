@@ -24,7 +24,7 @@ function readJson(file) {
 // Default runner: a shell command with a PATH that includes the tools' real folders.
 // Windows Git\cmd comes first so `claude plugin install` can clone with submodules (evals/trials/plugin-cli.md).
 export function defaultDeps() {
-  const tools = ['git', 'node', 'npm', 'claude', 'gh', 'winget', 'openspec', 'jq', 'gitleaks'];
+  const tools = ['git', 'node', 'npm', 'claude', 'gh', 'winget', 'openspec', 'jq', 'gitleaks', 'playwright-cli'];
   const located = Object.fromEntries(tools.map(t => [t, locate(t, { preferKnown: t === 'git' })]));
   const env = { ...process.env, PATH: pathWith(located) };
   return {

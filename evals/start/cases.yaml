@@ -1,0 +1,96 @@
+# Eval cases for /kit:start (spec: project-starter). Real git and openspec run inside the temp sandbox;
+# --home points the machine project list at the sandbox, so the real ~/.claude is never touched.
+skill: start
+vars:
+  plan: '{{kit}}/scripts/start-plan.mjs'
+  apply: '{{kit}}/scripts/start-apply.mjs'
+  prereqs: '{{kit}}/scripts/prereqs.mjs'
+
+cases:
+  - id: empty-folder-gets-tier2-basics
+    description: An empty folder gets git, .gitignore (licensed folders ignored), OpenSpec pointing at the context doc, CLAUDE.md routing, context doc, stamp, and a project-list entry
+    setup:
+      files:
+        absent.js: "process.exit(require('fs').existsSync(process.argv[2]) ? 1 : 0)"
+    input:
+      run: node "{{apply}}" --dir . --type none --home home
+    checks:
+      - { kind: file-exists, path: .git }
+      - { kind: file-exists, path: docs/project-context.md }
+      - { kind: file-exists, path: .claude/kit.json }
+      - { kind: git-ignored, path: PM-OS-v2.1/notes.md }
+      - { kind: content-match, path: .gitignore, pattern: '^# kit:start' }
+      - { kind: content-match, path: openspec/config.yaml, pattern: 'docs/project-context\.md' }
+      - { kind: content-match, path: CLAUDE.md, pattern: '<!-- kit:routing:start -->[\s\S]*/opsx:apply[\s\S]*<!-- kit:routing:end -->' }
+      - { kind: content-match, path: home/.claude/kit/projects.json, pattern: '"projects"' }
+      - kind: command-exit
+        description: user-level Claude settings are never written
+        command: node absent.js home/.claude/settings.json
+        expect: 0
+
+  - id: idempotent-rerun
+    description: Running the starter twice with the same choices leaves nothing to change
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{plan}}" --dir . --type none
+        expect: 0
+        stdout_match: 'Nothing to change\.'
+
+  - id: existing-claude-md-unchanged-without-yes
+    description: A user-edited CLAUDE.md is shown as a diff and left byte-identical unless confirmed
+    setup:
+      files:
+        CLAUDE.md: "# My project\n\nMy own rules.\n"
+    checks:
+      - kind: command-exit
+        command: node "{{plan}}" --dir . --type none
+        stdout_match: 'CHANGE\s+CLAUDE\.md[\s\S]*\+ <!-- kit:routing:start -->'
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        stdout_match: 'skipped\s+CLAUDE\.md: not confirmed'
+      - kind: content-match
+        path: CLAUDE.md
+        pattern: '^# My project\r?\n\r?\nMy own rules\.\r?\n$'
+        negate: false
+
+  - id: missing-git-stops-before-writes
+    description: With git missing, the prerequisite check blocks with an install hint and nothing is written
+    setup:
+      files:
+        blocked.mjs: "import { pathToFileURL } from 'node:url'; const m = await import(pathToFileURL(process.argv[2]).href); const r = m.checkPrereqs({ locateFn: () => null, setupDeps: { platform: 'win32', userSettings: () => ({}), run: () => ({ status: 1, stdout: '', stderr: '' }) } }); console.log(m.formatPrereqs(r)); process.exit(r.ready ? 0 : 9);"
+        absent.js: "process.exit(require('fs').existsSync(process.argv[2]) ? 1 : 0)"
+    checks:
+      - kind: command-exit
+        command: node blocked.mjs "{{prereqs}}"
+        expect: 9
+        stdout_match: 'BLOCKED\s+git is missing\. Install: [\s\S]*Nothing was changed\.'
+      - { kind: command-exit, command: node absent.js CLAUDE.md, expect: 0 }
+      - { kind: command-exit, command: node absent.js .git, expect: 0 }
+
+  - id: plugins-enabled-only-in-the-project
+    description: A project plugin lands in the project's .claude/settings.json (CLI or fallback), never in user-level settings
+    setup:
+      files:
+        absent.js: "process.exit(require('fs').existsSync(process.argv[2]) ? 1 : 0)"
+        r.json: '{"phases":[],"tools":[{"name":"fakeplug","tier":"project","status":"trial","scope":"project","plugin":"fakeplug@kit-eval-nowhere","check":"node absent.js .","install":{"win32":"x","linux":"x","darwin":"x"}}]}'
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --opt-in fakeplug --home home --registry r.json
+        stdout_match: 'enabled\s+fakeplug \(written to \.claude/settings\.json'
+      - { kind: content-match, path: .claude/settings.json, pattern: '"fakeplug@kit-eval-nowhere": true' }
+      - kind: command-exit
+        command: node absent.js home/.claude/settings.json
+        expect: 0
+
+  - id: skill-confirms-and-never-goes-global
+    description: The skill asks before changing existing files and forbids user-scope installs
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Never apply a change the user didn.t confirm' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Never pass `--scope user`' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/start-apply\.mjs' }

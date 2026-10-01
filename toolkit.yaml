@@ -72,8 +72,11 @@ tools:
     status: trial
     scope: project
     check: openspec schemas
+    check_match: superspec
+    interactive: true
     install:
-      win32: copy openspec/schemas/superspec from the repo, then openspec init --tools claude --profile custom with XDG_CONFIG_HOME redirected (project-only; see evals/trials/workflow-ab-setup.md)
+      win32: copy openspec/schemas/superspec from github.com/danielhanold/superspec, then openspec init --tools claude --profile custom --force with XDG_CONFIG_HOME pointed at a throwaway config
+    install_note: Multi-step and project-only - follow evals/trials/workflow-ab-setup.md (never change the global OpenSpec config). Automating it is a follow-up.
     rubric:
       problem_fit: Strong process (isolation, audit trail, verify report), asks instead of guessing
       overlap: Same phases as OpenSpec spec-driven; used per change, never as the default
@@ -108,9 +111,11 @@ tools:
     cost: uses-claude-quota
     status: trial
     scope: project
-    check: claude plugin list
+    plugin: superpowers@superpowers-marketplace
+    check: claude plugin list --json
+    check_match: '"id": "superpowers@superpowers-marketplace"[^}]*"projectEnabled": true'
     install:
-      win32: enable superpowers@superpowers-marketplace in <project>/.claude/settings.json (never user scope)
+      win32: claude plugin install superpowers@superpowers-marketplace --scope project --json
     rubric:
       problem_fit: Build discipline (TDD, small commits, worktrees)
       overlap: Planning skills overlap OpenSpec; used only through SuperSpec
@@ -329,6 +334,7 @@ tools:
     status: trial
     scope: project
     check: npx --no-install ctx7 --version
+    interactive: true
     install:
       win32: npx ctx7 setup --claude
     install_note: Interactive - OAuth sign-in generates a free API key; choose "CLI + Skills" mode. Remove with `npx ctx7 remove`.
@@ -382,6 +388,7 @@ tools:
     status: trial
     scope: project
     check: claude mcp get notion
+    interactive: true
     install:
       win32: claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local
     install_note: Interactive - then run /mcp in Claude Code and finish the OAuth flow. `--scope local` keeps it private to you in this project (not committed).

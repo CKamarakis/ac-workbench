@@ -43,6 +43,9 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 | `check` | adopted/trial | Command that tells whether the tool is present (exit 0 = present) |
 | `check_match` | no | Regex the check's output must match too, e.g. `'"kit@ac-workbench"'` on `claude plugin list --json` |
 | `install` | adopted/trial | Install instructions by platform, e.g. `win32: …` |
+| `install_note` | no | Steps the user must do, and anything unverified about the install |
+| `interactive` | no | `true` when the install needs the user (OAuth, multi-step). `/kit:start` never runs it; it shows the steps and marks the tool pending |
+| `plugin` | no | Claude Code plugin id (`name@marketplace`). `/kit:start` installs it with `claude plugin install <id> --scope project` |
 | `phases` | no | Phases this tool owns |
 | `skills` | no | Phase → the skill or command to use for it, e.g. `build: /opsx:apply`. Shown in the lane map and the CLAUDE.md routing block |
 | `overlaps` | no | Tools it overlaps with. Two active tools owning one phase need this on at least one of them |

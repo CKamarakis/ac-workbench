@@ -1,0 +1,114 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { planProject, selectTools, managedBlock, lineDiff, configAction, formatPlan, projectTypes, GI_START, GI_END } from '../../plugins/kit/scripts/start-plan.mjs';
+import { BLOCK_START, BLOCK_END } from '../../plugins/kit/scripts/lanes.mjs';
+
+import { registry } from './fixtures/start-registry.mjs';
+const deps = (present = []) => ({ platform: 'win32', run: cmd => (present.includes(cmd.split(' ')[1]) ? { status: 0, stdout: 'ok', stderr: '' } : { status: 1, stdout: '', stderr: '' }) });
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-start-'));
+const plan = (dir, o = {}) => planProject({ dir, registry, version: '9.9.9', today: '2026-10-01', deps: deps(o.present), ...o });
+const act = (p, id) => p.actions.find(a => a.id === id);
+
+test('empty folder: creates every Tier 2 basic and plans git + openspec init', () => {
+  const p = plan(tmp());
+  for (const id of ['.gitignore', 'CLAUDE.md', 'docs/project-context.md', '.claude/kit.json']) assert.equal(act(p, id).action, 'create', id);
+  assert.equal(act(p, 'git').command, 'git init');
+  assert.equal(act(p, 'openspec').command, 'openspec init --tools claude');
+  assert.equal(act(p, 'openspec/config.yaml').action, 'after-init');
+  assert.match(act(p, 'CLAUDE.md').content, /<!-- kit:routing:start -->[\s\S]*\/opsx:propose[\s\S]*<!-- kit:routing:end -->/);
+  assert.match(act(p, '.gitignore').content, /\[Pp\]\[Mm\]\[-_ \]\[Oo\]\[Ss\]\*\//);
+  assert.ok(p.changes > 0);
+});
+
+test('edited CLAUDE.md without a block: user text kept, block appended, diff shown', () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# Mine\n\nMy rules.\n');
+  const a = act(plan(d), 'CLAUDE.md');
+  assert.equal(a.action, 'differs');
+  assert.match(a.content, /^# Mine\n\nMy rules\.\n\n<!-- kit:routing:start -->/);
+  assert.match(a.diff, /^\+ <!-- kit:routing:start -->/m);
+  assert.doesNotMatch(a.diff, /^- /m);
+});
+
+test('outdated block is replaced in place, text around it untouched', () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), `# Mine\n\n${BLOCK_START}\nold rules\n${BLOCK_END}\n\nAfter.\n`);
+  const a = act(plan(d), 'CLAUDE.md');
+  assert.equal(a.action, 'differs');
+  assert.match(a.content, /^# Mine\n\n<!-- kit:routing:start -->/);
+  assert.match(a.content, /<!-- kit:routing:end -->\n\nAfter\.\n$/);
+  assert.doesNotMatch(a.content, /old rules/);
+});
+
+test('damaged marker is a conflict, never a guess', () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), `# Mine\n${BLOCK_START}\nno end marker\n`);
+  fs.writeFileSync(path.join(d, '.gitignore'), 'node_modules/\n# kit:end\n');
+  const p = plan(d);
+  assert.equal(act(p, 'CLAUDE.md').action, 'conflict');
+  assert.match(act(p, 'CLAUDE.md').reason, /end marker missing/);
+  assert.equal(act(p, '.gitignore').action, 'conflict');
+  assert.equal(p.conflicts, 2);
+  assert.match(formatPlan(p), /2 conflict\(s\) need you/);
+});
+
+test('existing .gitignore gets the kit block appended, its lines kept', () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, '.gitignore'), 'node_modules/\n.env\n');
+  const a = act(plan(d), '.gitignore');
+  assert.equal(a.action, 'differs');
+  assert.match(a.content, /^node_modules\/\n\.env\n\n# kit:start/);
+});
+
+test('web-ui: global + web-ui tools applied; other types, dropped and later excluded; project tier only offered', () => {
+  const { chosen, offered } = selectTools(registry, { type: 'web-ui' });
+  assert.deepEqual(chosen.map(c => c.entry.name), ['ctx', 'imp']);
+  assert.deepEqual(offered, ['sp', 'notion']);
+  assert.match(chosen[1].why, /web-ui/);
+  assert.deepEqual(projectTypes(registry), ['cli', 'web-ui']);
+});
+
+test('opt-in declined vs accepted', () => {
+  const declined = plan(tmp(), { type: 'web-ui' });
+  assert.ok(!declined.tools.some(x => x.name === 'sp'));
+  assert.match(formatPlan(declined), /Optional for this project.*sp, notion/);
+  const accepted = plan(tmp(), { type: 'web-ui', optIn: ['sp'] });
+  const sp = accepted.tools.find(x => x.name === 'sp');
+  assert.equal(sp.action, 'install');
+  assert.equal(sp.command, 'claude plugin install sp@market --scope project --json');
+  assert.equal(sp.kind, 'plugin');
+});
+
+test('interactive tool is pending with its note; present tool needs nothing', () => {
+  const p = plan(tmp(), { type: 'web-ui', optIn: ['notion'], present: ['imp'] });
+  const ctx = p.tools.find(x => x.name === 'ctx');
+  assert.equal(ctx.action, 'pending');
+  assert.match(ctx.note, /OAuth/);
+  assert.equal(p.tools.find(x => x.name === 'notion').action, 'pending');
+  assert.equal(p.tools.find(x => x.name === 'imp').action, 'present');
+  assert.match(formatPlan(p), /YOU\s+ctx/);
+});
+
+test('openspec config: pointer added, existing context is a conflict, pointer present is same', () => {
+  assert.equal(configAction('schema: spec-driven\n').action, 'differs');
+  assert.match(configAction('schema: spec-driven\n').content, /context: \|\n  Project context.*docs\/project-context\.md/);
+  assert.equal(configAction('schema: spec-driven\ncontext: |\n  other\n').action, 'conflict');
+  assert.equal(configAction('schema: x\ncontext: |\n  see docs/project-context.md\n').action, 'same');
+});
+
+test('existing project-context doc is kept, never edited', () => {
+  const d = tmp();
+  fs.mkdirSync(path.join(d, 'docs'));
+  fs.writeFileSync(path.join(d, 'docs/project-context.md'), 'mine');
+  assert.equal(act(plan(d), 'docs/project-context.md').action, 'keep');
+});
+
+test('managedBlock and lineDiff basics', () => {
+  assert.equal(managedBlock('', '<a>', '</a>', '<a>x</a>').result, '<a>x</a>\n');
+  assert.equal(managedBlock('k\n<a>x</a>\n', '<a>', '</a>', '<a>x</a>').action, 'same');
+  assert.equal(managedBlock('# kit:start foo\nx\n# kit:end\n', GI_START, GI_END, '# kit:start foo\nx\n# kit:end').action, 'same');
+  assert.equal(lineDiff('a\nb\nc', 'a\nB\nc'), '  a\n- b\n+ B\n  c');
+});

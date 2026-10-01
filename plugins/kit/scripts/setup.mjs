@@ -30,8 +30,8 @@ export function defaultDeps() {
   return {
     platform: process.platform,
     userSettings: () => readJson(path.join(os.homedir(), '.claude', 'settings.json')),
-    run: (command, { timeout = 300000 } = {}) => {
-      const r = spawnSync(command, { shell: true, encoding: 'utf8', env, timeout });
+    run: (command, { timeout = 300000, cwd } = {}) => {
+      const r = spawnSync(command, { shell: true, encoding: 'utf8', env, timeout, cwd });
       return { status: r.status ?? -1, stdout: r.stdout ?? '', stderr: (r.stderr ?? '') + (r.error ? String(r.error) : '') };
     },
   };

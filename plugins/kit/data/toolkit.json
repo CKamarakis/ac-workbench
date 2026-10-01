@@ -182,7 +182,7 @@
       "scope": "machine",
       "check": "gitleaks version",
       "install": {
-        "win32": "winget install --id Gitleaks.Gitleaks -e"
+        "win32": "winget install --id Gitleaks.Gitleaks -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
       },
       "rubric": {
         "problem_fit": "Catches tokens and keys before they reach a public repo",
@@ -201,6 +201,165 @@
           "status": "adopted",
           "rationale": "Hook blocked a fake token and passed clean commits; full history scan found no leaks",
           "evidence": "openspec/changes/kit-local-mvp/tasks.md (task 1.6)"
+        }
+      ]
+    },
+    {
+      "name": "git",
+      "source": "winget:Git.Git",
+      "tier": "global",
+      "reason": "Version control; the Windows Git (Git\\cmd) is also what `claude plugin install` needs to clone plugins",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "git --version",
+      "install": {
+        "win32": "winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+      },
+      "rubric": {
+        "problem_fit": "Required by every project and by plugin installs",
+        "overlap": "None",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Standard tool",
+        "reversibility": "Uninstall via winget",
+        "license": "GPL-2.0"
+      },
+      "reviewed_version": "2.53.0",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Baseline requirement; Git\\cmd works for plugin installs where Git Bash's git does not",
+          "evidence": "evals/trials/plugin-cli.md"
+        }
+      ]
+    },
+    {
+      "name": "gh",
+      "source": "winget:GitHub.cli",
+      "tier": "global",
+      "reason": "GitHub CLI for the repo, releases and the private feedback inbox",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "gh --version",
+      "install": {
+        "win32": "winget install --id GitHub.cli -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+      },
+      "rubric": {
+        "problem_fit": "Repo creation, issues (feedback inbox), release downloads",
+        "overlap": "None",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Official GitHub tool",
+        "reversibility": "Uninstall via winget",
+        "license": "MIT"
+      },
+      "reviewed_version": "2.101.0",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Used to create and publish the kit repo; needed by /kit:feedback"
+        }
+      ]
+    },
+    {
+      "name": "jq",
+      "source": "winget:jqlang.jq",
+      "tier": "global",
+      "reason": "JSON on the command line; required by SuperSpec's setup scripts",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "jq --version",
+      "install": {
+        "win32": "winget install --id jqlang.jq -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+      },
+      "rubric": {
+        "problem_fit": "Small, needed by SuperSpec tooling",
+        "overlap": "Node can do the same in kit scripts",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Standard tool",
+        "reversibility": "Uninstall via winget",
+        "license": "MIT"
+      },
+      "reviewed_version": "1.8.2",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Installed for the SuperSpec trial; tiny and widely used"
+        }
+      ]
+    },
+    {
+      "name": "kit",
+      "source": "github:CKamarakis/ac-workbench",
+      "tier": "global",
+      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:feedback; the only plugin enabled for every session",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "claude plugin list --json",
+      "check_match": "\"kit@ac-workbench\"",
+      "install": {
+        "win32": "claude plugin marketplace add CKamarakis/ac-workbench && claude plugin install kit@ac-workbench --scope user"
+      },
+      "rubric": {
+        "problem_fit": "Bootstraps and routes everything else",
+        "overlap": "None",
+        "context_cost": "Low; a few skills",
+        "run_cost": "Free",
+        "trust": "Own code, public repo, gitleaks-checked",
+        "reversibility": "claude plugin uninstall kit@ac-workbench",
+        "license": "Own work"
+      },
+      "reviewed_version": "0.1.0",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Installed from the local directory marketplace in dev mode; ping skill verified",
+          "evidence": "evals/trials/plugin-install-check.md"
+        }
+      ]
+    },
+    {
+      "name": "superpowers-marketplace",
+      "source": "github:obra/superpowers-marketplace",
+      "tier": "global",
+      "reason": "Makes Superpowers available to install per project; registering a marketplace enables nothing by itself",
+      "cost": "free",
+      "status": "trial",
+      "scope": "machine",
+      "check": "claude plugin marketplace list --json",
+      "check_match": "\"superpowers-marketplace\"",
+      "install": {
+        "win32": "claude plugin marketplace add obra/superpowers-marketplace --scope user"
+      },
+      "rubric": {
+        "problem_fit": "Needed for per-project Superpowers installs (SuperSpec flow)",
+        "overlap": "None",
+        "context_cost": "None until a plugin from it is enabled",
+        "run_cost": "Free",
+        "trust": "Superpowers author's marketplace",
+        "reversibility": "claude plugin marketplace remove superpowers-marketplace",
+        "license": "MIT"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Follows the Superpowers trial status"
         }
       ]
     },

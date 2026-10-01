@@ -40,7 +40,8 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 | `reviewed_version`, `reviewed_on` | yes | The version you assessed, and when |
 | `installed_version` | no | When newer than `reviewed_version`, the entry is flagged **needs review** (a warning, not an error) |
 | `scope` | adopted/trial | `machine` (installed once: CLIs, the kit, marketplaces) or `project` (enabled per project, never globally) |
-| `check` | adopted/trial | Command that tells whether the tool is present |
+| `check` | adopted/trial | Command that tells whether the tool is present (exit 0 = present) |
+| `check_match` | no | Regex the check's output must match too, e.g. `'"kit@ac-workbench"'` on `claude plugin list --json` |
 | `install` | adopted/trial | Install instructions by platform, e.g. `win32: …` |
 | `phases` | no | Phases this tool owns |
 | `overlaps` | no | Tools it overlaps with. Two active tools owning one phase need this on at least one of them |

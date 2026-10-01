@@ -38,10 +38,10 @@
 
 ## 5. Tool setup
 
-- [ ] 5.1 Verify the non-interactive plugin CLI (`claude plugin marketplace add`, `claude plugin install` and any scope flag) and whether Claude Code fetches an enabled-but-missing plugin by itself; record the results in `evals/trials/plugin-cli.md` and update design D13/D14 if they differ
-- [ ] 5.2 Implement `plugins/kit/scripts/locate.mjs` (zero-dependency) finding tools via PATH, `npm prefix -g`, `%APPDATA%\npm` and standard `Program Files` folders; verify tests for "on PATH", "only in npm prefix", "only in Program Files" (gh) and "missing"
-- [ ] 5.3 Implement `plugins/kit/scripts/setup.mjs` plan/apply: machine-scope adopted/trial entries only, check → present/missing, install after confirmation, one failure never stops the rest, summary with fix hints, and a flag for project-scope plugins found in `~/.claude/settings.json`; verify tests for fresh machine, partial, all present (nothing to do), dropped entry skipped and one failing install
-- [ ] 5.4 Add registry entries for the machine toolset (git, gh, jq, gitleaks, openspec, the kit plugin, the Superpowers marketplace) with check and install data for `win32`; verify validation passes
+- [x] 5.1 Verify the non-interactive plugin CLI (`claude plugin marketplace add`, `claude plugin install` and any scope flag) and whether Claude Code fetches an enabled-but-missing plugin by itself; record the results in `evals/trials/plugin-cli.md` and update design D13/D14 if they differ
+- [x] 5.2 Implement `plugins/kit/scripts/locate.mjs` (zero-dependency) finding tools via PATH, `npm prefix -g`, `%APPDATA%\npm` and standard `Program Files` folders; verify tests for "on PATH", "only in npm prefix", "only in Program Files" (gh) and "missing"
+- [x] 5.3 Implement `plugins/kit/scripts/setup.mjs` plan/apply: machine-scope adopted/trial entries only, check → present/missing, install after confirmation, one failure never stops the rest, summary with fix hints, and a flag for project-scope plugins found in `~/.claude/settings.json`; verify tests for fresh machine, partial, all present (nothing to do), dropped entry skipped and one failing install
+- [x] 5.4 Add registry entries for the machine toolset (git, gh, jq, gitleaks, openspec, the kit plugin, the Superpowers marketplace) with check and install data for `win32`; verify validation passes
 - [ ] 5.5 Write `skills/setup/SKILL.md` (plan → show → confirm → apply → summary) and its eval cases, document the two-line bootstrap for a new machine in `docs/setup.md`, and verify `/kit:setup` on this machine installs what is missing and a second run reports nothing to do
 
 ## 6. Lane map

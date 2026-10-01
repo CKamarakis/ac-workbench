@@ -174,7 +174,8 @@ ac-workbench/
 - `~/.claude/settings.json` is never given project-scope plugins. Setup only registers marketplaces and the kit there.
 - The same applies to a tool's own config. When a tool's docs say to configure it globally (e.g. SuperSpec's OpenSpec profile), the kit applies that config per project. For OpenSpec this means a redirected `XDG_CONFIG_HOME` during `openspec init`, which writes generated commands into the project only (`evals/trials/workflow-ab-setup.md`). The registry's install data for such tools must say which project-only form to use.
 - **Why:** the user works in repos they don't own. Kit tools must be active only where the kit set the project up. This was the user's decision on 2026-09-29, after the Superpowers install defaulted to user scope.
-- **Alternative:** `claude plugin install --scope project`. Its flags and non-interactive behavior are **unverified** (task 5.1). Writing the settings directly works either way. The CLI is only needed to fetch the plugin into the cache, if Claude Code doesn't offer that itself when it sees an enabled plugin that isn't installed (**unverified**).
+- **Mechanism (verified 2026-10-01, `evals/trials/plugin-cli.md`):** the starter runs `claude plugin install <p> --scope project --json` for each project-scope plugin. That fetches the plugin into the shared cache, enables it in `<project>/.claude/settings.json` and records a project-scoped install, without prompts and without touching user settings. The kit always passes `--scope` explicitly, because the CLI's default is `user`. Writing `enabledPlugins` directly stays the fallback when the CLI fails.
+- `claude plugin …` must run with `C:Program FilesGitcmd` first on PATH. Plugin installs clone with submodules, which fail from the agent's Git Bash environment.
 
 ### D15. Secret scanning from the start
 
@@ -190,7 +191,7 @@ ac-workbench/
 - [The secret scrub misses a pattern] → The user confirms the text before filing, and file contents are never included (paths only).
 - [Marker blocks get hand-edited or deleted] → The planner treats a missing block as "append" and a damaged block (start marker without end) as a conflict to show, never to guess.
 - [Rubric evals are subjective] → Named criteria with a reason each. Deterministic checks are preferred wherever the outcome allows.
-- [Plugin cache fetch for per-project plugins, **unverified**] → Task 5.1 checks it. If Claude Code doesn't install a missing enabled plugin by itself, setup pre-fetches every project-scope plugin into the cache without enabling it.
+- [Plugin installs need a working git with submodules] → Checked in 5.1. `locate.mjs` resolves Windows Git (`C:Program FilesGitcmd`) and setup prepends it to PATH for every `claude plugin` call. A setup check flags it when it's missing.
 - [A user-scope install slips in, e.g. through `/plugin install` defaulting to user scope] → Setup's plan flags any project-scope plugin found in `~/.claude/settings.json` `enabledPlugins` and offers to move it.
 - [Installed-version detection for "needs review" depends on where Claude Code records plugin versions, **unverified**] → Start with a manual `installed_version` field and automate once the location is confirmed.
 
@@ -201,6 +202,6 @@ ac-workbench/
 
 ## Open Questions
 
-- Which engine drives Claude-in-the-loop eval cases: `claude plugin eval` or the user's harness tool? This doesn't affect the case format (D8).
+- Which engine drives Claude-in-the-loop eval cases: `claude plugin eval` (it exists in 2.1.286: `case.yaml` or `prompt.md` + graders, with a no-plugin baseline) or the user's harness tool? This doesn't affect the case format (D8).
 - ~~Exact location of Claude Code's installed plugin version data~~ Answered 2026-10-01: `~/.claude/plugins/installed_plugins.json` (version, scope, gitCommitSha per plugin). Automating `installed_version` from it remains a later step.
 - Whether per-project `enabledPlugins` alone is enough, or plugins also need a cache fetch. Task 2.5 and task 5.1 settle this; D14 works either way.

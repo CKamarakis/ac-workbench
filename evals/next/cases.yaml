@@ -1,0 +1,31 @@
+# Eval cases for /kit:next (spec: skill-routing "Next-step suggestion"). Real openspec runs in the sandbox.
+skill: next
+vars:
+  next: '{{kit}}/scripts/next.mjs'
+  apply: '{{kit}}/scripts/start-apply.mjs'
+
+cases:
+  - id: no-openspec-suggests-start
+    description: A folder without OpenSpec gets /kit:start
+    checks:
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /kit:start[\s\S]*why:'
+
+  - id: fresh-kit-project-suggests-brainstorm-owner
+    description: Right after /kit:start (no change yet) the suggestion is the brainstorm owner with a reason
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /opsx:explore\r?\n  why:   No active change[\s\S]*owner: openspec'
+
+  - id: skill-offers-but-does-not-run
+    description: The skill reports the suggestion and leaves the decision to the user
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Don't run the suggested step yourself" }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/next\.mjs' }

@@ -62,12 +62,12 @@
 
 ## 8. Next-step skill
 
-- [ ] 8.1 Implement `plugins/kit/scripts/next.mjs` mapping `openspec status --json` states to phases (design D6) and owners from the lane map; verify tests for no active change (→ brainstorm owner, e.g. `/opsx:explore`), planning incomplete (names next artifact), tasks ready, all tasks done
-- [ ] 8.2 Write `skills/next/SKILL.md` and its eval cases and verify `/kit:next` in the sandbox gives a suggestion with owner and one-line reason
+- [x] 8.1 Implement `plugins/kit/scripts/next.mjs` mapping `openspec status --json` states to phases (design D6) and owners from the lane map; verify tests for no active change (→ brainstorm owner, e.g. `/opsx:explore`), planning incomplete (names next artifact), tasks ready, all tasks done
+- [x] 8.2 Write `skills/next/SKILL.md` and its eval cases and verify `/kit:next` in the sandbox gives a suggestion with owner and one-line reason
 
 ## 9. Integration
 
-- [ ] 9.1 Run `npm test` and `node tools/run-evals.mjs` for all skills and verify everything passes with no "missing evals"
+- [x] 9.1 Run `npm test` and `node tools/run-evals.mjs` for all skills and verify everything passes with no "missing evals"
 - [ ] 9.2 End-to-end on a fresh empty throwaway folder: `/kit:start` (including setup check) → `/kit:next`, and verify the project gets its stamp and routing block, appears in `~/.claude/kit/projects.json`, and its workflow plugins are active only there
 - [ ] 9.3 Tag `v0.1.0` in the kit repo and verify `plugin.json` version matches the tag
 - [ ] 9.4 After about two weeks of real use (target 2026-10-13), review the change against actual use: feedback inbox items, eval runs, registry verdicts, scoping and setup friction; record the findings in `evals/trials/usage-review-1.md` and open `/opsx:explore` for any follow-up change

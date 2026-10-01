@@ -1,0 +1,63 @@
+{
+  "skill": "next",
+  "date": "2026-10-01T15:25:51.697Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 4993,
+  "summary": {
+    "pass": 3,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "no-openspec-suggests-start",
+      "outcome": "pass",
+      "duration_ms": 135,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "fresh-kit-project-suggests-brainstorm-owner",
+      "outcome": "pass",
+      "duration_ms": 4855,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-offers-but-does-not-run",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Don't run the suggested step yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/next\\.mjs/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

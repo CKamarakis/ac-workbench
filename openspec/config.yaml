@@ -6,8 +6,9 @@ context: |
   Full living context, decisions and open ideas: docs/project-context.md. Read it before any proposal.
   Deliverable: a marketplace repo (.claude-plugin/marketplace.json) whose main plugin is `kit`
   (plugins/kit: skills, zero-dependency scripts, templates, generated data/toolkit.json).
-  Kit pieces: toolkit registry (toolkit.yaml), project starter, cockpit, skill evals, harness review,
-  kit feedback, skill routing. prd-pipeline (voice -> PRD -> Notion) is a later plugin.
+  Kit pieces: toolkit registry (toolkit.yaml), skill evals, tool setup, skill routing, project starter, /kit:next.
+  Order of work and current position: docs/roadmap.md (read it first). Next milestones: prd-pipeline
+  (voice/text -> PRD -> Notion), quality gates, then cockpit/feedback/harness review (change kit-overview-feedback).
   MVP is local-only and free: no paid services beyond the Claude plan; set up once, works in every project.
   Platform: Windows 11, Git Bash + PowerShell; global npm bins are not on the agent shell PATH.
   PM-OS (licensed, local reference, gitignored): adapt its logic, never copy its files into this repo.

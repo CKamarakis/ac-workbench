@@ -303,7 +303,7 @@ tools:
     cost: free
     status: trial
     scope: project
-    check: playwright-cli --version
+    check: playwright-cli --version && node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/playwright-cli'))"
     install:
       win32: npm install -g @playwright/cli@latest && playwright-cli install --skills
     install_note: Verified 2026-10-01 (sandbox) - the CLI (0.1.22) is a machine-wide npm install (a CLI, inert until called); `playwright-cli install --skills` adds .claude/skills/playwright-cli to the project and uses the installed Chrome. A small helper (winldd) goes to the shared Playwright cache in AppData/Local/ms-playwright.

@@ -48,3 +48,9 @@
 - **`git status`: 0 modified tracked files** (only 2 new untracked).
 - **The real Toughbubble was never written:** status clean, no kit files.
 - **Note for the real run:** the project name comes from the folder (`Toughbubble`), and its config needs a hand-added pointer to `docs/project-context.md`.
+
+## Live run by the user (tasks 7.6, 9.2), 2026-10-01
+
+- **Folder:** `Projects/kit-start-live`, as web-ui with no opt-ins. Steps 1–4 went as expected (user report): plan, confirm, files and tools, Context7 pending, `/kit:next` → `/opsx:explore`.
+- **Bug found afterwards:** the Playwright skill was missing in this project. Its `check` only tested the global CLI, which was already installed from the sandbox run, so the starter reported it "present". **Fix:** the check now also requires `.claude/skills/playwright-cli`. A re-run installed it, and the next plan said "Nothing to change". Rule added in `docs/registry.md` ("Writing a good check").
+- **Scoping, file level:** Impeccable and Emil's skills are only under `kit-start-live/.claude/skills`. The user-level skills folder holds only Claude's own `synced` folder. `~/.claude/settings.json` is unchanged (hash `4310051e2be9`); its only Superpowers mention is the marketplace registration.

@@ -52,6 +52,11 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 | `skip_skills` | no | That tool's skills which the kit does not use |
 | `verdicts` | yes | Ordered history: `date`, `status`, `rationale`, optional `evidence` (path to an eval run or trial note). Append only; never rewrite old entries |
 
+## Writing a good `check`
+
+- The check must prove the **per-project** part is there, not only the machine part. Example: Playwright needs a global CLI *and* a project skill, so its check tests both. A CLI-only check made `/kit:start` skip the skill in a second project (found 2026-10-01).
+- If the check's command succeeds before the tool is usable (e.g. `claude mcp get notion` before sign-in), add `check_match` on the output.
+
 ## Changing a verdict
 
 1. Append a new item to `verdicts` with today's date, the new status, a one-line rationale and the `evidence` path.

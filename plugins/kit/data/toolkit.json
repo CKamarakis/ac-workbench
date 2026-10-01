@@ -400,7 +400,7 @@
       "cost": "free",
       "status": "trial",
       "scope": "project",
-      "check": "playwright-cli --version",
+      "check": "playwright-cli --version && node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/playwright-cli'))\"",
       "install": {
         "win32": "npm install -g @playwright/cli@latest && playwright-cli install --skills"
       },

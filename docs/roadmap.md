@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-01 (group 7–8 done)
+Last updated: 2026-10-01 (M1 done, v0.1.0)
 
 ## North star: the workflow this kit exists for
 
@@ -37,7 +37,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 | # | Change | Delivers | Exit criteria | Status |
 |---|---|---|---|---|
-| M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **in progress**: groups 1–8 done, 9.1 done (41/45); left: your live `/kit:start` + `/kit:next` run (7.6, 9.2), then tag v0.1.0 (9.3) |
+| M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0` (2026-10-01; 44/45, only the usage review 9.4 left, see M6) |
 | M2 | `prd-pipeline` (to create with `/opsx:explore`) | capture → PRD → Notion store and retrieve; the repo keeps a pointer plus the Ready PRD | An idea dictated by voice ends as a PRD in Notion, and `/opsx:propose` in a project uses it | not started |
 | M3 | `quality-gates` (to create) | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | not started |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
@@ -46,9 +46,9 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 ## Current position and next actions
 
-1. **Now:** the user's live `/kit:start` → `/kit:next` run in a fresh throwaway folder (tasks 7.6 and 9.2), then tag `v0.1.0` (9.3). The script-level sandbox and Toughbubble-copy runs are done (`evals/trials/start-sandbox.md`).
-2. Then: close M1 (`/opsx:archive` after the usage review is scheduled; 9.4 stays as the M6 review).
-3. Then: `/opsx:explore` for M2 prd-pipeline. Read the Notion plugin's skills and PM-OS `/prd-draft` first.
+1. **Now:** M2 prd-pipeline. Start with `/opsx:explore` (capture → PRD → Notion). Read first: the Notion plugin's skills (Knowledge Capture, Spec to Implementation) and PM-OS `/prd-draft` (adapt in our own words).
+2. Then: M3 quality gates (`/opsx:explore`).
+3. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
 
 Open decisions:
 - Review-phase owner: built-in `/code-review` + `/security-review`, or leave unowned until M3. Leaning: decide in M3.

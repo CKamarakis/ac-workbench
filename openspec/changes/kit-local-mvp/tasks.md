@@ -13,9 +13,9 @@
 
 - [x] 2.1 Install `jq` (winget or direct download; record the exact command) and verify `jq --version` runs in Git Bash; `gh` is already present (2.101.0, signed in); verify it is callable via its full path
 - [x] 2.2 Create a throwaway `kit-sandbox` repo, add this repo as a local-directory marketplace there, install `kit`, and verify a stub skill in `plugins/kit/skills/` appears as `/kit:<name>` and can run a script via `${CLAUDE_PLUGIN_ROOT}` (resolves design risk on plugin install/script paths)
-- [ ] 2.3 Enable Superpowers in the sandbox only and run the smoke checks (session start time, input not frozen, skills listed); record results in `evals/trials/superpowers-smoke.md` with pass/fail per check
-- [ ] 2.4 If 2.3 passes, install SuperSpec's schema and the OpenSpec custom profile with verify in the sandbox, and verify `openspec schemas` lists it; if 2.3 fails, record the WSL2/drop decision in the same file and skip setup B in group 4
-- [ ] 2.5 Verify per-project enablement: with Superpowers only in `worklow-test/.claude/settings.json`, a new session there lists `superpowers:*` skills and a new session in another folder does not; record the result in `evals/trials/superpowers-smoke.md` (design D14)
+- [x] 2.3 Enable Superpowers in the sandbox only and run the smoke checks (session start time, input not frozen, skills listed); record results in `evals/trials/superpowers-smoke.md` with pass/fail per check
+- [x] 2.4 If 2.3 passes, install SuperSpec's schema and the OpenSpec custom profile with verify in the sandbox, and verify `openspec schemas` lists it; if 2.3 fails, record the WSL2/drop decision in the same file and skip setup B in group 4
+- [x] 2.5 Verify per-project enablement: with Superpowers only in `worklow-test/.claude/settings.json`, a new session there lists `superpowers:*` skills and a new session in another folder does not; record the result in `evals/trials/superpowers-smoke.md` (design D14)
 
 ## 3. Eval framework
 

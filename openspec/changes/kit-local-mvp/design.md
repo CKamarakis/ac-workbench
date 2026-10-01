@@ -172,6 +172,7 @@ ac-workbench/
 - The starter writes the project-scope entries for the chosen project type into `<project>/.claude/settings.json`: `enabledPlugins` plus `extraKnownMarketplaces` for their marketplaces.
 - It merges these keys and never touches other keys (permissions, env, …). A key the kit set is recorded in the stamp (`.claude/kit.json`), so a re-run can tell kit keys from user keys.
 - `~/.claude/settings.json` is never given project-scope plugins. Setup only registers marketplaces and the kit there.
+- The same applies to a tool's own config. When a tool's docs say to configure it globally (e.g. SuperSpec's OpenSpec profile), the kit applies that config per project. For OpenSpec this means a redirected `XDG_CONFIG_HOME` during `openspec init`, which writes generated commands into the project only (`evals/trials/workflow-ab-setup.md`). The registry's install data for such tools must say which project-only form to use.
 - **Why:** the user works in repos they don't own. Kit tools must be active only where the kit set the project up. This was the user's decision on 2026-09-29, after the Superpowers install defaulted to user scope.
 - **Alternative:** `claude plugin install --scope project`. Its flags and non-interactive behavior are **unverified** (task 5.1). Writing the settings directly works either way. The CLI is only needed to fetch the plugin into the cache, if Claude Code doesn't offer that itself when it sees an enabled plugin that isn't installed (**unverified**).
 

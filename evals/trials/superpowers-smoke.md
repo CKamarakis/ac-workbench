@@ -10,8 +10,8 @@
 | Install succeeds | PASS | install command in the transcript; the plugin is enabled in settings |
 | Session starts without hanging (#413) | PASS (user report) | the user reported "worked"; no timing recorded |
 | Input not frozen (#419) | PASS (user report) | same as above |
-| `superpowers:*` skills listed | not confirmed | no restarted-session transcript |
-| No hook/Git errors at start | not confirmed | same as above |
+| `superpowers:*` skills listed | PASS | user check 2026-10-01: listed in `worklow-test` |
+| No hook/Git errors at start | PASS | user check 2026-10-01: no errors |
 
 ## Scope finding
 
@@ -26,3 +26,12 @@ The user decided that workflow plugins are enabled **per project** by the kit, n
 - Removed `superpowers@superpowers-marketplace` from `~/.claude/settings.json` → `enabledPlugins`. The marketplace stays known, and `kit` stays global.
 - Added `worklow-test/.claude/settings.json` → `enabledPlugins: { "superpowers@superpowers-marketplace": true }`.
 - Still to verify (this also answers the proposal's open question on per-project `enabledPlugins`): a new session in `worklow-test` lists `superpowers:*` skills, and a new session in another project does not.
+
+## Per-project check (task 2.5), 2026-10-01
+
+| Session in | `superpowers:*` listed | Expected | Result |
+|---|---|---|---|
+| `worklow-test` (enabled in project settings) | yes | yes | PASS |
+| `Toughbubble` (not enabled) | no | no | PASS |
+
+Verdict: per-project `enabledPlugins` alone is enough to scope a plugin when the plugin is already installed in the cache. This answers the proposal's open question and confirms design D14. Whether a plugin that isn't installed yet gets fetched automatically is still open (task 5.1).

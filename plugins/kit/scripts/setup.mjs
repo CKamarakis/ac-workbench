@@ -1,6 +1,7 @@
 // One-command machine setup from the registry (design D13; spec: tool-setup). Zero dependencies.
 //   node setup.mjs plan  [--json]          -> what is present / missing / skipped, plus warnings
 //   node setup.mjs apply [--json] [name..] -> install the missing machine tools (all, or only the named ones)
+//   --registry <file.json>                  -> use another registry (tests, evals); default: ../data/toolkit.json
 // The skill shows the plan and asks for confirmation before calling `apply`.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -120,8 +121,10 @@ export function formatResult(r) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [cmd, ...rest] = process.argv.slice(2);
   const json = rest.includes('--json');
-  const names = rest.filter(a => !a.startsWith('--'));
-  const registry = loadRegistry();
+  const ri = rest.indexOf('--registry');
+  const registryFile = ri >= 0 ? rest[ri + 1] : undefined;
+  const names = rest.filter((a, i) => !a.startsWith('--') && !(ri >= 0 && i === ri + 1));
+  const registry = loadRegistry(registryFile);
   if (cmd === 'plan') {
     const p = plan(registry);
     console.log(json ? JSON.stringify(p, null, 2) : formatPlan(p));

@@ -1,0 +1,81 @@
+# Eval cases for /kit:setup (spec: tool-setup). The fake registry uses marker files instead of real installs:
+#   check:   node check.js <name>    -> exit 0 if <name>.installed exists
+#   install: node install.js <name>  -> creates <name>.installed (install.js fail-<name> exits 1)
+skill: setup
+vars:
+  setup: '{{kit}}/scripts/setup.mjs'
+
+cases:
+  - id: plan-lists-missing-present-skipped
+    description: Plan shows missing and present machine tools, skips dropped/later and project-scope entries
+    setup:
+      files:
+        check.js: "process.exit(require('fs').existsSync(process.argv[2] + '.installed') ? 0 : 1)"
+        beta.installed: ''
+        r.json: '{"tools":[{"name":"alpha","status":"adopted","scope":"machine","check":"node check.js alpha","install":{"win32":"node install.js alpha"}},{"name":"beta","status":"trial","scope":"machine","check":"node check.js beta","install":{"win32":"node install.js beta"}},{"name":"gamma","status":"dropped","scope":"machine","check":"node check.js gamma","install":{"win32":"node install.js gamma"}},{"name":"proj","status":"trial","scope":"project","check":"node check.js proj","install":{"win32":"x"}}]}'
+    checks:
+      - kind: command-exit
+        command: node "{{setup}}" plan --registry r.json
+        expect: 0
+        stdout_match: '^(?=[\s\S]*MISSING\s+alpha)(?=[\s\S]*ok\s+beta)(?=[\s\S]*skip\s+gamma\s+status dropped)(?=[\s\S]*skip\s+proj\s+project scope)'
+
+  - id: apply-installs-and-isolates-failure
+    description: Missing tools are installed; one failing install is reported with a fix and does not stop the rest
+    setup:
+      files:
+        check.js: "process.exit(require('fs').existsSync(process.argv[2] + '.installed') ? 0 : 1)"
+        install.js: "const n = process.argv[2]; if (n.startsWith('fail-')) { console.error('download failed'); process.exit(1) } require('fs').writeFileSync(n + '.installed', '')"
+        r.json: '{"tools":[{"name":"fail-delta","status":"trial","scope":"machine","check":"node check.js fail-delta","install":{"win32":"node install.js fail-delta"}},{"name":"alpha","status":"adopted","scope":"machine","check":"node check.js alpha","install":{"win32":"node install.js alpha"}},{"name":"gamma","status":"dropped","scope":"machine","check":"node check.js gamma","install":{"win32":"node install.js gamma"}}]}'
+    checks:
+      - kind: command-exit
+        command: node "{{setup}}" apply --registry r.json
+        expect: 1
+        stdout_match: '^(?=[\s\S]*installed\s+alpha)(?=[\s\S]*FAILED\s+fail-delta: download failed)(?=[\s\S]*fix: run it yourself)'
+      - kind: file-exists
+        path: alpha.installed
+      - kind: command-exit
+        command: node check.js gamma
+        expect: 1
+
+  - id: second-run-nothing-to-do
+    description: Running apply twice installs once, then reports nothing to do
+    setup:
+      files:
+        check.js: "process.exit(require('fs').existsSync(process.argv[2] + '.installed') ? 0 : 1)"
+        install.js: "require('fs').appendFileSync('installs.log', process.argv[2] + '\\n'); require('fs').writeFileSync(process.argv[2] + '.installed', '')"
+        count.js: "process.exit(require('fs').readFileSync('installs.log', 'utf8').trim().split('\\n').length === 1 ? 0 : 1)"
+        r.json: '{"tools":[{"name":"alpha","status":"adopted","scope":"machine","check":"node check.js alpha","install":{"win32":"node install.js alpha"}}]}'
+    checks:
+      - kind: command-exit
+        command: node "{{setup}}" apply --registry r.json
+        expect: 0
+        stdout_match: 'installed\s+alpha'
+      - kind: command-exit
+        command: node "{{setup}}" apply --registry r.json
+        expect: 0
+        stdout_match: 'Nothing to do'
+      - kind: command-exit
+        description: alpha was installed exactly once
+        command: node count.js
+        expect: 0
+
+  - id: real-registry-plan-runs
+    description: The plan runs against the kit's real registry without errors (read-only)
+    checks:
+      - kind: command-exit
+        command: node "{{setup}}" plan
+        expect: 0
+        stdout_match: '(ok|MISSING)\s+openspec'
+
+  - id: skill-confirms-and-uses-plugin-root
+    description: The skill asks before installing and calls the script through CLAUDE_PLUGIN_ROOT
+    checks:
+      - kind: content-match
+        path: '{{kit}}/skills/setup/SKILL.md'
+        pattern: 'Install nothing before they answer'
+      - kind: content-match
+        path: '{{kit}}/skills/setup/SKILL.md'
+        pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/setup\.mjs'
+      - kind: content-match
+        path: '{{kit}}/skills/setup/SKILL.md'
+        pattern: 'never edit `~/\.claude/settings\.json`'

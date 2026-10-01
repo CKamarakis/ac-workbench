@@ -14,7 +14,7 @@ When run in a project folder, the starter SHALL ensure the following exist:
 - a CLAUDE.md starter with routing rules
 - a project context doc
 - a kit stamp file recording the kit version and setup date
-- the project's workflow plugins enabled in the project's own settings
+- the project's selected tools installed for this project only
 
 #### Scenario: Empty folder
 - **WHEN** the starter runs in an empty folder
@@ -24,16 +24,25 @@ When run in a project folder, the starter SHALL ensure the following exist:
 - **WHEN** a folder named like `PM-OS-v2.1` exists in the bootstrapped project
 - **THEN** git does not list it as untracked or stageable
 
-### Requirement: Project-type add-ons are opt-in
-The starter SHALL ask for the project type (or accept it as an argument) and SHALL apply only the registry entries tiered for that type with status `adopted` or `trial`. Entries with status `dropped` or `later` SHALL NOT be applied.
+### Requirement: Tools are applied by tier
+The starter SHALL ask for the project type (or accept it as an argument). Among registry entries with scope `project` and status `adopted` or `trial`, it SHALL select tools by tier:
+- `global`: applied to every project the kit sets up
+- `project`: offered one by one, and applied only when the user opts in for this project
+- `project-type:<type>`: applied only when that type is selected
+
+Entries with status `dropped` or `later` SHALL NOT be applied or offered. The summary SHALL list each selected tool and why (its tier).
 
 #### Scenario: Web UI project
 - **WHEN** the user selects project type `web-ui`
-- **THEN** only registry entries tiered `project-type:web-ui` with status adopted or trial are applied, and each is listed in the summary
+- **THEN** the `global` tools and the `project-type:web-ui` tools with status adopted or trial are applied, other types' tools are not, and each applied tool is listed in the summary
+
+#### Scenario: Opt-in tool
+- **WHEN** a `project`-tier tool (e.g. a Notion connection) is adopted or trial
+- **THEN** the starter asks whether to add it to this project, and applies it only on a yes
 
 #### Scenario: Dropped tool excluded
 - **WHEN** a registry entry for the selected type has status `dropped`
-- **THEN** the starter does not apply it
+- **THEN** the starter neither applies nor offers it
 
 ### Requirement: Machine tools are checked first
 Before changing the project, the starter SHALL run the machine tool setup check. If machine-scope tools are missing, it SHALL offer to install them through tool setup, and SHALL continue with the project only when the required ones are present.
@@ -42,8 +51,12 @@ Before changing the project, the starter SHALL run the machine tool setup check.
 - **WHEN** the starter runs on a machine where an adopted machine-scope tool is missing
 - **THEN** it lists the tool, offers to install it, and does not change the project until the user has answered
 
-### Requirement: Workflow plugins are enabled per project
-The starter SHALL enable the registry's project-scope plugins for the selected project type in the project's own Claude Code settings, and SHALL NOT enable them in the user-level settings. It SHALL change only the plugin and marketplace entries it manages, leaving other settings in that file untouched.
+### Requirement: Project tools are installed per project
+The starter SHALL install the selected tools (plugins, MCP servers, skills) for this project only, and SHALL NOT enable or configure them at user level or in a tool's global configuration. It SHALL change only the settings entries it manages, leaving other settings in the project's files untouched. When a tool's install needs the user (for example an OAuth sign-in), the starter SHALL stop at that step, tell the user exactly what to do, and report the tool as pending rather than as installed.
+
+#### Scenario: Interactive install step
+- **WHEN** a selected tool's install requires an OAuth sign-in
+- **THEN** the starter shows the user the step to complete, and the summary lists the tool as pending until its check passes
 
 #### Scenario: Plugins active only in the bootstrapped project
 - **WHEN** the starter has enabled Superpowers for a project

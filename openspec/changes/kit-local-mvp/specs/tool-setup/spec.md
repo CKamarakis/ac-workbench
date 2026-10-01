@@ -38,6 +38,10 @@ Machine scope SHALL be limited to command-line tools, the kit plugin itself and 
 - **WHEN** setup has run and the user opens a Claude Code session in a repository the kit did not set up
 - **THEN** no project-scope workflow plugin from the registry is active in that session
 
+#### Scenario: Plugin found enabled for every session
+- **WHEN** a project-scope plugin from the registry is enabled in the user-level settings
+- **THEN** setup reports it as a warning with the fix (enable it per project instead) and does not change any settings without confirmation
+
 ### Requirement: Tools outside PATH are detected
 Setup SHALL treat a tool as present when it is installed in a known location outside the shell's PATH (such as the global npm folder or its standard install folder), and SHALL use that location rather than reinstalling.
 

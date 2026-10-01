@@ -21,7 +21,7 @@ Each skill shipped by the kit SHALL have at least one eval case. Each case defin
 Where an outcome needs judgement (e.g. the quality of a review or document), the eval case SHALL define a written rubric with named criteria. The result SHALL record a pass/fail per criterion, not only an overall score.
 
 #### Scenario: Rubric result
-- **WHEN** a harness-review eval is scored
+- **WHEN** a judgement-based eval (e.g. the quality of planning artifacts in an A/B trial) is scored
 - **THEN** the result lists each rubric criterion with pass/fail and a one-line reason
 
 ### Requirement: Eval runs produce comparable results
@@ -29,7 +29,7 @@ Each eval run SHALL record:
 - date
 - the setup under test (e.g. schema or tool combination)
 - per-case outcomes
-- time taken
+- time taken by the setup under test (for a trial, the working session's wall time, not the time the checks took to run)
 - the number of manual interventions
 
 Runs of the same cases under two setups SHALL be comparable side by side.

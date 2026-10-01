@@ -8,34 +8,32 @@ Every new project costs about half a day of setup. Tool choices are made from gu
 
 > **Scope update 2026-10-01:** the cockpit, kit feedback and harness review moved to the change `kit-overview-feedback`. This change now ships the core kit: registry, evals, tool setup, routing, starter, `/kit:next`. Reason and order: `docs/roadmap.md` (drift log).
 
-The repo becomes a personal kit: a marketplace repo that holds several plugins. The MVP adds five local pieces:
+The repo becomes a personal kit: a marketplace repo that holds several plugins. This change ships the core, five local pieces:
 
 ```
- you/claude-kit (marketplace repo)
-  |-- toolkit.yaml ........ registry: tools, tiers, verdicts
-  |-- project-starter ..... reads the registry, sets up a project in minutes
-  |-- cockpit v0 .......... local page: projects + toolkit + best practices
-  |-- evals ............... test cases + scoring for each kit skill
-  +-- harness-review ...... checklist review of an agent system (8 layers)
+ CKamarakis/ac-workbench (marketplace repo, plugin `kit`)
+  |-- toolkit.yaml ........ registry: tools, tiers, scopes, verdicts, lanes
+  |-- evals ............... test cases + run records for each kit skill (and A/B trials)
+  |-- /kit:setup .......... one command: the machine toolset from the registry
+  |-- lane map + /kit:next  one owner per phase; routing block; next-step suggestion
+  +-- /kit:start .......... sets up a project in minutes; tools per project by tier
 ```
 
 How the pieces connect:
 
 ```
-             toolkit.yaml  <------------------ verdicts ---------+
-            /     |      \                                       |
-           v      v       v                                      |
-  project-starter  cockpit v0   harness-review --> evals --> VERDICT
-     (installs)    (shows)       (reviews)        (proves)
+                 toolkit.yaml  <------------- verdicts ------------+
+              /       |        \                                   |
+             v        v         v                                  |
+     /kit:setup   /kit:start   lane map --> /kit:next     evals / trials
+     (machine)    (project)    (routing)    (what next)   (prove) -+
 ```
+
+The cockpit, kit feedback and harness review are in the change `kit-overview-feedback`.
 
 - **Toolkit registry:** one file listing each tool with its tier (global / per project / by project type), the reason it's there, rubric notes (problem fit, overlap, context cost, run cost, trust, reversibility, license), cost, and status (trial / adopted / dropped / later).
 - **Project starter:** one command in an empty folder sets up the Tier 2 basics (git, `.gitignore` incl. licensed-folder patterns, OpenSpec init + config context, CLAUDE.md starter, project-context doc) and optional Tier 3 add-ons by project type.
-- **Cockpit v0:** a local, read-only overview built from the registry and a project list. It shows no live data.
 - **Skill evals:** every kit skill ships with fixed test cases and automatic checks. Results feed registry verdicts.
-- **Harness review (checklist only):** a guided review of an agent system across 8 layers (context, tools, memory, loops, verification, guardrails, feedback, observability), giving a scorecard and the top 3 fixes. It is kept simple on purpose and will grow with experience.
-
-- **Kit feedback:** a `/kit:feedback` skill, used inside any consuming project, that captures what happened (project, files, context, suggestion) at the moment it happens and files it to a kit inbox (GitHub Issues, label `feedback`) in a **private** repository separate from the public kit repo. Triage happens later in the kit repo.
 - **Tool setup:** one command (`/kit:setup`, also run by `/kit:start`) installs the machine toolset from the registry (CLIs, the kit plugin, known marketplaces). It is safe to re-run. Workflow plugins are enabled per project, never globally.
 - **Skill routing:** a lane map (one owner per phase) stored in the registry and written into each project's routing rules, plus a `/kit:next` skill that suggests the next step based on the current OpenSpec change status.
 
@@ -53,42 +51,41 @@ Rules:
 2. **Projects report; only the kit repo changes the kit.** No committing to the kit from consuming projects.
 3. **Capture feedback when it happens,** with context, so nothing needs re-explaining later.
 4. **Dev mode vs stable mode.** On the main PC, the kit clone is added as a local-directory marketplace, so edits apply immediately (verified: in-place local plugins are not version-pinned). Elsewhere, install from GitHub pinned to a release. Exact update commands are **unverified**.
-5. **Drift is visible.** Each project stores `.claude/kit.json` (kit version, setup date). The cockpit shows projects that are behind. Starter re-runs suggest changes as a diff and never overwrite files.
+5. **Drift is visible.** Each project stores `.claude/kit.json` (kit version, setup date). The cockpit (change `kit-overview-feedback`) will show projects that are behind. Starter re-runs suggest changes as a diff and never overwrite files.
 6. **Kit global, tools per project.** Only the kit plugin, CLIs and known marketplaces are installed for the whole machine. Workflow plugins (e.g. Superpowers) are enabled in each kit-set-up project's own settings, so repos the user works in but doesn't own are unaffected.
 
-- `gh` CLI is required for the inbox. It is installed and signed in, but not on the Git Bash PATH (checked 2026-09-29).
+- The feedback part of this model (`/kit:feedback`, private inbox) is built in `kit-overview-feedback`.
 
 ### Skill routing and overlap
 
-Several tools claim the same phase (e.g. Superpowers and OpenSpec both plan). Overlapping skill descriptions make Claude's choice unpredictable, and too many skills get silently cut from the skill list. Each phase therefore gets one owner:
+Several tools claim the same phase (e.g. Superpowers and OpenSpec both plan). Overlapping skill descriptions make Claude's choice unpredictable, and too many skills get silently cut from the skill list. Each phase therefore gets one owner.
+
+The owners are registry data, not this proposal. After the A/B trial (2026-10-01), `npm run registry` shows:
 
 ```
- PHASE        OWNER (default candidate)
- Brainstorm   Superpowers brainstorming  (inside the OpenSpec flow, per SuperSpec)
- Artifacts    OpenSpec (proposal, specs, design, tasks)
- Plan         Superpowers writing-plans, built from OpenSpec tasks (one task list)
- Build        Superpowers subagent-driven TDD, in a git worktree
- Verify       OpenSpec verify + Playwright
- Review       built-in /code-review, /security-review
- UI polish    Emil review/improve-animations
- Close        OpenSpec archive
- Kit issues   /kit:feedback
+ PHASE        OWNER: SKILL                         ALTERNATIVE
+ brainstorm   openspec: /opsx:explore               superspec (trial)
+ artifacts    openspec: /opsx:propose               superspec
+ plan         openspec: /opsx:continue              superspec
+ build        openspec: /opsx:apply                 superspec (worktree + subagent TDD)
+ verify       openspec: validate + the change's tests   superspec: /opsx:verify
+ review       unowned (decided in quality-gates, see docs/roadmap.md)
+ ui-polish    impeccable (trial)                    emil-skills (motion)
+ close        openspec: /opsx:archive               superspec
+ kit-issues   kit: /kit:feedback
 ```
 
 - **Enforcement, strongest first:**
-  1. An OpenSpec custom schema that calls the right skill at each step (SuperSpec, https://github.com/danielhanold/superspec, MIT).
-  2. Enabling plugins per project (`enabledPlugins`; per-project behavior **unverified**).
-  3. Routing rules in the project's CLAUDE.md.
-- **Registry lane fields:** `phases`, `skip_skills`, `overlaps`, `reviewed_version`. harness-review flags new overlaps.
+  1. An OpenSpec custom schema that calls the right skill at each step (SuperSpec, https://github.com/danielhanold/superspec, MIT), for changes that use it.
+  2. Enabling tools per project (`enabledPlugins`; verified 2026-10-01: a plugin enabled in one project doesn't load elsewhere).
+  3. Routing rules in the project's CLAUDE.md (generated routing block).
+- **Registry lane fields:** `phases`, `skills`, `skip_skills`, `overlaps`, `reviewed_version`. The validator fails on unresolved overlaps; the harness review (`kit-overview-feedback`) also flags them in a project.
 - **When a tool updates:** read its changelog. New lane claims get an owner decision; behavior changes trigger an eval re-run.
-- **SuperSpec is a trial candidate, not a decision.** Its schema has no OS-specific commands (checked 2026-09-29). It needs git worktrees and `realpath` (both work here) plus `gh` and `jq` (missing). It also needs the OpenSpec custom profile with the verify step.
+- **SuperSpec:** trial, per change for big or risky work (A/B result in `evals/trials/workflow-ab.md`). It needs git worktrees, `realpath`, `gh` and `jq` (all present), plus a project-only OpenSpec custom profile (`evals/trials/workflow-ab-setup.md`).
 
-**Out of scope (later):** prd-pipeline + Notion, CI deploys and previews, Sentry/PostHog, cockpit with live data, task-observer trial, harness-review automation, adopting ECC pieces (read and adapt one at a time, never a bulk install).
+**Out of scope here (see `docs/roadmap.md` for when):** prd-pipeline + Notion (M2), quality gates (M3), cockpit, feedback and harness review (M5), CI deploys and previews, Sentry/PostHog, task-observer, ECC pieces (one at a time, never a bulk install).
 
-**Proposed default tools (not confirmed; the registry will record the decision):**
-- Tier 1 (global): OpenSpec, Superpowers, Playwright CLI + skill, Context7.
-- First always-on checks: lint + secret-scan hooks.
-- awesome-design is kept as a human bookmark list, not agent input.
+**Tool choices:** recorded in `toolkit.yaml` with verdicts and evidence. This proposal no longer lists candidates; the full review of the user's tool list is `evals/trials/tool-review-2026-10-01.md`.
 
 ## Capabilities
 
@@ -106,16 +103,13 @@ Moved to `kit-overview-feedback` (2026-10-01): `cockpit`, `harness-review`, `kit
 
 ## Impact
 
-- **Repo identity:** the repo becomes a kit rather than a single plugin. A rename (e.g. `claude-kit`) and restructure are needed.
-  - `openspec/config.yaml` context still describes only prd-pipeline and needs an update.
-  - `docs/project-context.md` needs the kit framing.
+- **Repo identity:** renamed to `ac-workbench` (done 2026-09-29); `openspec/config.yaml` and `docs/project-context.md` use the kit framing.
 - **Plugin structure:** `.claude-plugin/marketplace.json` listing several plugins, each with its own `.claude-plugin/plugin.json` and `skills/`. Verified against the plugin docs on 2026-09-29.
-- **Evals tooling:** built-in `claude plugin eval` is a candidate. It is **unverified** (docs not read yet) and must be compared with the harness/evals tool the user will share.
-- **Dependencies:** Node/npm (present). Playwright CLI and Context7 are only added if adopted. No paid services.
-- **Platform:** Windows 11 + Git Bash. The `openspec` CLI is not on the Git Bash PATH, and the starter must handle that.
+- **Evals tooling:** the kit owns the case format. `claude plugin eval` exists (2.1.286) and is a candidate engine for Claude-in-the-loop cases, to be compared with the harness/evals tool the user will share.
+- **Dependencies:** Node/npm and dev-only `yaml`. Trial tools (Playwright CLI, Context7, Impeccable, ...) are added per project only. No paid services.
+- **Platform:** Windows 11 + Git Bash. CLIs off the agent PATH (`openspec`, `gh`, `jq`, `gitleaks`, `claude`) are found by `locate.mjs`.
 - **Open items:**
   - Review the user's harness/evals tool.
-  - Cockpit tech choice (static HTML vs. published artifact), to be decided in design.
 
 ## Validation Plan
 
@@ -146,13 +140,14 @@ The proposal is tested by building its first slice with it, not by debate.
 - per-user Git not found: https://github.com/obra/superpowers/issues/1863 (doesn't apply here; Git is at the standard path)
 - update lost skills: https://github.com/obra/superpowers/issues/1082
 
-Workaround suggested in those issues: WSL2. The fix status of each issue in the current version is **unverified**, so the smoke test comes first. A hook installed for the whole user profile would affect every session, so the trial stays isolated in the sandbox.
+Workaround suggested in those issues: WSL2. The smoke test (6.4.2, 2026-10-01) hit none of them; the fix status in the issues themselves stays **unverified**. A hook installed for the whole user profile would affect every session, so the trial stays isolated in the sandbox.
 
-**Prerequisites for the trial:**
-- `jq` (e.g. via winget; command **unverified**). `gh` is already present.
-- OpenSpec custom profile with verify
-- Superpowers installed for the sandbox project only
+**Results (completed 2026-10-01, details in `evals/trials/`):**
 
-**Step 1 results so far (2026-09-29, `evals/trials/`):**
-- Local plugin install works, and `${CLAUDE_PLUGIN_ROOT}` is replaced in the skill text (it is not an environment variable).
-- The Superpowers install landed at user scope by default and was moved to project scope. Session start and input were fine (user report). The skill listing and per-project enablement are still to be confirmed.
+| Step | Result | Evidence |
+|---|---|---|
+| 1 Smoke test | PASS: local plugin install works (`${CLAUDE_PLUGIN_ROOT}` is replaced in skill text, not an env var); Superpowers starts with no hang or frozen input, skills listed, **active only in the project that enables it** | `plugin-install-check.md`, `superpowers-smoke.md` |
+| 2 Same task, two setups | both builds pass 12/12 acceptance cases and 12/12 extra probes | `evals/registry/runs/2026-10-01-*.json` |
+| 3 Score | A (OpenSpec) 7.5 min, $1.96, 0 questions; B (SuperSpec) 28.5 min, ~$9–10 est., 2 questions, better audit trail | `workflow-ab.md` |
+| 4 Verdict | OpenSpec adopted as the default; SuperSpec and Superpowers trial for big or risky changes; B's validator ported | `toolkit.yaml` |
+| 5 Default workflow | the starter's routing block uses the lane map (OpenSpec default, SuperSpec alternative) | group 7 |

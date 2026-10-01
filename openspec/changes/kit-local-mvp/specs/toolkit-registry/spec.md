@@ -41,7 +41,7 @@ Each entry SHALL keep an ordered history of verdicts. Each verdict records its d
 - **THEN** validation fails and reports the mismatch
 
 ### Requirement: Registry declares phase ownership
-Entries MAY declare the workflow phases they own, the skills of theirs that are skipped, and the tools they overlap with. Validation SHALL fail when two `adopted` or `trial` entries own the same phase without an overlap resolution recorded on at least one of them.
+Entries MAY declare the workflow phases they own, for each owned phase the skill or command to use, the skills of theirs that are skipped, and the tools they overlap with. Validation SHALL fail when two `adopted` or `trial` entries own the same phase without an overlap resolution recorded on at least one of them.
 
 #### Scenario: Unresolved phase conflict
 - **WHEN** two adopted tools both declare ownership of phase `plan` and neither records the overlap

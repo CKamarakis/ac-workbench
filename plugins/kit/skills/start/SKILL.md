@@ -5,7 +5,7 @@ description: Set up or re-sync the current project with the kit - git, .gitignor
 
 # Kit start
 
-Sets up **this folder** as a kit project, or re-syncs one. It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session.
+Sets up **this folder** as a kit project, or re-syncs one. Run it once per project (and again only to re-sync after a kit update). **It asks one question: the project type.** It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session.
 
 Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project folder (`--dir .`).
 
@@ -19,13 +19,14 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
    - `missing … machine tool`: say so and offer `/kit:setup`. Continue only if the user wants to go ahead without it.
    - `WARNING`: show it as is.
 
-2. **Ask the project type and the optional tools.**
-   - Get the types from the plan's `types` (step 3 prints them in `--json`). Offer them plus "none". If the user passed a type as an argument, use it.
-   - For each name under "Optional for this project", ask yes or no. These are the `project`-tier tools, e.g. SuperSpec. Default to no.
+2. **Ask the one question: the project type.** Run the plan once with `--type none --json` (step 3's command) to get `typeOptions`; the text comes from there, never from memory.
+   - Each option shows its `about` (the tools it adds). If one has `recommended: true`, offer it first with `Recommended (<why>)`; otherwise offer "none" first ("no type-specific tools; add a type later").
+   - If the user passed a type as an argument, use it and don't ask.
+   - **Ask nothing else about tools.** Global and type tools install without questions. Opt-in tools (`offeredTools`, e.g. SuperSpec, Superpowers) are **not** asked about and not installed: they're added on demand when a change needs them. Pass `--opt-in` only when the user explicitly asks for a tool.
 
 3. **Plan** (nothing is written):
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-plan.mjs" --dir . --type <type|none> --opt-in <a,b>
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-plan.mjs" --dir . --type <type|none>
    ```
    Show the output to the user as is:
    - `CREATE` and `RUN`: what will be added.
@@ -35,24 +36,24 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
 
    "Nothing to change" means the project is already in sync: say so and stop.
 
-4. **Confirm.**
-   - Ask for a yes on the whole plan.
-   - Then, for each `CHANGE`, a separate yes or no. Default to no for files the user wrote, such as `CLAUDE.md`.
-   - Never apply a change the user didn't confirm.
+4. **Confirm with one yes.**
+   - One message: a one-line summary of what gets added (the `CREATE` items and tool installs), then each `CHANGE` with its diff, its `about` and `Recommended: <recommend> (<why>)` from the plan JSON.
+   - Ask **one** question: apply all of it? The user may answer "yes, except <file>".
+   - Never apply a change the user didn't confirm. A recommendation is not an answer.
 
-5. **Apply** with the same type and opt-ins, and only the confirmed changes:
+5. **Apply** with the same type, and only the confirmed changes:
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-apply.mjs" --dir . --type <type|none> --opt-in <a,b> --accept <id,id|all>
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-apply.mjs" --dir . --type <type|none> --accept <id,id|all>
    ```
    `--accept` lists only the confirmed `CHANGE` ids (e.g. `CLAUDE.md,.gitignore`). New files are always created. Tool installs can take a few minutes.
 
-6. **Summarize** from the output:
-   - written, ran, skipped (and why)
-   - the knowledge folder (`knowledge/` with `notes/`, `prds/`, `assets/`, `archive/`): new folders, or already there
-   - tools installed, present, enabled via settings, failed (with the fix line)
-   - **PENDING steps the user must do**: show each command and note exactly, e.g. run `/mcp` to finish an OAuth sign-in. Don't claim these are done.
+6. **Summarize in three parts, in plain words for the user.** Each item appears once.
+   - **Done:** what was written or changed (e.g. "CLAUDE.md: workflow rules updated"), the knowledge folder (new or already there), and the tools now available with one line each on what they're for. A tool shown as `ok` or installed counts as done.
+   - **Needs you:** only steps that block using the project **now**: a failed install (with its fix line), a `PENDING`/`YOU` step, or a skipped file change and what to do about it. If there's nothing, write "Nothing".
+   - **Later:** the `LATER` lines ("when you first …"), and one line listing the tools available on demand.
+   - Don't repeat internal install notes (e.g. "unverified on Windows"); they're for the kit, not the user.
 
-   End with the next step: `/kit:next`, `/kit:capture` to save the first note, or `/opsx:explore` to start the first change.
+   End with one next step: `/kit:next`, `/kit:capture` to save the first note, or `/opsx:explore` to start the first change.
 
 ## Rules
 

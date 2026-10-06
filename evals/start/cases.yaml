@@ -112,3 +112,34 @@ cases:
     checks:
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'the knowledge folder' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Notion', negate: true }
+
+  - id: plan-json-recommends-web-ui-for-next
+    description: In a folder with next.config.js, the plan JSON recommends web-ui with its reason (followups 5.2)
+    setup:
+      files:
+        next.config.js: "module.exports = {}\n"
+    checks:
+      - kind: command-exit
+        command: node "{{plan}}" --dir . --type none --json
+        stdout_match: '"name": "web-ui",[\s\S]*?"recommended": true,\s*"why": "found next\.config\.js: this is a web app"'
+      - kind: command-exit
+        command: node "{{plan}}" --dir . --type none --json
+        stdout_match: '"offeredTools"'
+
+  - id: skill-one-question-setup
+    description: The start skill asks one question (type), lists opt-ins as on demand, and confirms file changes with one yes (followups 5.4)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'It asks one question: the project type' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask nothing else about tools' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'typeOptions' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'available on demand' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask \*\*one\*\* question: apply all of it' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'one question each', negate: true }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'A recommendation is not an answer\.' }
+
+  - id: summary-three-parts
+    description: The start skill summarizes in Done / Needs you / Later and hides internal notes (followups 5.5)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Summarize in three parts' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: '\*\*Needs you:\*\* only steps that block using the project \*\*now\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "Don't repeat internal install notes" }

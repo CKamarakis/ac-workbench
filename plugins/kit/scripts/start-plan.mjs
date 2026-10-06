@@ -98,6 +98,51 @@ function toolAction(entry, dir, deps) {
   return { ...base, action: 'install', kind: entry.plugin ? 'plugin' : 'command', plugin: entry.plugin ?? null, command, note: entry.install_note ?? null };
 }
 
+// ---------- question context (followups D5; spec: project-starter "Starter questions carry context") ----------
+
+export const DEFAULT_RECOMMEND = { recommend: 'no', why: 'optional; add it later when a change needs it' };
+
+// Config files that make a project type likely. Only types the registry defines are recommended.
+export const TYPE_HINTS = {
+  'web-ui': { pattern: /^(next|vite|astro|svelte|nuxt)\.config\.(js|mjs|cjs|ts|mts)$/, why: f => `found ${f}: this is a web app` },
+};
+
+const ACTION_ABOUT = {
+  '.gitignore': ["Adds the kit's block: ignores licensed folders such as PM-OS", 'yes', 'keeps licensed material out of git; only the kit block changes'],
+  'CLAUDE.md': ["Adds or updates the kit's routing section: which skill to use per phase, plus the knowledge and PRD rules", 'yes', "the agent follows the kit's workflow; your own text in the file is kept"],
+  'openspec/config.yaml': ["Points OpenSpec's context at docs/project-context.md", 'yes', 'every proposal then reads your project context'],
+  '.claude/kit.json': ['The kit stamp: kit version, project type, tools and knowledge folder', 'yes', 'the kit reads it to re-sync this project later'],
+  'docs/project-context.md': ['Your project context doc (goal, users, decisions); yours once created', 'yes', 'OpenSpec reads it before every proposal'],
+  knowledge: ['A folder of the knowledge tree (notes, PRDs, assets, archive)', 'yes', '/kit:capture and /kit:prd keep notes and PRDs there'],
+};
+
+export function aboutAction(id, knowledgeDir = DEFAULT_DIR) {
+  const key = id.startsWith(`${knowledgeDir}/`) ? 'knowledge' : id;
+  const a = ACTION_ABOUT[key];
+  return a ? { about: a[0], recommend: a[1], why: a[2] } : {};
+}
+
+/** Project types with the tools each adds, and a recommendation from the project's config files. */
+export function typeOptions(registry, dir) {
+  let files = [];
+  try { files = fs.readdirSync(dir); } catch { /* new folder */ }
+  return projectTypes(registry).map(name => {
+    const tools = (registry.tools ?? []).filter(t => t.tier === `project-type:${name}` && ACTIVE.includes(t.status)).map(t => t.name);
+    const hint = TYPE_HINTS[name];
+    const hit = hint && files.find(f => hint.pattern.test(f));
+    return { name, tools, about: tools.length ? `adds ${tools.join(', ')}` : 'adds no tools yet', recommended: !!hit, why: hit ? hint.why(hit) : null };
+  });
+}
+
+/** Opt-in (project-tier) tools with their registry reason and recommendation. */
+export function offeredTools(registry, names) {
+  return names.map(n => {
+    const t = (registry.tools ?? []).find(x => x.name === n) ?? {};
+    const r = t.recommend ? { recommend: t.recommend, why: t.recommend_why } : DEFAULT_RECOMMEND;
+    return { name: n, about: t.reason ?? '', ...r };
+  });
+}
+
 // ---------- the plan ----------
 
 /**
@@ -133,7 +178,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   }
 
   // CLAUDE.md (managed routing block)
-  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir });
+  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir, libraryDocs: true });
   const cmCur = norm(read(path.join(abs, 'CLAUDE.md')));
   if (cmCur == null) actions.push({ id: 'CLAUDE.md', kind: 'file', action: 'create', content: fill(template('CLAUDE.md'), { project, routing: block }) });
   else {
@@ -161,7 +206,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
 
   // tools by tier
   const { chosen, offered } = selectTools(registry, { type, optIn });
-  const tools = chosen.map(({ entry, why }) => ({ ...toolAction(entry, abs, deps), why }));
+  const tools = chosen.map(({ entry, why }) => ({ ...toolAction(entry, abs, deps), why, ...(entry.first_use ? { firstUse: entry.first_use } : {}) }));
 
   // stamp
   const stamp = {
@@ -176,18 +221,40 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   const stampAction = !stampCur ? 'create' : JSON.stringify({ ...stampCur }) === JSON.stringify(stamp) ? 'same' : 'differs';
   actions.push({ id: '.claude/kit.json', kind: 'file', action: stampAction, content: stampJson, ...(stampAction === 'differs' ? { diff: lineDiff(JSON.stringify(stampCur, null, 2), stampJson.trimEnd()) } : {}) });
 
+  for (const a of actions) if (a.kind === 'file') Object.assign(a, aboutAction(a.id, knowledgeDir));
   const changes = actions.filter(a => !['same', 'keep'].includes(a.action)).length + tools.filter(t => t.action === 'install').length;
   const conflicts = actions.filter(a => a.action === 'conflict').length;
-  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, types: projectTypes(registry), changes, conflicts };
+  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, offeredTools: offeredTools(registry, offered), types: projectTypes(registry), typeOptions: typeOptions(registry, abs), changes, conflicts };
 }
 
 export const CONTEXT_LINE = 'Project context, decisions and open ideas: docs/project-context.md. Read it before any proposal.';
 
 export function configAction(cfg) {
   if (cfg.includes('docs/project-context.md')) return { id: 'openspec/config.yaml', kind: 'file', action: 'same' };
-  if (/^context:/m.test(cfg)) return { id: 'openspec/config.yaml', kind: 'file', action: 'conflict', reason: 'config already has a context: entry; add a line pointing to docs/project-context.md yourself' };
+  if (/^context:/m.test(cfg)) {
+    const result = appendToContextBlock(cfg);
+    if (result == null) return { id: 'openspec/config.yaml', kind: 'file', action: 'conflict', reason: 'config has a one-line context: entry; add a line pointing to docs/project-context.md yourself' };
+    return { id: 'openspec/config.yaml', kind: 'file', action: 'differs', content: result, diff: lineDiff(cfg, result) };
+  }
   const result = configWithContext(cfg);
   return { id: 'openspec/config.yaml', kind: 'file', action: 'differs', content: result, diff: lineDiff(cfg, result) };
+}
+
+/** Appends the pointer as the last line of an existing `context: |` block; null when context isn't a block. */
+export function appendToContextBlock(cfg) {
+  const lines = cfg.replace(/\r\n/g, '\n').split('\n');
+  const start = lines.findIndex(l => /^context:\s*[|>][-+]?\s*$/.test(l));
+  if (start < 0) return null;
+  let last = start, indent = '  ';
+  for (let i = start + 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const m = /^(\s+)\S/.exec(lines[i]);
+    if (!m) break;
+    if (last === start) indent = m[1];
+    last = i;
+  }
+  lines.splice(last + 1, 0, `${indent}${CONTEXT_LINE}`);
+  return lines.join('\n');
 }
 
 export const configWithContext = cfg => cfg.replace(/\s*$/, '\n') + `\ncontext: |\n  ${CONTEXT_LINE}\n`;
@@ -202,10 +269,19 @@ export function formatPlan(p) {
   if (p.tools.length) lines.push('', 'Tools for this project:');
   for (const t of p.tools) {
     const tag = { present: 'ok', install: 'INSTALL', pending: 'YOU' }[t.action];
-    lines.push(`  ${tag.padEnd(8)} ${t.name.padEnd(16)} ${t.why}${t.command && t.action !== 'present' ? `\n           ${t.command}` : ''}${t.note && t.action !== 'present' ? `\n           note: ${t.note}` : ''}`);
+    lines.push(`  ${tag.padEnd(8)} ${t.name.padEnd(16)} ${t.why}${t.command && t.action !== 'present' ? `\n           ${t.command}` : ''}${t.note && t.action === 'pending' ? `\n           note: ${t.note}` : ''}`);
+  }
+  const later = p.tools.filter(x => x.firstUse);
+  if (later.length) {
+    lines.push('', 'Later (when you first use it):');
+    for (const x of later) lines.push(`  ${x.name.padEnd(16)} ${x.firstUse}`);
   }
   const notOpted = p.offered.filter(n => !p.optIn.includes(n));
-  if (notOpted.length) lines.push('', `Optional for this project (opt in with --opt-in): ${notOpted.join(', ')}`);
+  if (notOpted.length) {
+    // One-question setup (followups D5b): opt-ins are listed, never asked; added on demand when a change needs them.
+    lines.push('', 'Available on demand (not installed now; added when a change needs them):');
+    for (const o of (p.offeredTools ?? []).filter(x => notOpted.includes(x.name))) lines.push(`  ${o.name.padEnd(16)} ${o.about}`);
+  }
   lines.push('', p.conflicts ? `${p.conflicts} conflict(s) need you; they will be skipped.` : p.changes ? `${p.changes} change(s) to apply.` : 'Nothing to change.');
   return lines.join('\n');
 }

@@ -5,7 +5,7 @@
     {
       "name": "kit",
       "source": "./plugins/kit",
-      "description": "Personal Claude Code kit: project starter, next-step routing, feedback inbox, harness review"
+      "description": "Personal Claude Code kit: project starter, notes to PRD to OpenSpec, next-step routing, tool registry"
     }
   ]
 }

@@ -125,6 +125,7 @@ export function formatResult(r) {
   for (const f of r.tools.fallback) L.push(`  enabled    ${f.name} (written to .claude/settings.json; the CLI install failed: ${f.error})`);
   for (const f of r.tools.failed) L.push(`  FAILED     ${f.name}: ${f.error}\n             fix: ${f.fix}`);
   for (const p of r.tools.pending) L.push(`  PENDING    ${p.name}: needs you${p.command ? `\n             run: ${p.command}` : ''}${p.note ? `\n             note: ${p.note}` : ''}`);
+  for (const t of r.plan?.tools ?? []) if (t.firstUse) L.push(`  LATER      ${t.name}: ${t.firstUse}`);
   L.push(`  listed in  ${r.projectsFile}`);
   return L.join('\n');
 }

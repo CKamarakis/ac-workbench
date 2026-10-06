@@ -29,6 +29,8 @@ If it prints `error:`, show it and stop. Don't do the step by hand.
 
 Run this when the PRD exists and the user wants changes, or new notes should feed in. **Never rewrite the whole file.**
 
+**Which PRD:** if the user didn't name one, offer the PRDs from `list` **in its order: most recently updated first** (it already sorts them; don't re-sort). Show each one's status and its update date.
+
 1. For each section you'd change: `section-get --file prds/<slug>.md --heading "<Heading>" --json`. Keep the returned `hash`.
 2. Show the proposed new text **per section**, and ask yes or no for each one.
 3. Only for approved sections: write the text to a scratch file, then run:

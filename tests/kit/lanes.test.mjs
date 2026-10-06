@@ -79,3 +79,17 @@ test('prd-pipeline 5.2: routing block names the knowledge folder and the PRD han
   assert.match(block, /`PRD: knowledge\/prds\/<slug>\.md @ <commit>`/);
   assert.ok(block.endsWith(BLOCK_END));
 });
+
+test('followups 4.2: routing rule offers several Ready PRDs newest first', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
+  assert.match(block, /If there are several, ask which one, listing them most recently updated first/);
+});
+
+test('followups 5.7: routing block carries the library docs rule (npx, no sign-in)', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge', libraryDocs: true });
+  assert.match(block, /### Library docs/);
+  assert.match(block, /npx -y ctx7@latest library <name>/);
+  assert.match(block, /No install or sign-in is needed/);
+  assert.match(block, /error that comes from a library/);
+  assert.ok(block.endsWith(BLOCK_END));
+});

@@ -175,3 +175,21 @@ test('6.2 readKnowledge + gitChangedSince on a real temp repo', async () => {
   assert.equal(since('knowledge/prds/gift-cards.md', c1), true);
   assert.equal(since('knowledge/prds/gift-cards.md', 'deadbeef'), null);
 });
+
+test('followups 4.3: two Ready PRDs on a real repo -> the newer one is named, the other listed', async () => {
+  const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
+  const { spawnSync } = await import('node:child_process');
+  const { readKnowledge } = await import('../../plugins/kit/scripts/next.mjs');
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-next-order-'));
+  const w = (rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
+  const ready = '---\ntitle: T\nstatus: Ready\nsources: []\n---\n';
+  w('knowledge/prds/alpha.md', ready);
+  w('knowledge/prds/zulu.md', ready);
+  spawnSync('git', ['init', '-q'], { cwd: d });
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'add', '.'], { cwd: d });
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'old'], { cwd: d, env: { ...process.env, GIT_COMMITTER_DATE: '2020-01-01T00:00:00Z', GIT_AUTHOR_DATE: '2020-01-01T00:00:00Z' } });
+  fs.appendFileSync(path.join(d, 'knowledge/prds/zulu.md'), '\nedited today\n');
+  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map: kmap, knowledge: readKnowledge(d) });
+  assert.equal(s.prd, 'knowledge/prds/zulu.md');
+  assert.deepEqual(s.otherReady, ['alpha']);
+});

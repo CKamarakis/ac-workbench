@@ -356,3 +356,14 @@ test('tiers global and project are valid', () => {
     assert.ok(!validate(doc).errors.some((e) => e.includes('openspec.tier')));
   }
 });
+
+test('recommend: yes/no only, and needs recommend_why (prd-pipeline-followups 1.1)', () => {
+  const doc = validDoc();
+  const t = doc.tools[0];
+  t.recommend = 'maybe';
+  assert.match(validate(doc).errors.join('\n'), /recommend: "maybe" is not one of yes, no/);
+  t.recommend = 'no';
+  assert.match(validate(doc).errors.join('\n'), /recommend_why: required when recommend is set/);
+  t.recommend_why = 'Optional';
+  assert.deepEqual(validate(doc).errors, []);
+});

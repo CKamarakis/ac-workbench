@@ -60,3 +60,17 @@ cases:
     checks:
       - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'checks the project.s PRDs' }
       - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Never change a PRD's status here" }
+
+  - id: newest-ready-prd-named-first
+    description: With two Ready PRDs, the most recently updated one is named and the other is listed (followups 4.3)
+    setup:
+      files:
+        knowledge/prds/alpha.md: "---\ntitle: Alpha\nstatus: Ready\nsources: []\n---\n"
+        knowledge/prds/zulu.md: "---\ntitle: Zulu\nstatus: Ready\nsources: []\n---\n"
+        touch.js: "const fs=require('fs');const t=new Date('2020-01-01T00:00:00Z');fs.utimesSync('knowledge/prds/alpha.md',t,t)"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - { kind: command-exit, command: node touch.js }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: 'PRD "zulu" is Ready[\s\S]*other Ready PRDs: alpha'

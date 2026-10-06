@@ -231,3 +231,80 @@ test('set-field: valid status and change only; body untouched', async () => {
   assert.match(text, /change: gift-cards\n/);
   assert.match(text, /## Problem\n\nP\n\n## Scope\n\nS\n$/);
 });
+
+// ---------- prd-pipeline-followups 2.1-2.3 ----------
+import { spawnSync as sp } from 'node:child_process';
+import { importNote, gitUpdatedOf } from '../../plugins/kit/scripts/knowledge.mjs';
+
+test('2.1 PRDs sorted newest-updated first (injected), ties by slug', () => {
+  const r = tmp();
+  for (const s of ['a', 'b', 'c']) put(r, `prds/${s}.md`, prd([]));
+  const when = { a: '2026-10-01T00:00:00.000Z', b: '2026-10-05T00:00:00.000Z', c: '2026-10-05T00:00:00.000Z' };
+  const l = listKnowledge(r, { updatedOf: f => when[path.basename(f, '.md')] });
+  assert.deepEqual(l.prds.map(p => p.slug), ['b', 'c', 'a']);
+  assert.equal(l.prds[2].updated, when.a);
+});
+
+test('2.1 real git: an uncommitted edit beats an older commit; no git -> mtime', () => {
+  const d = tmp();
+  const g = (...a) => sp('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
+  put(d, 'knowledge/prds/a.md', prd([]));
+  put(d, 'knowledge/prds/b.md', prd([]));
+  g('init', '-q'); g('add', '.'); g('commit', '-qm', 'one', '--date', '2020-01-01T00:00:00Z');
+  sp('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '--amend', '-qm', 'one', '--no-edit'], { cwd: d, env: { ...process.env, GIT_COMMITTER_DATE: '2020-01-01T00:00:00Z' } });
+  fs.appendFileSync(path.join(d, 'knowledge/prds/b.md'), 'edit\n');
+  const r = path.join(d, 'knowledge');
+  const l = listKnowledge(r);
+  assert.deepEqual(l.prds.map(p => p.slug), ['b', 'a']);
+  assert.match(l.prds[1].updated, /^2020-01-01/);
+  const n = tmp();
+  put(n, 'prds/x.md', prd([]));
+  const t = new Date('2021-05-05T00:00:00Z');
+  fs.utimesSync(path.join(n, 'prds/x.md'), t, t);
+  assert.match(gitUpdatedOf(n)(path.join(n, 'prds/x.md')), /^2021-05-05/);
+});
+
+test('2.2 .txt in notes/ is unimported, not a note; archive ignored', () => {
+  const r = tmp();
+  put(r, 'notes/raw.txt', 'x');
+  put(r, 'notes/topic/call.txt', 'y');
+  put(r, 'archive/notes/old.txt', 'z');
+  const l = listKnowledge(r);
+  assert.deepEqual(l.unimported, ['notes/raw.txt', 'notes/topic/call.txt']);
+  assert.equal(l.notes.length, 0);
+});
+
+test('2.3 transcript dropped into notes: replaced by a dated note, text unchanged', () => {
+  const r = tmp();
+  const text = 'Anna: gift cards should expire.\r\n\r\n  Me: 12 months?\n';
+  put(r, 'notes/call with anna.txt', text);
+  const res = importNote(r, { file: path.join(r, 'notes/call with anna.txt'), title: 'Call with Anna about gift cards', date: '2026-10-06' });
+  assert.equal(res.path, 'notes/2026-10-06-call-with-anna-about-gift-cards.md');
+  assert.equal(res.removed, 'notes/call with anna.txt');
+  assert.ok(!fs.existsSync(path.join(r, 'notes/call with anna.txt')));
+  const fm = parseFrontmatter(fs.readFileSync(path.join(r, res.path), 'utf8'));
+  assert.equal(fm.data.source, 'call with anna.txt');
+  assert.equal(fm.body.replace(/^\n/, ''), text.replace(/\r\n/g, '\n'));
+});
+
+test('2.3 file outside the knowledge folder is kept; .md frontmatter kept', () => {
+  const r = tmp();
+  const outside = path.join(tmp(), 'interview.md');
+  fs.writeFileSync(outside, '---\ntitle: Interview 3\ndate: 2026-09-30\ntags: [ux]\nspeaker: Bo\n---\n\nBody text\n');
+  const res = importNote(r, { file: outside });
+  assert.equal(res.path, 'notes/2026-09-30-interview-3.md');
+  assert.equal(res.kept, outside);
+  assert.ok(fs.existsSync(outside));
+  const fm = parseFrontmatter(fs.readFileSync(path.join(r, res.path), 'utf8'));
+  assert.deepEqual(fm.data, { title: 'Interview 3', date: '2026-09-30', tags: ['ux'], source: 'interview.md', speaker: 'Bo' });
+  assert.equal(fm.body.replace(/^\n/, ''), 'Body text\n');
+});
+
+test('2.3 import refuses other types and a missing title', () => {
+  const r = tmp();
+  put(r, 'notes/a.pdf', 'x');
+  put(r, 'notes/b.txt', 'x');
+  assert.throws(() => importNote(r, { file: path.join(r, 'notes/a.pdf'), title: 'A' }), /only \.txt and \.md/);
+  assert.throws(() => importNote(r, { file: path.join(r, 'notes/b.txt') }), /needs a title/);
+  assert.ok(fs.existsSync(path.join(r, 'notes/b.txt')));
+});

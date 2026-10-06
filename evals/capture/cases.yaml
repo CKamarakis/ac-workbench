@@ -93,3 +93,47 @@ cases:
             description: The PRD file is unchanged until the user agrees, and then only via per-section proposals
           - name: silent-when-no-match
             description: For a note unrelated to any PRD, says nothing about PRDs
+
+  - id: import-transcript-from-notes
+    description: A .txt dropped into notes/ shows as not imported, then is replaced by a dated note with the same text (followups 3.2)
+    setup:
+      files:
+        knowledge/notes/call with anna.txt: "Anna: gift cards should expire after 12 months.\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" list --dir .
+        stdout_match: 'Not imported yet \(1\):\r?\n  notes/call with anna\.txt'
+      - kind: command-exit
+        command: node "{{k}}" import --dir . --file "knowledge/notes/call with anna.txt" --title "Call with Anna" --date 2026-10-06
+        stdout_match: 'created notes/2026-10-06-call-with-anna\.md\r?\nreplaced notes/call with anna\.txt'
+      - { kind: content-match, path: knowledge/notes/2026-10-06-call-with-anna.md, pattern: 'source: call with anna\.txt[\s\S]*---\r?\n\r?\nAnna: gift cards should expire after 12 months\.' }
+
+  - id: import-from-outside-keeps-original
+    description: Importing a file from outside the knowledge folder leaves the original in place
+    setup:
+      files:
+        downloads/interview.txt: "Raw interview text\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" import --dir . --file downloads/interview.txt --title Interview --date 2026-10-06' }
+      - { kind: file-exists, path: downloads/interview.txt }
+      - { kind: content-match, path: knowledge/notes/2026-10-06-interview.md, pattern: 'Raw interview text' }
+
+  - id: skill-import-rules
+    description: The skill confirms the title, says what happens to the original, and keeps the text
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: '## Import a file' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'is \*\*replaced\*\* by the new note' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: "Don't summarise, reword or clean it up" }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'not imported yet' }
+
+  - id: import-title-proposal
+    description: Given a transcript file, the skill proposes a title and says what happens to the original before importing
+    input:
+      prompt: "/kit:capture import knowledge/notes/call with anna.txt"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: proposes-title
+            description: Proposes a short title from the transcript and waits for a yes
+          - name: explains-original
+            description: Says the .txt in notes/ will be replaced by the new note before doing it

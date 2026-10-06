@@ -81,3 +81,8 @@ cases:
             description: Facts missing from the picked notes (e.g. target users) appear as assumptions or open questions, not as facts
           - name: no-overwrite
             description: On a later update, proposes per section and writes only approved sections
+
+  - id: skill-offers-prds-newest-first
+    description: The skill offers PRDs in list order, most recently updated first (followups 4.1)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'most recently updated first\*\* \(it already sorts them' }

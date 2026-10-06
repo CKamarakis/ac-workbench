@@ -74,6 +74,8 @@ tools:
     source: github:danielhanold/superspec
     tier: project
     reason: OpenSpec schema that wires in Superpowers (worktree, subagent TDD, verify) for big or risky changes
+    recommend: 'no'
+    recommend_why: Plain OpenSpec covers most changes; use SuperSpec for a big or risky one (payments, auth, data migration)
     cost: uses-claude-quota
     status: trial
     scope: project
@@ -114,6 +116,8 @@ tools:
     source: github:obra/superpowers-marketplace
     tier: project
     reason: Brainstorming, plan writing and subagent TDD; the build engine behind SuperSpec
+    recommend: 'no'
+    recommend_why: Only used inside SuperSpec's flow; say yes together with SuperSpec
     cost: uses-claude-quota
     status: trial
     scope: project
@@ -341,11 +345,10 @@ tools:
     cost: free-tier
     status: trial
     scope: project
-    check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/context7'))"
-    interactive: true
+    check: node --version
     install:
-      win32: npx -y ctx7@latest setup --claude --cli --project
-    install_note: Interactive (OAuth sign-in creates a free API key). ALWAYS --project - without it ctx7 configures Claude globally (verified from its --help 2026-10-01). Remove with `npx ctx7 remove`.
+      win32: nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in)
+    install_note: Verified 2026-10-07 - lookups (ctx7 library, ctx7 docs) work logged out; only ctx7 setup forces a browser sign-in, even with -y, so the kit skips setup and uses a routing rule instead. Limits without a key are unverified; a limit-hit message and the optional sign-in are deferred (roadmap).
     rubric:
       problem_fit: Fewer stale API answers during build
       overlap: None; a docs source, not a phase owner
@@ -364,6 +367,10 @@ tools:
         status: trial
         rationale: Full README read; cheap insurance against outdated APIs; trial on the next build
         evidence: evals/trials/tool-review-2026-10-01.md
+      - date: 2026-10-07
+        status: trial
+        rationale: Used through npx with no setup or sign-in (lookups work logged out); the routing block tells the agent when to look up docs
+        evidence: evals/trials/prd-pipeline-live.md
 
   - name: lint-hook
     source: tbd
@@ -452,6 +459,7 @@ tools:
     check: node -e "process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))"
     install:
       win32: npx -y impeccable install --providers=claude --scope=project
+    first_use: When you first do UI polish or a design review, run /impeccable init once (it writes PRODUCT.md)
     install_note: Verified 2026-10-01 (sandbox) - skill in .claude/skills/impeccable, 4 agents in .claude/agents, hooks in .claude/settings.local.json (personal, gitignored by the kit block), engine binary inside the skill folder. Then run /impeccable init once (writes PRODUCT.md). Its hooks use bash syntax; that they run on Windows is unverified.
     rubric:
       problem_fit: Avoids generic AI-looking UI; gives a shared design vocabulary

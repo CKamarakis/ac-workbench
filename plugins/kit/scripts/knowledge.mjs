@@ -4,6 +4,7 @@
 // Usage: node knowledge.mjs <command> [--dir <project>] [--json] [options]
 //   list
 //   new-note    --title <t> [--body <text> | --body-file <f>] [--date YYYY-MM-DD] [--tags a,b] [--source <s>] [--topic <t>] [--asset <file>]
+//   import      --file <path> [--title <t>] [--tags a,b] [--date YYYY-MM-DD] [--topic <t>]
 //   citing      --note <path>
 //   move        --from <path> --to archive|<folder>
 //   section-get --file <path> --heading <h>
@@ -16,6 +17,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { locate } from './locate.mjs';
 
 export const DEFAULT_DIR = 'knowledge';
 export const SUBDIRS = ['notes', 'prds', 'assets', 'archive'];
@@ -117,16 +120,40 @@ function resolveIn(root, rel) {
 
 // ---------- listing ----------
 
-function walk(dir, skip = () => false) {
+function walk(dir, ext = '.md') {
   if (!fs.existsSync(dir)) return [];
   const out = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) { if (!skip(p)) out.push(...walk(p, skip)); }
-    else if (e.name.endsWith('.md')) out.push(p);
+    if (e.isDirectory()) out.push(...walk(p, ext));
+    else if (e.name.toLowerCase().endsWith(ext)) out.push(p);
   }
   return out;
 }
+
+// ---------- last update (design D1, followups) ----------
+
+const mtimeIso = file => fs.statSync(file).mtime.toISOString();
+
+/**
+ * file -> ISO time of its last update: the last commit touching it when the file is clean and
+ * tracked, else its modification time (uncommitted edits, untracked file, or no git).
+ */
+export function gitUpdatedOf(root) {
+  const git = locate('git')?.path ?? 'git';
+  const run = (args, cwd) => spawnSync(git, args, { cwd, encoding: 'utf8', timeout: 10000 });
+  return file => {
+    const cwd = path.dirname(file);
+    const st = run(['status', '--porcelain', '--', path.basename(file)], cwd);
+    if (st.status !== 0 || st.stdout.trim()) return mtimeIso(file);
+    const log = run(['log', '-1', '--format=%cI', '--', path.basename(file)], cwd);
+    const t = log.status === 0 ? log.stdout.trim() : '';
+    return t ? new Date(t).toISOString() : mtimeIso(file);
+  };
+}
+
+/** Newest first; ties by slug. */
+export const byUpdated = (a, b) => String(b.updated).localeCompare(String(a.updated)) || a.slug.localeCompare(b.slug);
 
 const firstHeading = body => /^#\s+(.+)$/m.exec(body)?.[1]?.trim() ?? null;
 const dateFromName = name => /^(\d{4}-\d{2}-\d{2})-/.exec(name)?.[1] ?? null;
@@ -164,16 +191,19 @@ export function readPrd(root, file) {
   return { path: rel, slug, title: d.title ?? slug, status: d.status ?? null, sources, change: d.change || null, valid: !errors.length, errors };
 }
 
-/** Notes (recursive, never archive/) and PRDs. */
-export function listKnowledge(root) {
+/** Notes (recursive, never archive/), PRDs newest-updated first, and .txt files not imported yet. */
+export function listKnowledge(root, { updatedOf = null } = {}) {
   const exists = fs.existsSync(root);
   const notes = walk(path.join(root, 'notes')).map(f => readNote(root, f));
-  const prds = walk(path.join(root, 'prds')).map(f => readPrd(root, f));
+  const prdFiles = walk(path.join(root, 'prds'));
+  const upd = prdFiles.length ? (updatedOf ?? gitUpdatedOf(root)) : null;
+  const prds = prdFiles.map(f => ({ ...readPrd(root, f), updated: upd(f) })).sort(byUpdated);
   return {
     root: posix(root),
     exists,
     notes: notes.filter(n => n.valid),
     prds,
+    unimported: walk(path.join(root, 'notes'), '.txt').map(f => posix(path.relative(root, f))),
     invalid: [...notes.filter(n => !n.valid), ...prds.filter(p => !p.valid)].map(x => ({ path: x.path, errors: x.errors })),
   };
 }
@@ -207,6 +237,49 @@ export function newNote(root, { title, body = '', date = today(), tags = [], sou
   if (source) data.source = source;
   fs.writeFileSync(file, writeFrontmatter(data, text ? text + '\n' : ''));
   return { path: posix(path.relative(root, file)), asset: assetRel };
+}
+
+/**
+ * Imports a .txt or .md file as a note (followups D4). The text is kept as is; an existing
+ * frontmatter's title, date and other keys are kept unless overridden. A file under notes/ is
+ * replaced (removed only after the new note is verified); a file elsewhere is left in place.
+ */
+export function importNote(root, { file, title = null, tags = null, date = null, topic = null }) {
+  if (!file) throw new Error('--file is required');
+  const src = path.resolve(file);
+  const ext = path.extname(src).toLowerCase();
+  if (!['.txt', '.md'].includes(ext)) throw new Error(`only .txt and .md can be imported, got "${ext || 'no extension'}"`);
+  const raw = read(src);
+  if (raw == null) throw new Error(`not found: ${file}`);
+  let data = {}, body = raw;
+  if (ext === '.md') {
+    const fm = parseFrontmatter(raw);
+    if (!fm.ok) throw new Error(`${path.basename(src)}: ${fm.error}`);
+    data = fm.data;
+    body = fm.hasFrontmatter ? fm.body.replace(/^\n/, '') : raw;
+  }
+  const t = (title ?? data.title ?? '').toString().trim();
+  if (!t) throw new Error('a note needs a title (pass --title)');
+  const d = date ?? data.date ?? today();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d))) throw new Error(`date must be YYYY-MM-DD, got "${d}"`);
+  const notesDir = path.join(root, 'notes');
+  const inNotes = inside(notesDir, src);
+  const dir = topic ? resolveIn(root, path.join('notes', topic)) : inNotes ? path.dirname(src) : notesDir;
+  fs.mkdirSync(dir, { recursive: true });
+  const base = `${d}-${slugify(t)}`;
+  const dest = path.join(dir, base + '.md') === src ? src : freePath(dir, base, '.md');
+  const { title: _t, date: _d, tags: oldTags, source: _s, ...rest } = data;
+  const meta = { title: t, date: String(d) };
+  const tg = tags ?? (Array.isArray(oldTags) ? oldTags : oldTags ? [oldTags] : []);
+  if (tg.length) meta.tags = tg;
+  meta.source = path.basename(src);
+  const out = writeFrontmatter({ ...meta, ...rest }, '') + '\n' + body;
+  fs.writeFileSync(dest, out);
+  const check = parseFrontmatter(read(dest));
+  if (!check.ok || check.body.replace(/^\n/, '') !== body) throw new Error(`import check failed for ${posix(path.relative(root, dest))}; the original was kept`);
+  let removed = null;
+  if (inNotes && dest !== src) { fs.unlinkSync(src); removed = posix(path.relative(root, src)); }
+  return { path: posix(path.relative(root, dest)), removed, kept: inNotes ? null : src };
 }
 
 /** PRDs whose `sources` cite this note. */
@@ -350,6 +423,7 @@ function run(o) {
       tags: o.tags ? o.tags.split(',').map(s => s.trim()).filter(Boolean) : [],
       source: o.source ?? null, topic: o.topic ?? null, asset: o.asset ?? null,
     });
+    case 'import': return importNote(root, { file: o.file, title: o.title ?? null, date: o.date ?? null, topic: o.topic ?? null, tags: o.tags ? o.tags.split(',').map(s => s.trim()).filter(Boolean) : null });
     case 'citing': return { note: o.note, citedBy: citing(root, o.note) };
     case 'move': return move(root, o.from, o.to);
     case 'section-get': return sectionGet(at(o.file), o.heading);
@@ -361,7 +435,7 @@ function run(o) {
       const results = files.map(f => readPrd(root, f));
       return { valid: results.every(r => r.valid), results };
     }
-    default: throw new Error(`unknown command "${o.cmd ?? ''}" (list, new-note, citing, move, new-prd, set-field, section-get, section-set, prd-check)`);
+    default: throw new Error(`unknown command "${o.cmd ?? ''}" (list, new-note, import, citing, move, new-prd, set-field, section-get, section-set, prd-check)`);
   }
 }
 
@@ -370,7 +444,8 @@ function format(cmd, r) {
     const lines = [`Knowledge: ${r.root}${r.exists ? '' : ' (missing)'}`, `Notes (${r.notes.length}):`];
     for (const n of r.notes) lines.push(`  ${n.path}  - ${n.title}${n.tags.length ? `  [${n.tags.join(', ')}]` : ''}`);
     lines.push(`PRDs (${r.prds.length}):`);
-    for (const p of r.prds) lines.push(`  ${p.path}  ${p.status ?? '?'}  - ${p.title ?? p.slug}${p.change ? `  (change: ${p.change})` : ''}`);
+    for (const p of r.prds) lines.push(`  ${p.path}  ${p.status ?? '?'}  - ${p.title ?? p.slug}${p.change ? `  (change: ${p.change})` : ''}  (updated ${String(p.updated).slice(0, 16).replace('T', ' ')})`);
+    if (r.unimported.length) { lines.push(`Not imported yet (${r.unimported.length}):`); for (const u of r.unimported) lines.push(`  ${u}`); }
     for (const x of r.invalid) lines.push(`INVALID ${x.path}: ${x.errors.join('; ')}`);
     return lines.join('\n');
   }
@@ -382,6 +457,9 @@ function format(cmd, r) {
   if (cmd === 'citing') return r.citedBy.length ? `${r.note} is cited by: ${r.citedBy.join(', ')}` : `${r.note} is not cited by any PRD`;
   if (cmd === 'new-prd') return `created ${r.path} (status Draft)`;
   if (cmd === 'set-field') return `${r.path}: ${r.key} ${r.from ?? '(none)'} -> ${r.to}`;
+  if (cmd === 'import') return `created ${r.path}${r.removed ? `
+replaced ${r.removed}` : ''}${r.kept ? `
+original kept at ${r.kept}` : ''}`;
   if (cmd === 'new-note') return `created ${r.path}${r.asset ? `\nasset ${r.asset}` : ''}`;
   if (cmd === 'section-get') return `hash: ${r.hash}${r.missing ? ' (section missing)' : ''}\n${r.text}`;
   return JSON.stringify(r, null, 2);

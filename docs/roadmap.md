@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-06 (M2 built: kit 0.2.0, `/kit:capture` + `/kit:prd`, live trial passed)
+Last updated: 2026-10-07 (M2 follow-ups built: kit 0.3.0, one-question setup, live trial passed)
 
 ## North star: the workflow this kit exists for
 
@@ -47,14 +47,19 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 ## Current position and next actions
 
 1. **Now:** M3 quality gates (`/opsx:explore`). M2 is built; archive `prd-pipeline` right after `kit-local-mvp` (its specs build on that change's).
-2. Open from the M2 trial (`evals/trials/prd-pipeline-live.md`, follow-ups 2–4), for a small `prd-pipeline` follow-up change:
-   - `/kit:start` questions need one line of context and a recommended default each.
-   - PRDs listed most recently updated first.
-   - Parked (user, 2026-10-06): how to keep uncategorised notes manageable. Decide after real use, no changes yet.
-   - Import hand-added transcripts (`.txt`).
-   - Check in M6: a Ready PRD outranks an active change in `/kit:next`.
+2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archive order: `kit-local-mvp`, `prd-pipeline`, then this one.
+   - Still open from the trials (`evals/trials/prd-pipeline-live.md`):
+     - **parked** (user): keeping loose notes manageable, decided after real use;
+     - **idea:** offer to tidy hand-made notes that have no frontmatter;
+     - **check in M6:** a Ready PRD outranks an active change in `/kit:next`.
    - Test bed: `Projects/temp/Toughbubble` (a copy), before touching the real Toughbubble.
 3. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
+
+Inputs for the M3 explore (agreed with the user, 2026-10-06):
+- **Flow recommendation:** a short risk checklist checked at proposal time: payments, auth, personal data, data migration; hard to undo or wide reach; vague spec or open questions in the PRD. It recommends plain OpenSpec or SuperSpec with the reason; the user decides. Tested with an eval set of example change descriptions, each labelled with the expected flow.
+- **Library-error hook (backstop for the docs rule):** after a build, type or test command fails with a library error, a kit hook adds one line telling the agent to look up current docs (`npx ctx7`) before retrying. It's deterministic and fires only on failure.
+- **Later, edge case:** if context7's limits without a key are hit, tell the user and offer the one-time sign-in (free account), then register the key for the project.
+- **SuperSpec re-test on a big or risky change:** an A/B on two project copies, comparing quality (bugs found afterwards, rework, verify-report coverage, decisions asked vs guessed), plus time and **token usage** (the user is on a subscription, so tokens matter more than dollars). Run it when a real risky change comes up. The 2026-10-01 trial was a small change only.
 
 Open decisions:
 - Review-phase owner: built-in `/code-review` + `/security-review`, or leave unowned until M3. Leaning: decide in M3.
@@ -78,3 +83,4 @@ Open decisions:
 | 2026-10-01 | Full re-review of the user's tool list (the earlier session only read summaries) | Choose tools from real docs | user | claude-mem dropped; Notion MCP, Impeccable, Emil, Playwright CLI, Context7 to trial; `evals/trials/tool-review-2026-10-01.md` |
 | 2026-10-01 | Group 7 tests run only in throwaway folders and a Toughbubble copy | Never risk a real project | user | Tasks 7.6 and 7.7 reworded |
 | 2026-10-06 | **Notion dropped as the PRD store; PRDs and notes move to Markdown in each project's `knowledge/` folder** (P5 revised, P6 dropped). Asana, Google Docs and Obsidian were checked and left out of v1 | Live spike: Notion's SQL query limit hit after ~10 calls on the free plan. Asana's MCP has no tool for project briefs, Google Docs needs a Cloud project and makes per-section edits clumsy, and Obsidian has no official MCP. Markdown in git needs no MCP and has no limits. Final home stays open (configurable path). On-plan alternative: keep Notion and use fetch only (untested) | user | Stage 3 and the M2 row reworded; v1 scope in `project-context.md` |
+| 2026-10-06 | **`/kit:start` asks one question (project type); no opt-in questions.** Global and type tools install without asking; Superpowers (session-start hook) and MCP servers come on demand, when a change needs them. Plain skills, SuperSpec's schema and Impeccable are fine to keep present | Live trial: too many setup questions without context. Checked what costs context while idle: plain skills almost nothing; Superpowers' session-start hook and MCP servers do; Impeccable's hooks filter by file type (docs). A skill added mid-session works once the session touches its file (tested live) | user | Folded into `prd-pipeline-followups` (project-starter spec, tasks 5.3–5.4). Superpowers on demand goes with the M3 flow judge. README bookkeeping added (6.3) |

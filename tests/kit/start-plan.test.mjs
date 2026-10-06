@@ -74,7 +74,9 @@ test('web-ui: global + web-ui tools applied; other types, dropped and later excl
 test('opt-in declined vs accepted', () => {
   const declined = plan(tmp(), { type: 'web-ui' });
   assert.ok(!declined.tools.some(x => x.name === 'sp'));
-  assert.match(formatPlan(declined), /Optional for this project.*sp, notion/);
+  const text = formatPlan(declined);
+  assert.match(text, /Available on demand \(not installed now; added when a change needs them\):\n  sp [^\n]*\n  notion /);
+  assert.doesNotMatch(text, /opt in|Optional for this project/i);
   const accepted = plan(tmp(), { type: 'web-ui', optIn: ['sp'] });
   const sp = accepted.tools.find(x => x.name === 'sp');
   assert.equal(sp.action, 'install');
@@ -92,10 +94,11 @@ test('interactive tool is pending with its note; present tool needs nothing', ()
   assert.match(formatPlan(p), /YOU\s+ctx/);
 });
 
-test('openspec config: pointer added, existing context is a conflict, pointer present is same', () => {
+test('openspec config: pointer added, existing block gets the pointer, one-line context is a conflict, pointer present is same', () => {
   assert.equal(configAction('schema: spec-driven\n').action, 'differs');
   assert.match(configAction('schema: spec-driven\n').content, /context: \|\n  Project context.*docs\/project-context\.md/);
-  assert.equal(configAction('schema: spec-driven\ncontext: |\n  other\n').action, 'conflict');
+  assert.equal(configAction('schema: spec-driven\ncontext: |\n  other\n').action, 'differs');
+  assert.equal(configAction('schema: spec-driven\ncontext: one line\n').action, 'conflict');
   assert.equal(configAction('schema: x\ncontext: |\n  see docs/project-context.md\n').action, 'same');
 });
 
@@ -157,4 +160,69 @@ test('re-sync of an older routing block shows the knowledge section as a CHANGE 
   assert.equal(a.action, 'differs');
   assert.match(a.diff, /\+ ### Knowledge and PRDs/);
   assert.match(a.content, /^# Mine\n/);
+});
+
+// ---------- prd-pipeline-followups 5.1: question context ----------
+import { typeOptions, offeredTools, DEFAULT_RECOMMEND } from '../../plugins/kit/scripts/start-plan.mjs';
+
+const ctxRegistry = {
+  phases: [],
+  tools: [
+    { name: 'pw', tier: 'project-type:web-ui', status: 'trial', scope: 'project' },
+    { name: 'old', tier: 'project-type:web-ui', status: 'dropped', scope: 'project' },
+    { name: 'ss', tier: 'project', status: 'trial', scope: 'project', reason: 'Heavy flow for risky changes', recommend: 'no', recommend_why: 'plain flow covers most' },
+    { name: 'x', tier: 'project', status: 'trial', scope: 'project', reason: 'Something optional' },
+  ],
+};
+
+test('Next.js folder recommends web-ui with its reason; empty folder recommends nothing', () => {
+  const d = tmp();
+  assert.deepEqual(typeOptions(ctxRegistry, d), [{ name: 'web-ui', tools: ['pw'], about: 'adds pw', recommended: false, why: null }]);
+  fs.writeFileSync(path.join(d, 'next.config.ts'), '');
+  const [t] = typeOptions(ctxRegistry, d);
+  assert.equal(t.recommended, true);
+  assert.equal(t.why, 'found next.config.ts: this is a web app');
+  fs.rmSync(path.join(d, 'next.config.ts'));
+  fs.writeFileSync(path.join(d, 'nextXconfigXts'), '');
+  assert.equal(typeOptions(ctxRegistry, d)[0].recommended, false);
+});
+
+test('opt-in tools carry the registry recommendation, or default to no with a reason', () => {
+  assert.deepEqual(offeredTools(ctxRegistry, ['ss', 'x']), [
+    { name: 'ss', about: 'Heavy flow for risky changes', recommend: 'no', why: 'plain flow covers most' },
+    { name: 'x', about: 'Something optional', ...DEFAULT_RECOMMEND },
+  ]);
+  assert.equal(DEFAULT_RECOMMEND.why, 'optional; add it later when a change needs it');
+});
+
+test('CLAUDE.md CHANGE carries about and a yes recommendation; plan lists them', () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), '# Mine\n');
+  const p = plan(d);
+  const a = act(p, 'CLAUDE.md');
+  assert.equal(a.action, 'differs');
+  assert.match(a.about, /routing section/);
+  assert.equal(a.recommend, 'yes');
+  assert.ok(a.why);
+  assert.equal(act(p, 'knowledge/prds/.gitkeep').recommend, 'yes');
+  assert.ok(Array.isArray(p.offeredTools) && Array.isArray(p.typeOptions));
+});
+
+test('followups 5.6: an existing context block gets the pointer appended as a CHANGE', () => {
+  const cfg = 'schema: spec-driven\n# comment\ncontext: |\n  Product: X\n\n  - detail\nrules:\n  proposal: []\n';
+  const a = configAction(cfg);
+  assert.equal(a.action, 'differs');
+  assert.equal(a.content, 'schema: spec-driven\n# comment\ncontext: |\n  Product: X\n\n  - detail\n  Project context, decisions and open ideas: docs/project-context.md. Read it before any proposal.\nrules:\n  proposal: []\n');
+  assert.match(a.diff, /\+   Project context, decisions and open ideas/);
+  assert.equal(configAction('schema: spec-driven\ncontext: one line\n').action, 'conflict');
+});
+
+test('followups 5.5: first_use goes under Later; install notes hidden for INSTALL, shown for YOU steps', () => {
+  const reg = structuredClone(registry);
+  const t = reg.tools.find(x => x.tier === 'project-type:web-ui' && !x.interactive && ['adopted', 'trial'].includes(x.status));
+  t.first_use = 'When you first do UI polish, run /x init once';
+  t.install_note = 'INTERNAL NOTE unverified on Windows';
+  const text = formatPlan(planProject({ dir: tmp(), registry: reg, type: 'web-ui', version: '9.9.9', today: '2026-10-01', deps: deps() }));
+  assert.match(text, /Later \(when you first use it\):\n  \S+\s+When you first do UI polish, run \/x init once/);
+  assert.doesNotMatch(text, /INTERNAL NOTE/);
 });

@@ -136,6 +136,14 @@ export function validate(doc) {
       else if (isMissing(entry.install.win32)) errors.push(`${id}.install.win32: missing required field`);
     }
 
+    if (!isMissing(entry.first_use) && typeof entry.first_use !== 'string') errors.push(`${id}.first_use: must be one line of text`);
+    if (!isMissing(entry.recommend) && !['yes', 'no'].includes(entry.recommend)) {
+      errors.push(`${id}.recommend: "${entry.recommend}" is not one of yes, no`);
+    }
+    if (!isMissing(entry.recommend) && isMissing(entry.recommend_why)) {
+      errors.push(`${id}.recommend_why: required when recommend is set`);
+    }
+
     if (!isMissing(entry.installed_version) && !isMissing(entry.reviewed_version) && compareVersions(entry.installed_version, entry.reviewed_version) > 0) {
       warnings.push(`${id}: needs review (installed ${entry.installed_version}, reviewed ${entry.reviewed_version})`);
     }

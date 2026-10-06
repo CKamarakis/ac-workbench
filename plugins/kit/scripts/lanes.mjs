@@ -66,13 +66,24 @@ export function knowledgeSection(dir) {
     '### Knowledge and PRDs',
     '',
     `- Notes, PRDs and assets live in \`${k}/\` (\`notes/\`, \`prds/\`, \`assets/\`). Never read \`${k}/archive/\`. Capture with \`/kit:capture\`, write PRDs with \`/kit:prd\`.`,
-    `- \`/opsx:propose\`: if a PRD in \`${k}/prds/\` has \`status: Ready\` and no \`change\`, use it as the main input (ask which one if there are several). Add this line to the proposal: \`PRD: ${k}/prds/<slug>.md @ <commit>\`, where the commit is \`git log -1 --format=%h -- <file>\`, or \`uncommitted\` if the file has uncommitted changes.`,
+    `- \`/opsx:propose\`: if a PRD in \`${k}/prds/\` has \`status: Ready\` and no \`change\`, use it as the main input. If there are several, ask which one, listing them most recently updated first (by \`git log -1 --format=%cI -- <file>\`, or the file's date if it has uncommitted changes). Add this line to the proposal: \`PRD: ${k}/prds/<slug>.md @ <commit>\`, where the commit is \`git log -1 --format=%h -- <file>\`, or \`uncommitted\` if the file has uncommitted changes.`,
     "- After the proposal exists, offer to set the PRD's `change` to the change name and its status to `Building`. Change nothing in the PRD without a yes.",
   ];
 }
 
+/** Library docs rule (followups D5c; spec: skill-routing "Library docs rule"). context7 through npx: no install, no sign-in. */
+export function libraryDocsSection() {
+  return [
+    '### Library docs',
+    '',
+    '- Before writing code against a library API you are not sure of for the version in this project (check `package.json`), look up current docs: `npx -y ctx7@latest library <name> "<question>"`, then `npx -y ctx7@latest docs <library-id> "<question>"`. No install or sign-in is needed.',
+    '- After a build, type or test error that comes from a library (for example "is not exported", "has no exported member"), look up the docs before trying another fix.',
+    '- If context7 reports a rate limit, tell the user and continue without it; a free sign-in raises the limit.',
+  ];
+}
+
 /** The managed CLAUDE.md block (spec: skill-routing "Projects receive routing rules"). */
-export function routingBlock(map, { kitVersion, knowledgeDir = null } = {}) {
+export function routingBlock(map, { kitVersion, knowledgeDir = null, libraryDocs = false } = {}) {
   const rows = map.lanes.map(l => {
     const use = l.owner ? (l.owner.skill ? `\`${l.owner.skill}\`` : `${l.owner.name} (no skill recorded)`)
       : l.conflict.length ? `conflict: ${l.conflict.join(' / ')}, ask` : 'no owner yet, ask';
@@ -94,6 +105,7 @@ export function routingBlock(map, { kitVersion, knowledgeDir = null } = {}) {
     '**Skip:**',
     skip,
     ...(knowledgeDir ? ['', ...knowledgeSection(knowledgeDir)] : []),
+    ...(libraryDocs ? ['', ...libraryDocsSection()] : []),
     BLOCK_END,
   ].join('\n');
 }
@@ -104,6 +116,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const map = laneMap(JSON.parse(fs.readFileSync(file, 'utf8')));
   if (args.includes('--block')) {
     const version = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
-    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge' }));
+    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge', libraryDocs: true }));
   } else console.log(formatLanes(map));
 }

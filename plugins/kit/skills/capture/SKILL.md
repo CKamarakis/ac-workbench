@@ -36,6 +36,22 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" <command> --dir . [--json]
    - On a yes, continue with `/kit:prd`'s **per-section update** for that PRD, using this note as a new source. Nothing in the PRD changes without a yes per section.
    - If the PRD is `Building`, add that updating it will make `/kit:next` flag its change for review.
    - If nothing matches, say nothing about PRDs.
+7. **Stray files.** If `list` shows files under "not imported yet" (`.txt` in `notes/`), mention them once and offer to import them (below).
+
+## Import a file (transcript, notes from elsewhere)
+
+For a `.txt` or `.md` file the user points to, or one listed as "not imported yet".
+
+1. **Read it.** Propose a title, and tags only if the content clearly suggests them. **Write nothing until the user confirms or edits them.** If a `.md` already has a title or date in its frontmatter, propose keeping it.
+2. **Say what happens to the original before importing:**
+   - a file inside `notes/` is **replaced** by the new note (same text, new name and frontmatter);
+   - a file anywhere else is **left where it is**, and the note gets a copy of the text.
+3. **Import:**
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" import --dir . --file <path> --title "<title>" [--tags a,b] [--topic <folder>]
+   ```
+   The text is kept exactly as it is. Don't summarise, reword or clean it up.
+4. Reply with the new path, then continue with step 6 above (offer a PRD update).
 
 ## Archive or move notes
 

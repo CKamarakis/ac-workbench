@@ -134,6 +134,12 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - Out of v1: Notion, Asana, Google Docs, any MCP, review panel, cross-project sharing, automatic status write-back.
 - Tests run in a throwaway folder or a Toughbubble copy.
 - Added after the live trial: after saving a note, `/kit:capture` offers to update a matching PRD (late additions are normal).
+- Follow-ups (change `prd-pipeline-followups`, kit 0.3.0, 2026-10-07):
+  - PRDs listed newest-updated first;
+  - `.txt` transcripts imported as notes;
+  - `/kit:start` asks only the project type (opt-ins on demand; summary Done / Needs you / Later);
+  - context7 used through `npx` with a routing rule, no sign-in;
+  - registry fields `recommend` and `first_use`.
 - Live trial: `/opsx:propose` followed the routing rule and wrote the `PRD:` line, so the `rules.proposal` fallback was not needed.
 
 ### Open
@@ -152,6 +158,7 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 
 ## Open ideas
 
+- Flow recommendation (OpenSpec vs SuperSpec) from a risk checklist, plus a SuperSpec A/B re-test on a big or risky change, measured in quality and tokens. Input for M3, see the roadmap.
 - A visual product overview (features/PRDs and their status, links, components). The cockpit is the first step towards this.
 - Tools from the user (memory between conversations, multi-agent, harness/evals): evaluate them through the registry and evals.
 - Adopt pieces of ECC one at a time, never as a bulk install.

@@ -1,0 +1,328 @@
+{
+  "skill": "start",
+  "date": "2026-10-06T22:42:39.773Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 30445,
+  "summary": {
+    "pass": 11,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "empty-folder-gets-tier2-basics",
+      "outcome": "pass",
+      "duration_ms": 3652,
+      "checks": [
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": ".git exists"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "docs/project-context.md exists"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": ".claude/kit.json exists"
+        },
+        {
+          "kind": "git-ignored",
+          "pass": true,
+          "detail": "PM-OS-v2.1/notes.md is ignored"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": ".gitignore matches /^# kit:start/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/config.yaml matches /docs/project-context\\.md/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "CLAUDE.md matches /<!-- kit:routing:start -->[\\s\\S]*/opsx:apply[\\s\\S]*<!-- kit:routing:end -->/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "home/.claude/kit/projects.json matches /\"projects\"/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": [],
+      "input": {
+        "status": 0
+      }
+    },
+    {
+      "id": "idempotent-rerun",
+      "outcome": "pass",
+      "duration_ms": 8114,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "existing-claude-md-unchanged-without-yes",
+      "outcome": "pass",
+      "duration_ms": 5945,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "CLAUDE.md matches /^# My project\\r?\\n\\r?\\nMy own rules\\.\\r?\\n$/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "missing-git-stops-before-writes",
+      "outcome": "pass",
+      "duration_ms": 267,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 9 (expected 9)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "plugins-enabled-only-in-the-project",
+      "outcome": "pass",
+      "duration_ms": 4251,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": ".claude/settings.json matches /\"fakeplug@kit-eval-nowhere\": true/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-confirms-and-never-goes-global",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Never apply a change the user didn.t confirm/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Never pass `--scope user`/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/start-apply\\.mjs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "knowledge-folder-and-routing",
+      "outcome": "pass",
+      "duration_ms": 3491,
+      "checks": [
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/notes/.gitkeep exists"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/prds/.gitkeep exists"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/assets/.gitkeep exists"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/archive/.gitkeep exists"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": ".claude/kit.json matches /\"knowledge_dir\": \"knowledge\"/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "CLAUDE.md matches /### Knowledge and PRDs[\\s\\S]*PRD: knowledge/prds/<slug>\\.md @ <commit>[\\s\\S]*<!-- kit:routing:end -->/"
+        }
+      ],
+      "rubric": [],
+      "input": {
+        "status": 0
+      }
+    },
+    {
+      "id": "skill-mentions-knowledge-not-notion",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /the knowledge folder/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md does not match /Notion/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "plan-json-recommends-web-ui-for-next",
+      "outcome": "pass",
+      "duration_ms": 4720,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-one-question-setup",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /It asks one question: the project type/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Ask nothing else about tools/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /typeOptions/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /available on demand/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Ask \\*\\*one\\*\\* question: apply all of it/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md does not match /one question each/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /A recommendation is not an answer\\./"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "summary-three-parts",
+      "outcome": "pass",
+      "duration_ms": 0,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Summarize in three parts/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /\\*\\*Needs you:\\*\\* only steps that block using the project \\*\\*now\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/start/SKILL.md matches /Don't repeat internal install notes/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

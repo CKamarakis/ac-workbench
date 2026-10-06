@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-01 (M1 done, v0.1.0)
+Last updated: 2026-10-06 (M2 explore done: PRDs as Markdown in `knowledge/`)
 
 ## North star: the workflow this kit exists for
 
@@ -11,8 +11,8 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | # | Stage | Your role | Tool(s) | Milestone | Status |
 |---|---|---|---|---|---|
 | 1 | Capture an idea (voice / text) | talk, type | `/voice`, dictation | M2 | ⬜ |
-| 2 | Shape into a PRD / requirements | decide, correct | PRD skill (PM-OS logic, our words); Notion plugin skills to compare | M2 | ⬜ |
-| 3 | Store and retrieve context in Notion | review | Notion MCP (hosted, per project) | M2 | ⬜ |
+| 2 | Shape into a PRD / requirements | decide, correct | `/kit:prd` (PM-OS logic, our words) | M2 | ⬜ |
+| 3 | Store and retrieve context | review | Markdown in the project repo (`knowledge/`); Notion dropped 2026-10-06 | M2 | ⬜ |
 | 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
 | 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
 | 6 | Build | answer, test | `/opsx:apply`; SuperSpec for big or risky changes; Context7 | M1 | ✅ |
@@ -38,7 +38,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | # | Change | Delivers | Exit criteria | Status |
 |---|---|---|---|---|
 | M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0` (2026-10-01; 44/45, only the usage review 9.4 left, see M6) |
-| M2 | `prd-pipeline` (to create with `/opsx:explore`) | capture → PRD → Notion store and retrieve; the repo keeps a pointer plus the Ready PRD | An idea dictated by voice ends as a PRD in Notion, and `/opsx:propose` in a project uses it | not started |
+| M2 | `prd-pipeline` (explore done; create with `/opsx:propose`) | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | explore done |
 | M3 | `quality-gates` (to create) | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | not started |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
@@ -46,7 +46,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 ## Current position and next actions
 
-1. **Now:** M2 prd-pipeline. Start with `/opsx:explore` (capture → PRD → Notion). Read first: the Notion plugin's skills (Knowledge Capture, Spec to Implementation) and PM-OS `/prd-draft` (adapt in our own words).
+1. **Now:** M2 prd-pipeline. Explore is done (v1 scope in `docs/project-context.md`). Next: `/opsx:propose prd-pipeline`, then `/opsx:apply`. Read PM-OS `/prd-draft` for the template (adapt in our own words).
 2. Then: M3 quality gates (`/opsx:explore`).
 3. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
 
@@ -71,3 +71,4 @@ Open decisions:
 | 2026-10-01 | **Drift noticed by the user:** stages 1–3 (capture → PRD → Notion) had slipped behind kit plumbing (cockpit, feedback, harness review) | Those stages are the reason the project exists | user | Cockpit, feedback and harness review moved to `kit-overview-feedback` (M5); prd-pipeline is M2 right after M1; quality gates M3 |
 | 2026-10-01 | Full re-review of the user's tool list (the earlier session only read summaries) | Choose tools from real docs | user | claude-mem dropped; Notion MCP, Impeccable, Emil, Playwright CLI, Context7 to trial; `evals/trials/tool-review-2026-10-01.md` |
 | 2026-10-01 | Group 7 tests run only in throwaway folders and a Toughbubble copy | Never risk a real project | user | Tasks 7.6 and 7.7 reworded |
+| 2026-10-06 | **Notion dropped as the PRD store; PRDs and notes move to Markdown in each project's `knowledge/` folder** (P5 revised, P6 dropped). Asana, Google Docs and Obsidian were checked and left out of v1 | Live spike: Notion's SQL query limit hit after ~10 calls on the free plan. Asana's MCP has no tool for project briefs, Google Docs needs a Cloud project and makes per-section edits clumsy, and Obsidian has no official MCP. Markdown in git needs no MCP and has no limits. Final home stays open (configurable path). On-plan alternative: keep Notion and use fetch only (untested) | user | Stage 3 and the M2 row reworded; v1 scope in `project-context.md` |

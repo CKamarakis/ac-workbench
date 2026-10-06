@@ -70,6 +70,6 @@
 - [x] 9.1 Run `npm test` and `node tools/run-evals.mjs` for all skills and verify everything passes with no "missing evals"
 - [x] 9.2 End-to-end on a fresh empty throwaway folder: `/kit:start` (including setup check) → `/kit:next`, and verify the project gets its stamp and routing block, appears in `~/.claude/kit/projects.json`, and its workflow plugins are active only there
 - [x] 9.3 Tag `v0.1.0` in the kit repo and verify `plugin.json` version matches the tag
-- [ ] 9.4 After about two weeks of real use (target 2026-10-13), review the change against actual use: feedback inbox items, eval runs, registry verdicts, scoping and setup friction; record the findings in `evals/trials/usage-review-1.md` and open `/opsx:explore` for any follow-up change
+- 9.4 **Moved to milestone M6 (user, 2026-10-07), so this change could be archived.** After about two weeks of real use (target 2026-10-13), review the change against actual use: feedback inbox items, eval runs, registry verdicts, scoping and setup friction; record the findings in `evals/trials/usage-review-1.md` and open `/opsx:explore` for any follow-up change
 
 > Groups formerly 9–11 (cockpit, kit feedback, harness review) moved to the change `kit-overview-feedback` on 2026-10-01; see `docs/roadmap.md`.

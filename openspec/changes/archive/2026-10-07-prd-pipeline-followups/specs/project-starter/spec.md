@@ -27,10 +27,6 @@ Changes to existing files SHALL be shown with their diff, a one-line description
 - **WHEN** the plan changes `CLAUDE.md` and `.gitignore`
 - **THEN** both diffs are shown, each with what it adds and "Recommended: yes (<why>)", and one yes applies both, unless the user excludes one
 
-#### Scenario: Supersedes per-tool opt-in questions
-- **WHEN** this requirement and kit-local-mvp's "Tools are applied by tier" (which offers `project`-tier tools one by one) are both in force
-- **THEN** this requirement governs: `project`-tier tools are listed, not offered. When archiving, after `kit-local-mvp`, fold this into that requirement as a MODIFIED delta
-
 ### Requirement: Setup summary in three parts
 The starter's summary SHALL have three parts:
 - **Done:** what was written, installed or already in place.
@@ -53,3 +49,25 @@ When `openspec/config.yaml` already has a block `context:` entry that doesn't me
 #### Scenario: Existing context block
 - **WHEN** `openspec/config.yaml` has `context: |` with two lines and no mention of `docs/project-context.md`
 - **THEN** the plan shows a `CHANGE` that adds the pointer line at the end of that block, and nothing else in the file changes
+
+## MODIFIED Requirements
+
+### Requirement: Tools are applied by tier
+The starter SHALL ask for the project type (or accept it as an argument). Among registry entries with scope `project` and status `adopted` or `trial`, it SHALL select tools by tier:
+- `global`: applied to every project the kit sets up
+- `project`: not asked about and not applied at setup; listed in the summary as available on demand, and applied only when the user explicitly asks for it (for example when a change needs it)
+- `project-type:<type>`: applied only when that type is selected
+
+Entries with status `dropped` or `later` SHALL NOT be applied or offered. The summary SHALL list each selected tool and why (its tier).
+
+#### Scenario: Web UI project
+- **WHEN** the user selects project type `web-ui`
+- **THEN** the `global` tools and the `project-type:web-ui` tools with status adopted or trial are applied, other types' tools are not, and each applied tool is listed in the summary
+
+#### Scenario: Opt-in tool
+- **WHEN** a `project`-tier tool (e.g. SuperSpec) is adopted or trial
+- **THEN** the starter does not ask about it or apply it, lists it as available on demand, and applies it only when the user explicitly asks for it
+
+#### Scenario: Dropped tool excluded
+- **WHEN** a registry entry for the selected type has status `dropped`
+- **THEN** the starter neither applies nor offers it

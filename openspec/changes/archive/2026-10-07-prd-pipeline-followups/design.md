@@ -70,7 +70,7 @@ Same constraints as before: zero runtime dependencies, nothing written without a
 - File changes are confirmed with one yes, each shown with its diff, `about` and recommendation; the user may exclude one.
 - `formatPlan` prints the on-demand list in place of the "Optional for this project" prompt.
 - Why: setup questions without a need in sight were noise. Of the tools, only Superpowers' session-start hook and MCP servers cost context while idle, so they wait until a change needs them (M3 flow judge).
-- **Archive note:** this contradicts kit-local-mvp's "Tools are applied by tier" (opt-ins offered one by one). After `kit-local-mvp` is archived, turn this delta into a MODIFIED requirement.
+- **Archive note (done 2026-10-07):** kit-local-mvp's "Tools are applied by tier" offered opt-ins one by one. Once kit-local-mvp was archived, this change got a MODIFIED delta for that requirement.
 
 **D5c. A three-part summary, `first_use`, the config pointer, and context7 via npx (user review of the live run, 2026-10-07).**
 - **Summary:** Done / Needs you / Later.

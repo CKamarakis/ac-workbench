@@ -37,17 +37,17 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 | # | Change | Delivers | Exit criteria | Status |
 |---|---|---|---|---|
-| M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0` (2026-10-01; 44/45, only the usage review 9.4 left, see M6) |
-| M2 | `prd-pipeline` | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | **built** (2026-10-06, kit 0.2.0; 26/26 tasks; live trial on a Toughbubble copy passed). Archive after `kit-local-mvp` |
+| M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0`; archived 2026-10-07 (the usage review, 9.4, moved to M6) |
+| M2 | `prd-pipeline` | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | **done**: `prd-pipeline` and `prd-pipeline-followups` built (kit 0.3.0) and archived 2026-10-07 |
 | M3 | `quality-gates` (to create) | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | not started |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
-| M6 | usage review (~2026-10-13) | review after two weeks of real use; revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
+| M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
 
 ## Current position and next actions
 
-1. **Now:** M3 quality gates (`/opsx:explore`). M2 is built; archive `prd-pipeline` right after `kit-local-mvp` (its specs build on that change's).
-2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archive order: `kit-local-mvp`, `prd-pipeline`, then this one.
+1. **Now:** M3 quality gates (`/opsx:explore`, started 2026-10-07). M1 and M2 are archived; the specs in `openspec/specs/` are current.
+2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/archive/2026-10-07-prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archived 2026-10-07 with the other two.
    - Still open from the trials (`evals/trials/prd-pipeline-live.md`):
      - **parked** (user): keeping loose notes manageable, decided after real use;
      - **idea:** offer to tidy hand-made notes that have no frontmatter;

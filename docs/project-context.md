@@ -15,7 +15,7 @@ Constraints:
 
 **Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
 
-Active changes: [`kit-local-mvp`](../openspec/changes/kit-local-mvp/) (core kit, M1) and [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). [`prd-pipeline`](../openspec/changes/prd-pipeline/) (M2, built; archive after kit-local-mvp).
+Active changes: [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1 (`kit-local-mvp`) and M2 (`prd-pipeline`, `prd-pipeline-followups`) are archived (2026-10-07); current specs are in [`openspec/specs/`](../openspec/specs/). Next: M3 quality gates.
 
 ```
  ac-workbench (marketplace repo)
@@ -62,7 +62,7 @@ Earlier decisions that still hold:
 
 ## prd-pipeline (M2): explore notes
 
-Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as change [`prd-pipeline`](../openspec/changes/prd-pipeline/) (kit 0.2.0; trial: `evals/trials/prd-pipeline-live.md`). On 2026-10-06 the Notion model was dropped after a live spike: PRDs and notes now live as Markdown in a `knowledge/` folder in each project's repo (see the drift log in [`roadmap.md`](roadmap.md)).
+Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as change [`prd-pipeline`](../openspec/changes/archive/2026-10-07-prd-pipeline/) (kit 0.2.0; trial: `evals/trials/prd-pipeline-live.md`). On 2026-10-06 the Notion model was dropped after a live spike: PRDs and notes now live as Markdown in a `knowledge/` folder in each project's repo (see the drift log in [`roadmap.md`](roadmap.md)).
 
 ### Research so far
 

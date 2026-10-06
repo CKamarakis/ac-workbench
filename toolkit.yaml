@@ -1,7 +1,7 @@
 # Toolkit registry: every tool the kit knows, why it's here, and its verdict.
 # Edit by hand, then validate and regenerate the runtime copy:
 #   npm run registry          (writes plugins/kit/data/toolkit.json only when valid)
-# Field reference: docs/registry.md. Spec: openspec/changes/kit-local-mvp/specs/toolkit-registry/spec.md
+# Field reference: docs/registry.md. Spec: openspec/specs/toolkit-registry/spec.md
 version: 1
 
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).

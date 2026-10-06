@@ -5,10 +5,16 @@
 version: 1
 
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).
-phases: [brainstorm, artifacts, plan, build, verify, review, ui-polish, close, kit-issues]
+phases: [capture, prd, brainstorm, artifacts, plan, build, verify, review, ui-polish, close, kit-issues]
 
 # Situation-to-skill guide, shown in the cockpit.
 situations:
+  - when: I have an idea or a note to keep
+    phase: capture
+    use: /kit:capture
+  - when: I want to turn notes into a PRD
+    phase: prd
+    use: /kit:prd
   - when: I have a new idea or feature
     phase: brainstorm
     use: /opsx:explore
@@ -243,7 +249,7 @@ tools:
   - name: kit
     source: github:CKamarakis/ac-workbench
     tier: global
-    reason: This kit - /kit:setup, /kit:start, /kit:next, /kit:feedback; the only plugin enabled for every session
+    reason: This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:feedback; the only plugin enabled for every session
     cost: free
     status: adopted
     scope: machine
@@ -261,8 +267,10 @@ tools:
       license: Own work
     reviewed_version: 0.1.0
     reviewed_on: 2026-10-01
-    phases: [kit-issues]
+    phases: [capture, prd, kit-issues]
     skills:
+      capture: /kit:capture
+      prd: /kit:prd
       kit-issues: /kit:feedback
     verdicts:
       - date: 2026-10-01
@@ -385,7 +393,7 @@ tools:
     tier: project
     reason: Context store outside the repo - capture, PRDs and retrieval in Notion (prd-pipeline)
     cost: free
-    status: trial
+    status: later
     scope: project
     check: claude mcp get notion
     check_match: 'Status:.*[Cc]onnected'
@@ -407,6 +415,10 @@ tools:
         status: trial
         rationale: Official hosted server, per-project scope, core tools on the free plan; adopt once prd-pipeline uses it
         evidence: evals/trials/tool-review-2026-10-01.md
+      - date: 2026-10-06
+        status: later
+        rationale: Live spike on the free plan - SQL queries hit the usage limit after about 10 calls; prd-pipeline v1 keeps PRDs as Markdown in knowledge/ instead
+        evidence: evals/trials/notion-spike-2026-10-06.md
 
   - name: notion-plugin
     source: github:makenotion/claude-code-notion-plugin

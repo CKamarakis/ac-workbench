@@ -29,3 +29,34 @@ cases:
     checks:
       - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Don't run the suggested step yourself" }
       - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/next\.mjs' }
+
+  - id: ready-prd-suggests-propose
+    description: After /kit:start, a Ready PRD with no change gets /opsx:propose naming it (prd-pipeline 6.2)
+    setup:
+      files:
+        knowledge/prds/gift-cards.md: "---\ntitle: Gift cards\nstatus: Ready\nsources: []\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /opsx:propose\r?\n  why:   PRD "gift-cards" is Ready[\s\S]*prd:   knowledge/prds/gift-cards\.md'
+
+  - id: notes-only-suggests-prd
+    description: Notes but no PRD and no change -> /kit:prd
+    setup:
+      files:
+        knowledge/notes/2026-10-06-idea.md: "---\ntitle: Idea\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:prd\r?\n  why:   1 note'
+
+  - id: skill-reports-prd-and-never-writes-status
+    description: The skill names the PRD and leaves status changes to /kit:prd and the user
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'checks the project.s PRDs' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Never change a PRD's status here" }

@@ -94,3 +94,21 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Never apply a change the user didn.t confirm' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Never pass `--scope user`' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/start-apply\.mjs' }
+
+  - id: knowledge-folder-and-routing
+    description: A fresh project gets the four knowledge subfolders and the routing Knowledge section (prd-pipeline 5.4)
+    input:
+      run: node "{{apply}}" --dir . --type none --home home
+    checks:
+      - { kind: file-exists, path: knowledge/notes/.gitkeep }
+      - { kind: file-exists, path: knowledge/prds/.gitkeep }
+      - { kind: file-exists, path: knowledge/assets/.gitkeep }
+      - { kind: file-exists, path: knowledge/archive/.gitkeep }
+      - { kind: content-match, path: .claude/kit.json, pattern: '"knowledge_dir": "knowledge"' }
+      - { kind: content-match, path: CLAUDE.md, pattern: '### Knowledge and PRDs[\s\S]*PRD: knowledge/prds/<slug>\.md @ <commit>[\s\S]*<!-- kit:routing:end -->' }
+
+  - id: skill-mentions-knowledge-not-notion
+    description: The start skill reports the knowledge folder and no longer uses Notion as its example
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'the knowledge folder' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Notion', negate: true }

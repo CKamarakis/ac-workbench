@@ -25,6 +25,6 @@ What still needs a decision, and who decides.
 ## Links
 
 - Repo:
-- Notion (PRDs, long-lived context):
+- Notes and PRDs: `knowledge/` (`/kit:capture`, `/kit:prd`)
 - Design (Figma / Miro):
 - Deployments:

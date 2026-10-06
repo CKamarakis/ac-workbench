@@ -71,3 +71,11 @@ test('validator prints the lane map and needs-review flags for an updated tool',
   assert.match(r.stdout, /artifacts\s+openspec/);
   assert.match(r.stdout, /review\s+unowned/);
 });
+
+test('prd-pipeline 5.2: routing block names the knowledge folder and the PRD handoff', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { kitVersion: '0.0.0-test', knowledgeDir: 'knowledge' });
+  assert.match(block, /### Knowledge and PRDs/);
+  assert.match(block, /`\/opsx:propose`: if a PRD in `knowledge\/prds\/` has `status: Ready`/);
+  assert.match(block, /`PRD: knowledge\/prds\/<slug>\.md @ <commit>`/);
+  assert.ok(block.endsWith(BLOCK_END));
+});

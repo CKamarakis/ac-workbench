@@ -1,0 +1,95 @@
+# Eval cases for /kit:capture (spec: knowledge-capture). The helper runs for real in the temp sandbox.
+skill: capture
+vars:
+  k: '{{kit}}/scripts/knowledge.mjs'
+
+cases:
+  - id: note-written-with-title-and-date
+    description: A captured note lands in knowledge/notes/ as <date>-<slug>.md with its title and date
+    input:
+      run: node "{{k}}" new-note --dir . --title "Gift card purchase flow" --body "Buy, pick amount, pay" --date 2026-10-06 --source voice
+    checks:
+      - { kind: file-exists, path: knowledge/notes/2026-10-06-gift-card-purchase-flow.md }
+      - { kind: content-match, path: knowledge/notes/2026-10-06-gift-card-purchase-flow.md, pattern: '^---\r?\ntitle: Gift card purchase flow\r?\ndate: 2026-10-06\r?\nsource: voice\r?\n---' }
+
+  - id: collision-never-overwrites
+    description: A second note with the same date and title gets -2, and the first is unchanged
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" new-note --dir . --title Idea --body first --date 2026-10-06' }
+      - kind: command-exit
+        command: node "{{k}}" new-note --dir . --title Idea --body second --date 2026-10-06
+        stdout_match: 'created notes/2026-10-06-idea-2\.md'
+      - { kind: content-match, path: knowledge/notes/2026-10-06-idea.md, pattern: 'first' }
+
+  - id: topic-and-configured-folder
+    description: A named topic goes into notes/<topic>/, under the knowledge dir configured in the stamp
+    setup:
+      files:
+        .claude/kit.json: '{ "knowledge_dir": "docs/knowledge" }'
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" new-note --dir . --title Pay --date 2026-10-06 --topic checkout' }
+      - { kind: file-exists, path: docs/knowledge/notes/checkout/2026-10-06-pay.md }
+
+  - id: archive-cited-note-updates-prd
+    description: Archiving a cited note names the PRD first, moves the note, and the PRD's sources follow
+    setup:
+      files:
+        knowledge/notes/2026-10-06-a.md: "---\ntitle: A\n---\n"
+        knowledge/prds/gift-cards.md: "---\ntitle: Gift cards\nstatus: Draft\nsources:\n  - notes/2026-10-06-a.md\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" citing --dir . --note notes/2026-10-06-a.md
+        stdout_match: 'cited by: prds/gift-cards\.md'
+      - kind: command-exit
+        command: node "{{k}}" move --dir . --from notes/2026-10-06-a.md --to archive
+        stdout_match: 'updated sources in: prds/gift-cards\.md'
+      - { kind: file-exists, path: knowledge/archive/notes/2026-10-06-a.md }
+      - { kind: content-match, path: knowledge/prds/gift-cards.md, pattern: '  - archive/notes/2026-10-06-a\.md' }
+
+  - id: archive-is-never-listed
+    description: Notes under archive/ never show up in the list
+    setup:
+      files:
+        knowledge/notes/2026-10-06-live.md: "---\ntitle: Live note\n---\n"
+        knowledge/archive/notes/2026-01-01-old.md: "---\ntitle: Old note\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" list --dir . > list.txt' }
+      - { kind: content-match, path: list.txt, pattern: 'Live note' }
+      - { kind: content-match, path: list.txt, pattern: 'Old note', negate: true }
+
+  - id: skill-rules
+    description: The skill confirms before writing, uses the helper, and never touches archive/
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/knowledge\.mjs' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Write nothing until the user confirms or edits the title' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'name those PRDs to the user before moving' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Never read, list or shortlist anything under `archive/`' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Offer a PRD update' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'per-section update' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'If nothing matches, say nothing about PRDs' }
+
+  - id: title-proposed-from-dictation
+    description: Given a dictated note with no title, the skill proposes a title and waits
+    input:
+      prompt: "/kit:capture so the gift card thing, people pick an amount, then a design, then pay, and we email the code"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: proposes-title
+            description: Proposes one short, specific title (e.g. "Gift card purchase flow") before writing
+          - name: waits-for-yes
+            description: Writes no file until the user confirms or edits the title
+
+  - id: offers-prd-update-after-late-note
+    description: A late addition matching a Ready PRD gets an offer to update it, with nothing changed before a yes (task 3.3)
+    input:
+      prompt: "/kit:capture gift cards also need an expiry date, 12 months"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: offers-matching-prd
+            description: After saving the note, names prds/gift-cards.md with a one-line reason and asks whether to update it
+          - name: no-change-without-yes
+            description: The PRD file is unchanged until the user agrees, and then only via per-section proposals
+          - name: silent-when-no-match
+            description: For a note unrelated to any PRD, says nothing about PRDs

@@ -1,0 +1,83 @@
+# Eval cases for /kit:prd (spec: prd-authoring). The helper runs for real in the temp sandbox.
+skill: prd
+vars:
+  k: '{{kit}}/scripts/knowledge.mjs'
+
+cases:
+  - id: template-has-format
+    description: The PRD template carries the required frontmatter and the design D9 sections
+    checks:
+      - { kind: content-match, path: '{{kit}}/templates/prd.md', pattern: '^---\r?\ntitle: \{\{title\}\}\r?\nstatus: Draft\r?\nsources: \[\]\r?\n---' }
+      - { kind: content-match, path: '{{kit}}/templates/prd.md', pattern: '## Problem[\s\S]*## Users[\s\S]*## Goals and success measures[\s\S]*## Scope[\s\S]*## Requirements[\s\S]*## UX notes and assets[\s\S]*## Risks[\s\S]*## Open questions' }
+
+  - id: new-prd-from-notes
+    description: A new PRD starts as Draft with its sources and the template sections, and is never overwritten
+    setup:
+      files:
+        knowledge/notes/2026-10-06-flow.md: "---\ntitle: Flow\n---\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" new-prd --dir . --title "Gift cards" --sources notes/2026-10-06-flow.md
+        stdout_match: 'created prds/gift-cards\.md \(status Draft\)'
+      - { kind: content-match, path: knowledge/prds/gift-cards.md, pattern: 'status: Draft\r?\nsources:\r?\n  - notes/2026-10-06-flow\.md' }
+      - { kind: command-exit, command: 'node "{{k}}" new-prd --dir . --title "Gift cards"', expect: 1 }
+
+  - id: section-conflict-protects-user-edits
+    description: A section edited by the user after section-get is not overwritten (exit 3, file unchanged)
+    setup:
+      files:
+        knowledge/prds/x.md: "---\ntitle: X\nstatus: Draft\nsources: []\n---\n\n## Scope\n\nOriginal\n"
+        edit.js: "const fs=require('fs');const f='knowledge/prds/x.md';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('Original','User edit'))"
+        hash.js: "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>require('fs').writeFileSync('h.txt',JSON.parse(s).hash))"
+        set.js: "const h=require('fs').readFileSync('h.txt','utf8');const r=require('child_process').spawnSync(process.execPath,[process.argv[2],'section-set','--dir','.','--file','prds/x.md','--heading','Scope','--text','Agent text','--expect',h],{encoding:'utf8'});process.stdout.write(r.stdout);process.exit(r.status)"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" section-get --dir . --file prds/x.md --heading Scope --json | node hash.js' }
+      - { kind: command-exit, command: node edit.js }
+      - { kind: command-exit, command: 'node set.js "{{k}}"', expect: 3, stdout_match: '^CONFLICT' }
+      - { kind: content-match, path: knowledge/prds/x.md, pattern: 'User edit' }
+      - { kind: content-match, path: knowledge/prds/x.md, pattern: 'Agent text', negate: true }
+
+  - id: prd-check-reports-not-guesses
+    description: prd-check names a bad status and a missing source, and exits non-zero
+    setup:
+      files:
+        knowledge/prds/bad.md: "---\ntitle: Bad\nstatus: Done\nsources:\n  - notes/gone.md\n---\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" prd-check --dir .
+        expect: 1
+        stdout_match: 'INVALID prds/bad\.md: invalid status "Done"[\s\S]*source not found: notes/gone\.md'
+
+  - id: status-only-valid-values
+    description: set-field accepts the five statuses only
+    setup:
+      files:
+        knowledge/prds/x.md: "---\ntitle: X\nstatus: Draft\nsources: []\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" set-field --dir . --file prds/x.md --key status --value Done', expect: 1 }
+      - { kind: command-exit, command: 'node "{{k}}" set-field --dir . --file prds/x.md --key status --value Ready', stdout_match: 'status Draft -> Ready' }
+
+  - id: skill-rules
+    description: The skill covers each prd-authoring requirement
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'one-line reason' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'multi-select\*\*: several notes can feed one PRD' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'is not a fact\.(\*\*)? Mark it "Assumption:" or list it under Open questions' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'ask yes or no for each one' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '--expect <hash>' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'PRD: <knowledge>/prds/<slug>\.md @ <commit>' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: "The status changes only on the user's yes" }
+
+  - id: shortlist-and-gaps
+    description: With notes on checkout and onboarding, "gift cards" shortlists checkout notes with reasons and marks gaps
+    input:
+      prompt: "/kit:prd gift cards"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: shortlist-reasons
+            description: Shows relevant notes only, each with a one-line reason, and waits for the pick
+          - name: gaps-marked
+            description: Facts missing from the picked notes (e.g. target users) appear as assumptions or open questions, not as facts
+          - name: no-overwrite
+            description: On a later update, proposes per section and writes only approved sections

@@ -15,7 +15,7 @@ Constraints:
 
 **Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
 
-Active changes: [`kit-local-mvp`](../openspec/changes/kit-local-mvp/) (core kit, M1) and [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). prd-pipeline (M2) is the current milestone (explore done, change not yet created).
+Active changes: [`kit-local-mvp`](../openspec/changes/kit-local-mvp/) (core kit, M1) and [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). [`prd-pipeline`](../openspec/changes/prd-pipeline/) (M2, built; archive after kit-local-mvp).
 
 ```
  ac-workbench (marketplace repo)
@@ -62,7 +62,7 @@ Earlier decisions that still hold:
 
 ## prd-pipeline (M2): explore notes
 
-Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). There is no OpenSpec change yet. On 2026-10-06 the Notion model was dropped after a live spike: PRDs and notes now live as Markdown in a `knowledge/` folder in each project's repo (see the drift log in [`roadmap.md`](roadmap.md)).
+Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as change [`prd-pipeline`](../openspec/changes/prd-pipeline/) (kit 0.2.0; trial: `evals/trials/prd-pipeline-live.md`). On 2026-10-06 the Notion model was dropped after a live spike: PRDs and notes now live as Markdown in a `knowledge/` folder in each project's repo (see the drift log in [`roadmap.md`](roadmap.md)).
 
 ### Research so far
 
@@ -114,7 +114,7 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). There is no OpenSpec change
 
 - **P9:** notes always have a title (suggested by `/kit:capture` if not given). No expiry: you archive by hand. Moving or archiving a note updates the source paths of any PRD that cites it.
 
-### v1 scope (proposed for `/opsx:propose`)
+### v1 scope (built 2026-10-06)
 
 ```
  /voice or typing
@@ -133,6 +133,8 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). There is no OpenSpec change
 - `/kit:start` creates `knowledge/` and adds the routing line. `/kit:next` reads PRD status and git history.
 - Out of v1: Notion, Asana, Google Docs, any MCP, review panel, cross-project sharing, automatic status write-back.
 - Tests run in a throwaway folder or a Toughbubble copy.
+- Added after the live trial: after saving a note, `/kit:capture` offers to update a matching PRD (late additions are normal).
+- Live trial: `/opsx:propose` followed the routing rule and wrote the `PRD:` line, so the `rules.proposal` fallback was not needed.
 
 ### Open
 

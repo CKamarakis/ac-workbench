@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laneMap, routingBlock, BLOCK_START, BLOCK_END } from './lanes.mjs';
 import { loadRegistry, defaultDeps } from './setup.mjs';
+import { DEFAULT_DIR, SUBDIRS } from './knowledge.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACTIVE = ['adopted', 'trial'];
@@ -108,6 +109,8 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   const abs = path.resolve(dir);
   const project = path.basename(abs);
   const actions = [];
+  const stampCur = (() => { try { return JSON.parse(read(path.join(abs, '.claude', 'kit.json'))); } catch { return null; } })();
+  const knowledgeDir = (typeof stampCur?.knowledge_dir === 'string' && stampCur.knowledge_dir.trim()) ? stampCur.knowledge_dir.trim().replace(/\\/g, '/').replace(/\/+$/, '') : DEFAULT_DIR;
   const file = (rel, proposed, { owned = true } = {}) => {
     const cur = norm(read(path.join(abs, rel)));
     if (cur == null) return actions.push({ id: rel, kind: 'file', action: 'create', content: proposed });
@@ -130,7 +133,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   }
 
   // CLAUDE.md (managed routing block)
-  const block = routingBlock(laneMap(registry), { kitVersion: version });
+  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir });
   const cmCur = norm(read(path.join(abs, 'CLAUDE.md')));
   if (cmCur == null) actions.push({ id: 'CLAUDE.md', kind: 'file', action: 'create', content: fill(template('CLAUDE.md'), { project, routing: block }) });
   else {
@@ -142,6 +145,12 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
 
   // project context doc: created once, then the user's
   file('docs/project-context.md', fill(template('project-context.md'), { project, date: today }), { owned: false });
+
+  // knowledge folder: create only missing subfolders (a .gitkeep keeps them in git); never touch what's there
+  for (const sub of SUBDIRS) {
+    const rel = `${knowledgeDir}/${sub}`;
+    actions.push(fs.existsSync(path.join(abs, rel)) ? { id: `${rel}/`, kind: 'file', action: 'same' } : { id: `${rel}/.gitkeep`, kind: 'file', action: 'create', content: '' });
+  }
 
   // OpenSpec + config pointing to the context doc
   const hasOpenspec = fs.existsSync(path.join(abs, 'openspec'));
@@ -155,10 +164,10 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   const tools = chosen.map(({ entry, why }) => ({ ...toolAction(entry, abs, deps), why }));
 
   // stamp
-  const stampCur = (() => { try { return JSON.parse(read(path.join(abs, '.claude', 'kit.json'))); } catch { return null; } })();
   const stamp = {
     kit_version: version,
     setup_date: stampCur?.setup_date ?? today,
+    knowledge_dir: knowledgeDir,
     project_type: type,
     opted_in: [...optIn].sort(),
     tools: tools.map(t => t.name).sort(),
@@ -169,7 +178,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
 
   const changes = actions.filter(a => !['same', 'keep'].includes(a.action)).length + tools.filter(t => t.action === 'install').length;
   const conflicts = actions.filter(a => a.action === 'conflict').length;
-  return { project, dir: abs, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, types: projectTypes(registry), changes, conflicts };
+  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, types: projectTypes(registry), changes, conflicts };
 }
 
 export const CONTEXT_LINE = 'Project context, decisions and open ideas: docs/project-context.md. Read it before any proposal.';

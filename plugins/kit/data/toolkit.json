@@ -1,6 +1,8 @@
 {
   "version": 1,
   "phases": [
+    "capture",
+    "prd",
     "brainstorm",
     "artifacts",
     "plan",
@@ -12,6 +14,16 @@
     "kit-issues"
   ],
   "situations": [
+    {
+      "when": "I have an idea or a note to keep",
+      "phase": "capture",
+      "use": "/kit:capture"
+    },
+    {
+      "when": "I want to turn notes into a PRD",
+      "phase": "prd",
+      "use": "/kit:prd"
+    },
     {
       "when": "I have a new idea or feature",
       "phase": "brainstorm",
@@ -325,7 +337,7 @@
       "name": "kit",
       "source": "github:CKamarakis/ac-workbench",
       "tier": "global",
-      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:feedback; the only plugin enabled for every session",
+      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:feedback; the only plugin enabled for every session",
       "cost": "free",
       "status": "adopted",
       "scope": "machine",
@@ -346,9 +358,13 @@
       "reviewed_version": "0.1.0",
       "reviewed_on": "2026-10-01",
       "phases": [
+        "capture",
+        "prd",
         "kit-issues"
       ],
       "skills": {
+        "capture": "/kit:capture",
+        "prd": "/kit:prd",
         "kit-issues": "/kit:feedback"
       },
       "verdicts": [
@@ -501,7 +517,7 @@
       "tier": "project",
       "reason": "Context store outside the repo - capture, PRDs and retrieval in Notion (prd-pipeline)",
       "cost": "free",
-      "status": "trial",
+      "status": "later",
       "scope": "project",
       "check": "claude mcp get notion",
       "check_match": "Status:.*[Cc]onnected",
@@ -526,6 +542,12 @@
           "status": "trial",
           "rationale": "Official hosted server, per-project scope, core tools on the free plan; adopt once prd-pipeline uses it",
           "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-06",
+          "status": "later",
+          "rationale": "Live spike on the free plan - SQL queries hit the usage limit after about 10 calls; prd-pipeline v1 keeps PRDs as Markdown in knowledge/ instead",
+          "evidence": "evals/trials/notion-spike-2026-10-06.md"
         }
       ]
     },

@@ -59,8 +59,20 @@ export function formatLanes(map) {
   return lines.join('\n');
 }
 
+/** Knowledge folder and the Ready-PRD handoff to the proposal step (spec: project-starter, prd-authoring). */
+export function knowledgeSection(dir) {
+  const k = dir.replace(/\\/g, '/').replace(/\/+$/, '');
+  return [
+    '### Knowledge and PRDs',
+    '',
+    `- Notes, PRDs and assets live in \`${k}/\` (\`notes/\`, \`prds/\`, \`assets/\`). Never read \`${k}/archive/\`. Capture with \`/kit:capture\`, write PRDs with \`/kit:prd\`.`,
+    `- \`/opsx:propose\`: if a PRD in \`${k}/prds/\` has \`status: Ready\` and no \`change\`, use it as the main input (ask which one if there are several). Add this line to the proposal: \`PRD: ${k}/prds/<slug>.md @ <commit>\`, where the commit is \`git log -1 --format=%h -- <file>\`, or \`uncommitted\` if the file has uncommitted changes.`,
+    "- After the proposal exists, offer to set the PRD's `change` to the change name and its status to `Building`. Change nothing in the PRD without a yes.",
+  ];
+}
+
 /** The managed CLAUDE.md block (spec: skill-routing "Projects receive routing rules"). */
-export function routingBlock(map, { kitVersion } = {}) {
+export function routingBlock(map, { kitVersion, knowledgeDir = null } = {}) {
   const rows = map.lanes.map(l => {
     const use = l.owner ? (l.owner.skill ? `\`${l.owner.skill}\`` : `${l.owner.name} (no skill recorded)`)
       : l.conflict.length ? `conflict: ${l.conflict.join(' / ')}, ask` : 'no owner yet, ask';
@@ -81,6 +93,7 @@ export function routingBlock(map, { kitVersion } = {}) {
     '',
     '**Skip:**',
     skip,
+    ...(knowledgeDir ? ['', ...knowledgeSection(knowledgeDir)] : []),
     BLOCK_END,
   ].join('\n');
 }
@@ -91,6 +104,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const map = laneMap(JSON.parse(fs.readFileSync(file, 'utf8')));
   if (args.includes('--block')) {
     const version = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
-    console.log(routingBlock(map, { kitVersion: version }));
+    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge' }));
   } else console.log(formatLanes(map));
 }

@@ -1,0 +1,188 @@
+{
+  "skill": "prd",
+  "date": "2026-10-06T20:13:18.623Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 1118,
+  "summary": {
+    "pass": 6,
+    "fail": 0,
+    "pending": 1
+  },
+  "cases": [
+    {
+      "id": "template-has-format",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/templates/prd.md matches /^---\\r?\\ntitle: \\{\\{title\\}\\}\\r?\\nstatus: Draft\\r?\\nsources: \\[\\]\\r?\\n---/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/templates/prd.md matches /## Problem[\\s\\S]*## Users[\\s\\S]*## Goals and success measures[\\s\\S]*## Scope[\\s\\S]*## Requirements[\\s\\S]*## UX notes and assets[\\s\\S]*## Risks[\\s\\S]*## Open questions/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "new-prd-from-notes",
+      "outcome": "pass",
+      "duration_ms": 280,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/gift-cards.md matches /status: Draft\\r?\\nsources:\\r?\\n  - notes/2026-10-06-flow\\.md/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "section-conflict-protects-user-edits",
+      "outcome": "pass",
+      "duration_ms": 414,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 3 (expected 3)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/x.md matches /User edit/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/x.md does not match /Agent text/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "prd-check-reports-not-guesses",
+      "outcome": "pass",
+      "duration_ms": 151,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "status-only-valid-values",
+      "outcome": "pass",
+      "duration_ms": 270,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /one-line reason/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /multi-select\\*\\*: several notes can feed one PRD/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /is not a fact\\.(\\*\\*)? Mark it \"Assumption:\" or list it under Open questions/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /ask yes or no for each one/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /--expect <hash>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /PRD: <knowledge>/prds/<slug>\\.md @ <commit>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/prd/SKILL.md matches /The status changes only on the user's yes/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "shortlist-and-gaps",
+      "outcome": "pending",
+      "duration_ms": 1,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "shortlist-reasons",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "gaps-marked",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-overwrite",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

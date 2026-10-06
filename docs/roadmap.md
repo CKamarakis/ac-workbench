@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-06 (M2 explore done: PRDs as Markdown in `knowledge/`)
+Last updated: 2026-10-06 (M2 built: kit 0.2.0, `/kit:capture` + `/kit:prd`, live trial passed)
 
 ## North star: the workflow this kit exists for
 
@@ -10,9 +10,9 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 
 | # | Stage | Your role | Tool(s) | Milestone | Status |
 |---|---|---|---|---|---|
-| 1 | Capture an idea (voice / text) | talk, type | `/voice`, dictation | M2 | ⬜ |
-| 2 | Shape into a PRD / requirements | decide, correct | `/kit:prd` (PM-OS logic, our words) | M2 | ⬜ |
-| 3 | Store and retrieve context | review | Markdown in the project repo (`knowledge/`); Notion dropped 2026-10-06 | M2 | ⬜ |
+| 1 | Capture an idea (voice / text) | talk, type | `/voice` + `/kit:capture` | M2 | ✅ |
+| 2 | Shape into a PRD / requirements | decide, correct | `/kit:prd` (PM-OS logic, our words) | M2 | ✅ |
+| 3 | Store and retrieve context | review | Markdown in the project repo (`knowledge/`); Notion dropped 2026-10-06 | M2 | ✅ |
 | 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
 | 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
 | 6 | Build | answer, test | `/opsx:apply`; SuperSpec for big or risky changes; Context7 | M1 | ✅ |
@@ -38,7 +38,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | # | Change | Delivers | Exit criteria | Status |
 |---|---|---|---|---|
 | M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0` (2026-10-01; 44/45, only the usage review 9.4 left, see M6) |
-| M2 | `prd-pipeline` (explore done; create with `/opsx:propose`) | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | explore done |
+| M2 | `prd-pipeline` | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | **built** (2026-10-06, kit 0.2.0; 26/26 tasks; live trial on a Toughbubble copy passed). Archive after `kit-local-mvp` |
 | M3 | `quality-gates` (to create) | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | not started |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
@@ -46,8 +46,14 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 ## Current position and next actions
 
-1. **Now:** M2 prd-pipeline. Explore is done (v1 scope in `docs/project-context.md`). Next: `/opsx:propose prd-pipeline`, then `/opsx:apply`. Read PM-OS `/prd-draft` for the template (adapt in our own words).
-2. Then: M3 quality gates (`/opsx:explore`).
+1. **Now:** M3 quality gates (`/opsx:explore`). M2 is built; archive `prd-pipeline` right after `kit-local-mvp` (its specs build on that change's).
+2. Open from the M2 trial (`evals/trials/prd-pipeline-live.md`, follow-ups 2–4), for a small `prd-pipeline` follow-up change:
+   - `/kit:start` questions need one line of context and a recommended default each.
+   - PRDs listed most recently updated first.
+   - Parked (user, 2026-10-06): how to keep uncategorised notes manageable. Decide after real use, no changes yet.
+   - Import hand-added transcripts (`.txt`).
+   - Check in M6: a Ready PRD outranks an active change in `/kit:next`.
+   - Test bed: `Projects/temp/Toughbubble` (a copy), before touching the real Toughbubble.
 3. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
 
 Open decisions:

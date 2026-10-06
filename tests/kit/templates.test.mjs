@@ -40,3 +40,11 @@ test('CLAUDE.md and project-context templates have their placeholders', () => {
   assert.match(p, /\{\{project\}\}/);
   assert.match(p, /\{\{date\}\}/);
 });
+
+test('prd-pipeline 5.3: templates point PRDs to knowledge/, not Notion', () => {
+  for (const f of ['CLAUDE.md', 'project-context.md']) {
+    const t = fs.readFileSync(path.join(templates, f), 'utf8');
+    assert.match(t, /`knowledge\/`/, f);
+    assert.doesNotMatch(t, /Notion/, f);
+  }
+});

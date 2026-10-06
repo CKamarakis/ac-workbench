@@ -1,0 +1,190 @@
+{
+  "skill": "registry",
+  "date": "2026-10-06T20:13:19.745Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 2477,
+  "summary": {
+    "pass": 12,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "valid-registry",
+      "outcome": "pass",
+      "duration_ms": 184,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "missing-field",
+      "outcome": "pass",
+      "duration_ms": 198,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "bad-enum",
+      "outcome": "pass",
+      "duration_ms": 185,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "status-verdict-mismatch",
+      "outcome": "pass",
+      "duration_ms": 205,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "unresolved-phase-conflict",
+      "outcome": "pass",
+      "duration_ms": 210,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "resolved-overlap",
+      "outcome": "pass",
+      "duration_ms": 180,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "missing-install-data",
+      "outcome": "pass",
+      "duration_ms": 193,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "later-without-install",
+      "outcome": "pass",
+      "duration_ms": 204,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "needs-review-flag",
+      "outcome": "pass",
+      "duration_ms": 173,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "writes-json-on-success",
+      "outcome": "pass",
+      "duration_ms": 367,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "toolkit.json matches /\"openspec\"/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "failure-keeps-previous-json",
+      "outcome": "pass",
+      "duration_ms": 197,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "toolkit.json matches /^\\{\"previous\": true\\}$/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "stale-json-detected",
+      "outcome": "pass",
+      "duration_ms": 181,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "toolkit.json matches /^\\{\"stale\": true\\}$/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

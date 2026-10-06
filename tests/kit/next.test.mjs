@@ -74,3 +74,104 @@ test('unowned phase is said plainly, never guessed', () => {
   const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map: laneMap({ phases: ['brainstorm'], tools: [] }) });
   assert.match(s.use, /no owner yet for "brainstorm"/);
 });
+
+// ---------- prd-pipeline 6.1: PRD-aware suggestions ----------
+import { prdSuggest, prdLink } from '../../plugins/kit/scripts/next.mjs';
+
+const kmap = laneMap({
+  phases: ['capture', 'prd', ...registry.phases],
+  tools: [...registry.tools, { name: 'kit', status: 'adopted', phases: ['capture', 'prd'], skills: { capture: '/kit:capture', prd: '/kit:prd' } }],
+});
+const P = (slug, status, extra = {}) => ({ path: `prds/${slug}.md`, slug, title: slug, status, sources: [], change: null, valid: true, errors: [], ...extra });
+const K = ({ notes = [], prds = [], invalid = [], changes = [] } = {}) => ({ dir: 'knowledge', list: { exists: true, notes, prds, invalid }, changes });
+const os0 = { root: {}, changes: [] };
+
+test('prdLink reads the proposal line, with or without backticks', () => {
+  assert.deepEqual(prdLink('Source: `PRD: knowledge/prds/gift-cards.md @ a1b2c3d`'), { path: 'knowledge/prds/gift-cards.md', commit: 'a1b2c3d' });
+  assert.deepEqual(prdLink('PRD: knowledge/prds/x.md @ uncommitted'), { path: 'knowledge/prds/x.md', commit: 'uncommitted' });
+  assert.equal(prdLink('no link here'), null);
+});
+
+test('Ready PRD without a change -> /opsx:propose naming it', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ prds: [P('gift-cards', 'Ready'), P('later', 'Ready')] }) });
+  assert.equal(s.use, '/opsx:propose');
+  assert.equal(s.prd, 'knowledge/prds/gift-cards.md');
+  assert.match(s.reason, /"gift-cards" is Ready/);
+  assert.deepEqual(s.otherReady, ['later']);
+  assert.match(format(s), /prd:   knowledge\/prds\/gift-cards\.md/);
+});
+
+test('Ready PRD already used by a change (proposal line) is not suggested again', () => {
+  const k = K({ prds: [P('gift-cards', 'Ready')], changes: [{ name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: 'abc1234' } }] });
+  const s = suggest({ openspec: { root: {}, changes: [change('gift-cards', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k });
+  assert.equal(s.phase, 'build');
+});
+
+test('PRD changed since planning -> review, naming the change', () => {
+  const k = K({ prds: [P('gift-cards', 'Building', { change: 'gift-cards' })], changes: [{ name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: 'abc1234' } }] });
+  const seen = [];
+  const s = suggest({ openspec: { root: {}, changes: [change('gift-cards', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince: (p, c) => { seen.push([p, c]); return true; } });
+  assert.deepEqual(seen, [['knowledge/prds/gift-cards.md', 'abc1234']]);
+  assert.equal(s.phase, 'plan');
+  assert.equal(s.change, 'gift-cards');
+  assert.match(s.reason, /changed after change "gift-cards" was planned/);
+});
+
+test('unchanged PRD -> normal OpenSpec suggestion; unknown -> warning, not a guess', () => {
+  const k = K({ prds: [P('gift-cards', 'Building', { change: 'gift-cards' })], changes: [{ name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: 'abc1234' } }] });
+  const base = { openspec: { root: {}, changes: [change('gift-cards', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k };
+  assert.equal(suggest({ ...base, changedSince: () => false }).phase, 'build');
+  const s = suggest({ ...base, changedSince: () => null });
+  assert.equal(s.phase, 'build');
+  assert.match(s.warnings.join(), /could not check whether PRD "gift-cards" changed/);
+});
+
+test('archived change -> suggest marking the PRD Shipped (nothing written)', () => {
+  const k = K({ prds: [P('gift-cards', 'Building', { change: 'gift-cards' })], changes: [{ name: 'gift-cards', archived: true, link: null }] });
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: k });
+  assert.equal(s.use, '/kit:prd');
+  assert.match(s.reason, /archived: mark PRD "gift-cards" Shipped \(only on your yes\)/);
+});
+
+test('notes but no PRD and no active change -> /kit:prd', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes: [{ path: 'notes/a.md', title: 'A' }] }) });
+  assert.equal(s.use, '/kit:prd');
+  assert.match(s.reason, /1 note\(s\) in knowledge\/notes and no PRD yet/);
+});
+
+test('no knowledge folder -> same suggestion as before', () => {
+  const without = suggest({ openspec: os0, statusOf: () => null, map: kmap });
+  const missing = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: { dir: 'knowledge', list: { exists: false, notes: [], prds: [], invalid: [] }, changes: [] } });
+  assert.deepEqual(missing, without);
+  assert.equal(without.use, '/opsx:explore');
+});
+
+test('invalid PRDs are reported as warnings', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ invalid: [{ path: 'prds/bad.md', errors: ['invalid status "Done"'] }] }) });
+  assert.match(format(s), /WARNING invalid: prds\/bad\.md: invalid status "Done"/);
+});
+
+test('6.2 readKnowledge + gitChangedSince on a real temp repo', async () => {
+  const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
+  const { spawnSync } = await import('node:child_process');
+  const { readKnowledge, gitChangedSince } = await import('../../plugins/kit/scripts/next.mjs');
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-next-'));
+  const w = (rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
+  const g = (...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
+  w('knowledge/prds/gift-cards.md', '---\ntitle: G\nstatus: Building\nsources: []\nchange: gift-cards\n---\n\n## Scope\n\nS\n');
+  g('init', '-q'); g('add', '.'); g('commit', '-qm', 'one');
+  const c1 = g('rev-parse', '--short', 'HEAD').stdout.trim();
+  w('openspec/changes/gift-cards/proposal.md', `# P\n\nPRD: \`knowledge/prds/gift-cards.md @ ${c1}\`\n`);
+  w('openspec/changes/archive/2026-10-01-old/proposal.md', '# Old\n');
+  const k = readKnowledge(d);
+  assert.equal(k.dir, 'knowledge');
+  assert.deepEqual(k.changes.find(c => c.name === 'gift-cards'), { name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: c1 } });
+  assert.deepEqual(k.changes.find(c => c.name === 'old'), { name: 'old', archived: true, link: null });
+  const since = gitChangedSince(d);
+  assert.equal(since('knowledge/prds/gift-cards.md', c1), false);
+  w('knowledge/prds/gift-cards.md', fs.readFileSync(path.join(d, 'knowledge/prds/gift-cards.md'), 'utf8') + 'edit\n');
+  assert.equal(since('knowledge/prds/gift-cards.md', c1), true);
+  g('commit', '-qam', 'two');
+  assert.equal(since('knowledge/prds/gift-cards.md', c1), true);
+  assert.equal(since('knowledge/prds/gift-cards.md', 'deadbeef'), null);
+});

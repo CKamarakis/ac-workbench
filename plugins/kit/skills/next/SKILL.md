@@ -7,6 +7,8 @@ description: Suggest the next workflow step for this project (which skill or com
 
 Tells the user the next step and the skill to use, with a one-line reason. The owners come from the kit's lane map, so the answer follows the registry and is never guessed.
 
+It checks the project's PRDs (in the knowledge folder) before the OpenSpec state: a Ready PRD with no change, a PRD that changed since its change was planned, an archived change whose PRD can be marked Shipped, or notes with no PRD yet.
+
 ## Steps
 
 1. Run from the project folder:
@@ -16,8 +18,11 @@ Tells the user the next step and the skill to use, with a one-line reason. The o
 2. Reply in a few lines:
    - **Next:** the `use` value as the command to run, plus the change name if there is one.
    - **Why:** the reason line.
-   - `then`, `next artifact`, the alternative for big or risky changes, and other active changes: mention them only when the script prints them.
+   - `prd`: name the PRD file when the script prints it.
+   - `then`, `next artifact`, the alternative for big or risky changes, other active changes, other Ready PRDs: mention them only when the script prints them.
+   - `WARNING` lines (an invalid PRD, a check git couldn't make): show them as is.
 3. Don't run the suggested step yourself. Offer to run it; the user decides.
+   - **Never change a PRD's status here**, not even to Shipped. Offer `/kit:prd` for that; the user says yes there.
 
 ## Notes
 

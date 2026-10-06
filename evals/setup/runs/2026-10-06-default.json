@@ -1,0 +1,109 @@
+{
+  "skill": "setup",
+  "date": "2026-10-06T20:13:22.229Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 14463,
+  "summary": {
+    "pass": 5,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "plan-lists-missing-present-skipped",
+      "outcome": "pass",
+      "duration_ms": 2380,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "apply-installs-and-isolates-failure",
+      "outcome": "pass",
+      "duration_ms": 2666,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "alpha.installed exists"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "second-run-nothing-to-do",
+      "outcome": "pass",
+      "duration_ms": 4806,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "real-registry-plan-runs",
+      "outcome": "pass",
+      "duration_ms": 4610,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-confirms-and-uses-plugin-root",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/setup/SKILL.md matches /Install nothing before they answer/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/setup/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/setup\\.mjs/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/setup/SKILL.md matches /never edit `~/\\.claude/settings\\.json`/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

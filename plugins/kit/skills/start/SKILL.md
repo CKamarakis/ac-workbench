@@ -21,7 +21,7 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
 
 2. **Ask the project type and the optional tools.**
    - Get the types from the plan's `types` (step 3 prints them in `--json`). Offer them plus "none". If the user passed a type as an argument, use it.
-   - For each name under "Optional for this project", ask yes or no. These are the `project`-tier tools, e.g. a Notion connection or SuperSpec. Default to no.
+   - For each name under "Optional for this project", ask yes or no. These are the `project`-tier tools, e.g. SuperSpec. Default to no.
 
 3. **Plan** (nothing is written):
    ```bash
@@ -48,10 +48,11 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
 
 6. **Summarize** from the output:
    - written, ran, skipped (and why)
+   - the knowledge folder (`knowledge/` with `notes/`, `prds/`, `assets/`, `archive/`): new folders, or already there
    - tools installed, present, enabled via settings, failed (with the fix line)
-   - **PENDING steps the user must do**: show each command and note exactly, e.g. run `/mcp` to sign in to Notion. Don't claim these are done.
+   - **PENDING steps the user must do**: show each command and note exactly, e.g. run `/mcp` to finish an OAuth sign-in. Don't claim these are done.
 
-   End with the next step: `/kit:next`, or `/opsx:explore` to start the first change.
+   End with the next step: `/kit:next`, `/kit:capture` to save the first note, or `/opsx:explore` to start the first change.
 
 ## Rules
 

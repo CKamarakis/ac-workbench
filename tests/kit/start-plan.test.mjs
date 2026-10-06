@@ -119,3 +119,42 @@ test('installed but waiting on the user (check runs, match fails) is pending, no
   assert.equal(p.tools[0].action, 'pending');
   assert.equal(p.tools.filter(x => x.action === 'install').length, 0);
 });
+
+// prd-pipeline 5.1: knowledge folder
+
+test('empty folder: plans the four knowledge subfolders and records knowledge_dir', () => {
+  const p = plan(tmp());
+  for (const sub of ['notes', 'prds', 'assets', 'archive']) assert.equal(act(p, `knowledge/${sub}/.gitkeep`).action, 'create', sub);
+  assert.equal(JSON.parse(act(p, '.claude/kit.json').content).knowledge_dir, 'knowledge');
+  assert.match(act(p, 'CLAUDE.md').content, /### Knowledge and PRDs[\s\S]*PRD: knowledge\/prds\/<slug>\.md @ <commit>/);
+});
+
+test('existing notes untouched: only missing subfolders are planned', () => {
+  const d = tmp();
+  fs.mkdirSync(path.join(d, 'knowledge', 'notes'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge', 'notes', 'a.md'), 'mine');
+  const p = plan(d);
+  assert.equal(act(p, 'knowledge/notes/').action, 'same');
+  assert.equal(act(p, 'knowledge/notes/.gitkeep'), undefined);
+  for (const sub of ['prds', 'assets', 'archive']) assert.equal(act(p, `knowledge/${sub}/.gitkeep`).action, 'create');
+  assert.ok(!p.actions.some(a => a.id.startsWith('knowledge/notes/a')));
+});
+
+test('configured knowledge_dir is used for folders and the routing block', () => {
+  const d = tmp();
+  fs.mkdirSync(path.join(d, '.claude'), { recursive: true });
+  fs.writeFileSync(path.join(d, '.claude', 'kit.json'), JSON.stringify({ knowledge_dir: 'docs/knowledge' }));
+  const p = plan(d);
+  assert.equal(act(p, 'docs/knowledge/prds/.gitkeep').action, 'create');
+  assert.match(act(p, 'CLAUDE.md').content, /`docs\/knowledge\/prds\/`/);
+});
+
+test('re-sync of an older routing block shows the knowledge section as a CHANGE diff', async () => {
+  const { routingBlock, laneMap } = await import('../../plugins/kit/scripts/lanes.mjs');
+  const d = tmp();
+  fs.writeFileSync(path.join(d, 'CLAUDE.md'), `# Mine\n\n${routingBlock(laneMap(registry), { kitVersion: '9.9.9' })}\n`);
+  const a = act(plan(d), 'CLAUDE.md');
+  assert.equal(a.action, 'differs');
+  assert.match(a.diff, /\+ ### Knowledge and PRDs/);
+  assert.match(a.content, /^# Mine\n/);
+});

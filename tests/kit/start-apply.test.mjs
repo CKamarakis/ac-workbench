@@ -44,7 +44,7 @@ test('empty folder: full apply, then a second plan has nothing to change (idempo
   assert.deepEqual(r.tools.installed.sort(), ['imp', 'sp']);
   assert.deepEqual(r.tools.pending.map(p => p.name), ['ctx']);
   const stamp = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'kit.json'), 'utf8'));
-  assert.deepEqual(stamp, { kit_version: '9.9.9', setup_date: '2026-10-01', project_type: 'web-ui', opted_in: ['sp'], tools: ['ctx', 'imp', 'sp'] });
+  assert.deepEqual(stamp, { kit_version: '9.9.9', setup_date: '2026-10-01', knowledge_dir: 'knowledge', project_type: 'web-ui', opted_in: ['sp'], tools: ['ctx', 'imp', 'sp'] });
   const again = planProject({ ...opts(dir, home, deps), type: 'web-ui', optIn: ['sp'] });
   assert.equal(again.changes, 0, JSON.stringify(again.actions.filter(a => !['same', 'keep'].includes(a.action))));
   assert.match(formatResult(r), /PENDING\s+ctx/);
@@ -128,4 +128,14 @@ test('install succeeds but needs a user step (e.g. OAuth) -> pending with its no
   const r = applyProject({ dir, registry: reg, version: '9.9.9', today: '2026-10-01', deps, home, optIn: ['mcpx'] });
   assert.deepEqual(r.tools.failed, []);
   assert.deepEqual(r.tools.pending.map(p => [p.name, p.note]), [['mcpx', 'run /mcp and sign in']]);
+});
+
+test('prd-pipeline 5.1: apply creates the knowledge folders and keeps existing notes', () => {
+  const d = tmp('kit-apply-k-');
+  fs.mkdirSync(path.join(d, 'knowledge', 'notes'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge', 'notes', 'a.md'), 'mine');
+  applyProject({ dir: d, registry, version: '9.9.9', today: '2026-10-01', deps: fakeDeps(d), home: tmp('kit-home-') });
+  for (const sub of ['prds', 'assets', 'archive']) assert.ok(fs.existsSync(path.join(d, 'knowledge', sub, '.gitkeep')), sub);
+  assert.equal(fs.readFileSync(path.join(d, 'knowledge', 'notes', 'a.md'), 'utf8'), 'mine');
+  assert.ok(!fs.existsSync(path.join(d, 'knowledge', 'notes', '.gitkeep')));
 });

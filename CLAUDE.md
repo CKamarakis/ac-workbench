@@ -12,7 +12,6 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 
 - **Tools per project, kit global.** Never enable workflow plugins, MCPs or tool configs at user scope or in global config. `claude plugin install` defaults to `--scope user`, so always pass `--scope project`.
 - **Never touch real projects for tests.** Use throwaway folders, or a copy of the project.
-- **Licensed PM-OS** (folder `PM-OS-*`, gitignored): adapt its logic in our own words, never copy text or files into this repo.
 - **Before a tool becomes a default:** read its full docs, trial it, and record the verdict and evidence in `toolkit.yaml` (`npm run registry`).
 - Mark anything not checked against official docs as **unverified**.
 - Commits pass the gitleaks hook (`git config core.hooksPath .githooks`, once per clone).

@@ -129,7 +129,7 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
  4 /kit:next  "PRD Ready, no change yet" / "PRD changed since planning" / "archived -> mark Shipped"
 ```
 
-- `/kit:capture` and `/kit:prd` are new skills with evals. The PRD template adapts PM-OS ideas in our own words.
+- `/kit:capture` and `/kit:prd` are new skills with evals. The PRD template is written in our own words.
 - `/kit:start` creates `knowledge/` and adds the routing line. `/kit:next` reads PRD status and git history.
 - Out of v1: Notion, Asana, Google Docs, any MCP, review panel, cross-project sharing, automatic status write-back.
 - Tests run in a throwaway folder or a Toughbubble copy.
@@ -149,12 +149,6 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - **Modes idea:** `solo` (lean) vs `team/client` (stakeholders, reviews, Asana or Linear for status).
 - A customer-facing MCP for Toughbubble is being explored in Toughbubble's own repo, not here.
 - Transcription stays free: `/voice`, phone dictation, Win+H, or local Whisper.
-
-## PM framework: PM-OS v1.1 (Aakash Gupta)
-
-- Licensed for personal use and modification. **Never commit or redistribute it.**
-- It lives in the repo folder (`PM-OS-v1.1/`) as a local reference only. The `.gitignore` patterns match any version or spelling.
-- Useful pieces: `/prd-draft`, `/prd-review-panel`, the PRD template, `/create-tickets`, and the reviewer sub-agents (input for harness-review, adapted in our own words).
 
 ## Open ideas
 

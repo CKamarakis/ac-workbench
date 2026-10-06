@@ -11,7 +11,6 @@ context: |
   voice/text -> note -> PRD in the project's knowledge/ folder -> /opsx:propose), quality gates next, then cockpit/feedback/harness review (change kit-overview-feedback).
   MVP is local-only and free: no paid services beyond the Claude plan; set up once, works in every project.
   Platform: Windows 11, Git Bash + PowerShell; global npm bins are not on the agent shell PATH.
-  PM-OS (licensed, local reference, gitignored): adapt its logic, never copy its files into this repo.
   First test consumer: Toughbubble (Next.js, already on OpenSpec).
 
 rules:

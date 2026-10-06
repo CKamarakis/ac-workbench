@@ -11,7 +11,7 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | # | Stage | Your role | Tool(s) | Milestone | Status |
 |---|---|---|---|---|---|
 | 1 | Capture an idea (voice / text) | talk, type | `/voice` + `/kit:capture` | M2 | ✅ |
-| 2 | Shape into a PRD / requirements | decide, correct | `/kit:prd` (PM-OS logic, our words) | M2 | ✅ |
+| 2 | Shape into a PRD / requirements | decide, correct | `/kit:prd` | M2 | ✅ |
 | 3 | Store and retrieve context | review | Markdown in the project repo (`knowledge/`); Notion dropped 2026-10-06 | M2 | ✅ |
 | 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
 | 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
@@ -57,6 +57,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 Inputs for the M3 explore (agreed with the user, 2026-10-06):
 - **Flow recommendation:** a short risk checklist checked at proposal time: payments, auth, personal data, data migration; hard to undo or wide reach; vague spec or open questions in the PRD. It recommends plain OpenSpec or SuperSpec with the reason; the user decides. Tested with an eval set of example change descriptions, each labelled with the expected flow.
+- **Remove the licensed-material `.gitignore` patterns** from this repo and from the block the kit writes into projects (with their tests, evals and the project-starter requirement). The material is no longer used (user, 2026-10-07).
 - **Library-error hook (backstop for the docs rule):** after a build, type or test command fails with a library error, a kit hook adds one line telling the agent to look up current docs (`npx ctx7`) before retrying. It's deterministic and fires only on failure.
 - **Later, edge case:** if context7's limits without a key are hit, tell the user and offer the one-time sign-in (free account), then register the key for the project.
 - **SuperSpec re-test on a big or risky change:** an A/B on two project copies, comparing quality (bugs found afterwards, rework, verify-report coverage, decisions asked vs guessed), plus time and **token usage** (the user is on a subscription, so tokens matter more than dollars). Run it when a real risky change comes up. The 2026-10-01 trial was a small change only.

@@ -5,24 +5,6 @@ Sets up a new or empty project with the kit's basics in minutes instead of half 
 
 ## Requirements
 
-### Requirement: Bootstrap installs Tier 2 basics
-When run in a project folder, the starter SHALL ensure the following exist:
-- a git repository
-- a `.gitignore` including the licensed-material patterns
-- an initialized OpenSpec setup whose config points to the project context doc
-- a CLAUDE.md starter with routing rules
-- a project context doc
-- a kit stamp file recording the kit version and setup date
-- the project's selected tools installed for this project only
-
-#### Scenario: Empty folder
-- **WHEN** the starter runs in an empty folder
-- **THEN** all Tier 2 basics exist afterwards and a summary lists what was created
-
-#### Scenario: Licensed folder stays ignored
-- **WHEN** a folder named like `PM-OS-v2.1` exists in the bootstrapped project
-- **THEN** git does not list it as untracked or stageable
-
 ### Requirement: Tools are applied by tier
 The starter SHALL ask for the project type (or accept it as an argument). Among registry entries with scope `project` and status `adopted` or `trial`, it SHALL select tools by tier:
 - `global`: applied to every project the kit sets up
@@ -156,3 +138,21 @@ When `openspec/config.yaml` already has a block `context:` entry that doesn't me
 #### Scenario: Existing context block
 - **WHEN** `openspec/config.yaml` has `context: |` with two lines and no mention of `docs/project-context.md`
 - **THEN** the plan shows a `CHANGE` that adds the pointer line at the end of that block, and nothing else in the file changes
+
+### Requirement: Bootstrap installs the basics
+When run in a project folder, the starter SHALL ensure the following exist:
+- a git repository
+- a `.gitignore` with the kit's managed block (personal Claude Code settings are not shared)
+- an initialized OpenSpec setup whose config points to the project context doc
+- a CLAUDE.md starter with routing rules
+- a project context doc
+- a kit stamp file recording the kit version and setup date
+- the project's selected tools installed for this project only
+
+#### Scenario: Empty folder
+- **WHEN** the starter runs in an empty folder
+- **THEN** all the basics exist afterwards, and a summary lists what was created
+
+#### Scenario: Personal settings stay private
+- **WHEN** a project has `.claude/settings.local.json`
+- **THEN** git does not list it as untracked or stageable

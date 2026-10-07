@@ -1,9 +1,9 @@
 {
   "skill": "setup",
-  "date": "2026-10-06T22:42:25.175Z",
+  "date": "2026-10-07T13:57:24.477Z",
   "setup": "default",
   "interventions": 0,
-  "duration_ms": 14596,
+  "duration_ms": 13893,
   "summary": {
     "pass": 5,
     "fail": 0,
@@ -13,7 +13,7 @@
     {
       "id": "plan-lists-missing-present-skipped",
       "outcome": "pass",
-      "duration_ms": 2402,
+      "duration_ms": 2206,
       "checks": [
         {
           "kind": "command-exit",
@@ -26,7 +26,7 @@
     {
       "id": "apply-installs-and-isolates-failure",
       "outcome": "pass",
-      "duration_ms": 2682,
+      "duration_ms": 2574,
       "checks": [
         {
           "kind": "command-exit",
@@ -49,7 +49,7 @@
     {
       "id": "second-run-nothing-to-do",
       "outcome": "pass",
-      "duration_ms": 4812,
+      "duration_ms": 4607,
       "checks": [
         {
           "kind": "command-exit",
@@ -72,7 +72,7 @@
     {
       "id": "real-registry-plan-runs",
       "outcome": "pass",
-      "duration_ms": 4699,
+      "duration_ms": 4505,
       "checks": [
         {
           "kind": "command-exit",

@@ -1,0 +1,75 @@
+# Eval cases for /kit:verify (spec: quality-gates). The script runs for real in the sandbox (real npm).
+skill: verify
+vars:
+  v: '{{kit}}/scripts/verify.mjs'
+
+cases:
+  - id: passing-tests-pass
+    description: A web-ui project whose test script passes gets result pass and a report
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        expect: 0
+        stdout_match: 'verify add-x: PASS'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '^# Verify: add-x\r?\n\r?\nresult: pass' }
+
+  - id: failing-test-blocks
+    description: A failing required test is HARD, the result is fail, and status says so
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(2)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        expect: 1
+        stdout_match: 'HARD\s+T:test: npm run test failed \(exit 2\)'
+      - kind: command-exit
+        command: node "{{v}}" status --dir . --change add-x
+        stdout_match: 'add-x: fail'
+
+  - id: override-needs-reason
+    description: An override without a reason is refused; with one, the result is overridden
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(1)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{v}}" run --dir . --change add-x', expect: 1 }
+      - { kind: command-exit, command: 'node "{{v}}" override --dir . --change add-x --item T:test --reason " "', expect: 2 }
+      - kind: command-exit
+        command: 'node "{{v}}" override --dir . --change add-x --item T:test --reason "flaky upstream, tracked in #12"'
+        stdout_match: 'OVERRIDDEN'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '\| T:test \| flaky upstream, tracked in #12 \|' }
+
+  - id: skill-rules
+    description: The skill never overrides on its own, shows HARD first, and records findings through the script
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never override on your own' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*HARD items first\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'verify\.mjs" finding --dir \. --change <name> --source security' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: "Don't edit `verify.md` by hand" }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: "If `/security-review` can't run" }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never leave it unrecorded' }
+
+  - id: severity-mapping
+    description: Given a review with an injection finding and a naming nit, only the injection is recorded as high security
+    input:
+      prompt: "/kit:verify add-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: maps-severity
+            description: Exploitable issues are recorded as high security findings; style nits as low code findings
+          - name: no-self-override
+            description: Does not override a HARD item without the user's explicit request and reason

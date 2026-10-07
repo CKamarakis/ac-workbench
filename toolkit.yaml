@@ -7,6 +7,21 @@ version: 1
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).
 phases: [capture, prd, brainstorm, artifacts, plan, build, verify, review, ui-polish, close, kit-issues]
 
+# Test policy per project type (spec: toolkit-registry "Test policy per project type").
+# /kit:verify runs these package.json scripts. Projects without a type use "none".
+project_types:
+  web-ui:
+    tests:
+      - { script: test, required: true }
+      - { script: "test:integration", required: false }
+    missing_required: hard
+    advisory: [browser check for UI flows the change touches]
+  none:
+    tests:
+      - { script: test, required: false }
+    missing_required: advisory
+    advisory: []
+
 # Situation-to-skill guide, shown in the cockpit.
 situations:
   - when: I have an idea or a note to keep
@@ -61,6 +76,9 @@ tools:
       build: /opsx:apply
       verify: openspec validate --strict + the change's tests
       close: /opsx:archive
+    # /kit:verify owns verify (quality-gates); openspec validate stays one of its inputs.
+    overlaps: [kit]
+    skip_skills: [openspec validate as the whole verify step]
     verdicts:
       - date: 2026-09-29
         status: trial
@@ -103,7 +121,7 @@ tools:
       build: /opsx:apply (worktree + subagent TDD)
       verify: /opsx:verify
       close: /opsx:archive
-    overlaps: [openspec]
+    overlaps: [openspec, kit]
     # Used per change for big or risky work; OpenSpec spec-driven stays the default.
     skip_skills: [superspec as the project default schema]
     verdicts:
@@ -271,16 +289,46 @@ tools:
       license: Own work
     reviewed_version: 0.1.0
     reviewed_on: 2026-10-01
-    phases: [capture, prd, kit-issues]
+    phases: [capture, prd, verify, kit-issues]
     skills:
       capture: /kit:capture
       prd: /kit:prd
+      verify: /kit:verify
       kit-issues: /kit:feedback
     verdicts:
       - date: 2026-10-01
         status: adopted
         rationale: Installed from the local directory marketplace in dev mode; ping skill verified
         evidence: evals/trials/plugin-install-check.md
+
+  - name: claude-code-builtins
+    source: built into Claude Code
+    tier: global
+    reason: Claude Code's own /code-review and /security-review commands; the review owner and an input to /kit:verify
+    cost: uses-claude-quota
+    status: adopted
+    scope: machine
+    check: claude --version
+    install:
+      win32: nothing to install - part of Claude Code
+    rubric:
+      problem_fit: Reviews a diff for bugs and security issues at an effort level you choose
+      overlap: None; the review phase had no owner
+      context_cost: Only when run
+      run_cost: Uses your Claude plan; higher effort levels use more tokens
+      trust: Anthropic, shipped with Claude Code
+      reversibility: Nothing installed
+      license: Part of Claude Code
+    reviewed_version: Claude Code 2026-10
+    reviewed_on: 2026-10-07
+    phases: [review]
+    skills:
+      review: /code-review
+    verdicts:
+      - date: 2026-10-07
+        status: adopted
+        rationale: Built in, no install; owner of the review phase and an input to /kit:verify (quality-gates)
+        evidence: openspec/changes/quality-gates/design.md
 
   - name: superpowers-marketplace
     source: github:obra/superpowers-marketplace

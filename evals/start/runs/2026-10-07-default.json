@@ -1,9 +1,9 @@
 {
   "skill": "start",
-  "date": "2026-10-06T22:42:39.773Z",
+  "date": "2026-10-07T13:57:38.373Z",
   "setup": "default",
   "interventions": 0,
-  "duration_ms": 30445,
+  "duration_ms": 28485,
   "summary": {
     "pass": 11,
     "fail": 0,
@@ -13,7 +13,7 @@
     {
       "id": "empty-folder-gets-tier2-basics",
       "outcome": "pass",
-      "duration_ms": 3652,
+      "duration_ms": 3337,
       "checks": [
         {
           "kind": "file-exists",
@@ -33,7 +33,7 @@
         {
           "kind": "git-ignored",
           "pass": true,
-          "detail": "PM-OS-v2.1/notes.md is ignored"
+          "detail": ".claude/settings.local.json is ignored"
         },
         {
           "kind": "content-match",
@@ -69,7 +69,7 @@
     {
       "id": "idempotent-rerun",
       "outcome": "pass",
-      "duration_ms": 8114,
+      "duration_ms": 7740,
       "checks": [
         {
           "kind": "command-exit",
@@ -92,7 +92,7 @@
     {
       "id": "existing-claude-md-unchanged-without-yes",
       "outcome": "pass",
-      "duration_ms": 5945,
+      "duration_ms": 5447,
       "checks": [
         {
           "kind": "command-exit",
@@ -115,7 +115,7 @@
     {
       "id": "missing-git-stops-before-writes",
       "outcome": "pass",
-      "duration_ms": 267,
+      "duration_ms": 265,
       "checks": [
         {
           "kind": "command-exit",
@@ -138,7 +138,7 @@
     {
       "id": "plugins-enabled-only-in-the-project",
       "outcome": "pass",
-      "duration_ms": 4251,
+      "duration_ms": 4005,
       "checks": [
         {
           "kind": "command-exit",
@@ -184,7 +184,7 @@
     {
       "id": "knowledge-folder-and-routing",
       "outcome": "pass",
-      "duration_ms": 3491,
+      "duration_ms": 3275,
       "checks": [
         {
           "kind": "file-exists",
@@ -243,7 +243,7 @@
     {
       "id": "plan-json-recommends-web-ui-for-next",
       "outcome": "pass",
-      "duration_ms": 4720,
+      "duration_ms": 4412,
       "checks": [
         {
           "kind": "command-exit",
@@ -261,7 +261,7 @@
     {
       "id": "skill-one-question-setup",
       "outcome": "pass",
-      "duration_ms": 2,
+      "duration_ms": 1,
       "checks": [
         {
           "kind": "content-match",
@@ -304,7 +304,7 @@
     {
       "id": "summary-three-parts",
       "outcome": "pass",
-      "duration_ms": 0,
+      "duration_ms": 1,
       "checks": [
         {
           "kind": "content-match",

@@ -15,7 +15,7 @@ Constraints:
 
 **Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
 
-Active changes: [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1 (`kit-local-mvp`) and M2 (`prd-pipeline`, `prd-pipeline-followups`) are archived (2026-10-07); current specs are in [`openspec/specs/`](../openspec/specs/). Next: M3 quality gates.
+Active changes: [`quality-gates`](../openspec/changes/quality-gates/) (M3, built 2026-10-07, archive after review) and [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1 and M2 are archived; current specs are in [`openspec/specs/`](../openspec/specs/).
 
 ```
  ac-workbench (marketplace repo)
@@ -149,6 +149,14 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - **Modes idea:** `solo` (lean) vs `team/client` (stakeholders, reviews, Asana or Linear for status).
 - A customer-facing MCP for Toughbubble is being explored in Toughbubble's own repo, not here.
 - Transcription stays free: `/voice`, phone dictation, Win+H, or local Whisper.
+
+## Quality gates (M3, built 2026-10-07)
+
+- **Block vs advise:** block on a failing required test, a missing required test command (`web-ui`), or a high-severity security finding; everything else is advisory. An override needs the user's reason, and it is recorded.
+- **Where:** gitleaks pre-commit (secrets); `/kit:verify` before archive (tests by project type, `/security-review`, `/code-review`, changed files without tests). A kit hook blocks `openspec archive` without a passing `verify.md`. Pre-push is opt-in.
+- **`/kit:judge`:** keyword risk checklist (payments, auth, personal data, migration, irreversible, wide reach, vague). SuperSpec is recommended when two items match, or any of payments, auth or migration. The user decides.
+- **Hooks:** they ship in the kit plugin (`plugins/kit/hooks/`) and are inert without `.claude/kit.json`. A failed Bash command fires `PostToolUseFailure` (seen live; not on the docs page read).
+- **Evidence:** `evals/trials/quality-gates-hooks.md`, `evals/trials/quality-gates-live.md`.
 
 ## Open ideas
 

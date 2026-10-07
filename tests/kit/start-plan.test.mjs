@@ -19,7 +19,7 @@ test('empty folder: creates every Tier 2 basic and plans git + openspec init', (
   assert.equal(act(p, 'openspec').command, 'openspec init --tools claude');
   assert.equal(act(p, 'openspec/config.yaml').action, 'after-init');
   assert.match(act(p, 'CLAUDE.md').content, /<!-- kit:routing:start -->[\s\S]*\/opsx:propose[\s\S]*<!-- kit:routing:end -->/);
-  assert.match(act(p, '.gitignore').content, /\[Pp\]\[Mm\]\[-_ \]\[Oo\]\[Ss\]\*\//);
+  assert.match(act(p, '.gitignore').content, /^\.claude\/settings\.local\.json$/m);
   assert.ok(p.changes > 0);
 });
 

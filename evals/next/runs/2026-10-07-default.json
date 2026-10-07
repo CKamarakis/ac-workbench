@@ -1,11 +1,11 @@
 {
   "skill": "next",
-  "date": "2026-10-06T22:42:01.263Z",
+  "date": "2026-10-07T13:56:56.813Z",
   "setup": "default",
   "interventions": 0,
-  "duration_ms": 20090,
+  "duration_ms": 24008,
   "summary": {
-    "pass": 7,
+    "pass": 8,
     "fail": 0,
     "pending": 0
   },
@@ -13,7 +13,7 @@
     {
       "id": "no-openspec-suggests-start",
       "outcome": "pass",
-      "duration_ms": 148,
+      "duration_ms": 125,
       "checks": [
         {
           "kind": "command-exit",
@@ -26,7 +26,7 @@
     {
       "id": "fresh-kit-project-suggests-brainstorm-owner",
       "outcome": "pass",
-      "duration_ms": 5162,
+      "duration_ms": 4827,
       "checks": [
         {
           "kind": "command-exit",
@@ -62,7 +62,7 @@
     {
       "id": "ready-prd-suggests-propose",
       "outcome": "pass",
-      "duration_ms": 4916,
+      "duration_ms": 4719,
       "checks": [
         {
           "kind": "command-exit",
@@ -80,7 +80,7 @@
     {
       "id": "notes-only-suggests-prd",
       "outcome": "pass",
-      "duration_ms": 4833,
+      "duration_ms": 4599,
       "checks": [
         {
           "kind": "command-exit",
@@ -98,7 +98,7 @@
     {
       "id": "skill-reports-prd-and-never-writes-status",
       "outcome": "pass",
-      "duration_ms": 0,
+      "duration_ms": 1,
       "checks": [
         {
           "kind": "content-match",
@@ -116,13 +116,31 @@
     {
       "id": "newest-ready-prd-named-first",
       "outcome": "pass",
-      "duration_ms": 5030,
+      "duration_ms": 4775,
       "checks": [
         {
           "kind": "command-exit",
           "pass": true,
           "detail": "exit 0 (expected 0)"
         },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "tasks-done-suggests-verify",
+      "outcome": "pass",
+      "duration_ms": 4961,
+      "checks": [
         {
           "kind": "command-exit",
           "pass": true,

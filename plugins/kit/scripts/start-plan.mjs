@@ -108,7 +108,7 @@ export const TYPE_HINTS = {
 };
 
 const ACTION_ABOUT = {
-  '.gitignore': ["Adds the kit's block: ignores licensed folders such as PM-OS", 'yes', 'keeps licensed material out of git; only the kit block changes'],
+  '.gitignore': ["Adds the kit's block: keeps personal Claude Code settings out of git", 'yes', 'your settings.local.json stays private; only the kit block changes'],
   'CLAUDE.md': ["Adds or updates the kit's routing section: which skill to use per phase, plus the knowledge and PRD rules", 'yes', "the agent follows the kit's workflow; your own text in the file is kept"],
   'openspec/config.yaml': ["Points OpenSpec's context at docs/project-context.md", 'yes', 'every proposal then reads your project context'],
   '.claude/kit.json': ['The kit stamp: kit version, project type, tools and knowledge folder', 'yes', 'the kit reads it to re-sync this project later'],
@@ -178,7 +178,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   }
 
   // CLAUDE.md (managed routing block)
-  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir, libraryDocs: true });
+  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir, libraryDocs: true, qualityGates: true });
   const cmCur = norm(read(path.join(abs, 'CLAUDE.md')));
   if (cmCur == null) actions.push({ id: 'CLAUDE.md', kind: 'file', action: 'create', content: fill(template('CLAUDE.md'), { project, routing: block }) });
   else {

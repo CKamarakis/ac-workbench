@@ -93,3 +93,11 @@ test('followups 5.7: routing block carries the library docs rule (npx, no sign-i
   assert.match(block, /error that comes from a library/);
   assert.ok(block.endsWith(BLOCK_END));
 });
+
+test('quality-gates 5.2: routing block carries the judge and verify-before-archive rules', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { qualityGates: true });
+  assert.match(block, /### Quality gates/);
+  assert.match(block, /At `\/opsx:propose`, run `\/kit:judge`/);
+  assert.match(block, /Before `\/opsx:archive`, run `\/kit:verify`/);
+  assert.match(block, /only when the user explicitly asks, with their reason/);
+});

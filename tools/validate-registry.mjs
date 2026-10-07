@@ -175,6 +175,21 @@ export function validate(doc) {
     }
   }
 
+  // Test policy per project type (quality-gates; spec: toolkit-registry "Test policy per project type").
+  if (doc.project_types !== undefined) {
+    if (!isMapping(doc.project_types)) errors.push('registry.project_types: must be a mapping');
+    else {
+      const known = new Set(['none', ...doc.tools.map((t) => (isMapping(t) && typeof t.tier === 'string' && t.tier.startsWith('project-type:') ? t.tier.slice(13) : null)).filter(Boolean)]);
+      for (const [type, pol] of Object.entries(doc.project_types)) {
+        const at = `registry.project_types.${type}`;
+        if (!known.has(type)) errors.push(`${at}: unknown project type "${type}" (no tool uses it and it isn't "none")`);
+        if (!isMapping(pol) || !Array.isArray(pol.tests) || pol.tests.length === 0) { errors.push(`${at}.tests: needs at least one command`); continue; }
+        pol.tests.forEach((c, i) => { if (!isMapping(c) || typeof c.script !== 'string' || !c.script) errors.push(`${at}.tests[${i}].script: missing`); });
+        if (!['hard', 'advisory'].includes(pol.missing_required)) errors.push(`${at}.missing_required: must be hard or advisory`);
+      }
+    }
+  }
+
   return { errors, warnings };
 }
 

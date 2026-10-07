@@ -10,6 +10,7 @@ import { laneMap } from './lanes.mjs';
 import { loadRegistry } from './setup.mjs';
 import { locate, pathWith } from './locate.mjs';
 import { knowledgeDir, listKnowledge } from './knowledge.mjs';
+import { verifyStatus } from './verify.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 
@@ -80,19 +81,20 @@ export function prdSuggest({ knowledge, map, activeCount = 0, changedSince = () 
  *   statusOf: name -> { artifacts: [{ id, status }], isPlanningComplete }               (openspec status --json)
  *   map: laneMap(registry)
  */
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
-  const active = (openspec.changes ?? []).filter(c => c.status !== 'complete')
+  // Every change in `openspec list` is unarchived; "complete" only means all tasks are ticked (verify + archive still due).
+  const active = (openspec.changes ?? []).filter(c => c.status !== 'archived')
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
   const { suggestion, warnings } = prdSuggest({ knowledge, map, activeCount: active.length, changedSince });
   const withWarnings = s => (warnings.length ? { ...s, warnings } : s);
   if (suggestion) return withWarnings(suggestion);
-  return withWarnings(openspecSuggest({ active, statusOf, map }));
+  return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf }));
 }
 
-function openspecSuggest({ active, statusOf, map }) {
+function openspecSuggest({ active, statusOf, map, verifyOf }) {
   if (!active.length) return step(map, 'brainstorm', 'No active change: explore the next idea before proposing it.');
 
   const change = active[0];
@@ -113,8 +115,13 @@ function openspecSuggest({ active, statusOf, map }) {
   if (total === 0 || completed < total) {
     return step(map, 'build', `Planning of "${change.name}" is complete; ${total - completed} of ${total} tasks are open.`, extra);
   }
-  const verify = step(map, 'verify', `All ${total} tasks of "${change.name}" are done: verify, then close the change.`, extra);
   const close = lane(map, 'close');
+  // quality-gates: a passing (or overridden) verify report means the change can be closed.
+  const v = verifyOf(change.name);
+  if (v === 'pass' || v === 'overridden') return step(map, 'close', `All ${total} tasks of "${change.name}" are done and verify ${v === 'pass' ? 'passed' : 'was overridden'}: close the change.`, extra);
+  const verify = step(map, 'verify', v === 'fail'
+    ? `Verify failed for "${change.name}": fix the blocking items (see its verify.md) and verify again.`
+    : `All ${total} tasks of "${change.name}" are done: verify, then close the change.`, extra);
   return { ...verify, then: close.owner ? (close.owner.skill ?? close.owner.name) : null };
 }
 
@@ -181,6 +188,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const ri = args.indexOf('--registry');
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
-  const s = suggest({ openspec, statusOf: name => openspecJson(`status --change "${name}" --json`, dir), map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir) });
+  const s = suggest({ openspec, statusOf: name => openspecJson(`status --change "${name}" --json`, dir), map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } } });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

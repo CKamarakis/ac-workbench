@@ -193,3 +193,28 @@ test('followups 4.3: two Ready PRDs on a real repo -> the newer one is named, th
   assert.equal(s.prd, 'knowledge/prds/zulu.md');
   assert.deepEqual(s.otherReady, ['alpha']);
 });
+
+test('quality-gates 5.3: tasks done -> verify owner; pass -> close; fail -> verify again', () => {
+  const reg = { phases: ['verify', 'close'], tools: [
+    { name: 'openspec', status: 'adopted', phases: ['verify', 'close'], overlaps: ['kit'], skills: { verify: 'openspec validate', close: '/opsx:archive' } },
+    { name: 'kit', status: 'adopted', phases: ['verify'], skills: { verify: '/kit:verify' } },
+  ] };
+  const m = laneMap(reg);
+  const base = { openspec: { root: {}, changes: [change('add-x', 5, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: m };
+  const none = suggest({ ...base, verifyOf: () => 'missing' });
+  assert.equal(none.use, '/kit:verify');
+  assert.equal(none.then, '/opsx:archive');
+  const ok = suggest({ ...base, verifyOf: () => 'pass' });
+  assert.equal(ok.use, '/opsx:archive');
+  assert.match(ok.reason, /verify passed: close the change/);
+  const bad = suggest({ ...base, verifyOf: () => 'fail' });
+  assert.equal(bad.use, '/kit:verify');
+  assert.match(bad.reason, /Verify failed for "add-x"/);
+});
+
+test('quality-gates 5.3 fix: a change openspec reports as "complete" (all tasks ticked) is still active', () => {
+  const c = { ...change('add-x', 3, 3), status: 'complete' };
+  const s = suggest({ openspec: { root: {}, changes: [c] }, statusOf: () => ({ isPlanningComplete: true }), map, verifyOf: () => 'missing' });
+  assert.equal(s.phase, 'verify');
+  assert.equal(s.change, 'add-x');
+});

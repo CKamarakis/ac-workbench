@@ -52,4 +52,4 @@ Run this when the PRD exists and the user wants changes, or new notes should fee
 
 - You propose; the user decides. Nothing is written without a yes: no draft, no section, no status.
 - Never read anything under `archive/`. Never delete files. Don't commit.
-- The template and your wording are the kit's own words. Never paste text from licensed material (e.g. PM-OS) into a PRD.
+- The template and your wording are the kit's own words. Never paste text from third-party material you don't own the rights to into a PRD.

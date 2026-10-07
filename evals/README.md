@@ -33,7 +33,7 @@ cases:
         expect: 0
         stdout_match: "On branch"
       - kind: git-ignored       # git ignores this path in the sandbox
-        path: PM-OS-v2.1/notes.md
+        path: .claude/settings.local.json
       - kind: content-match     # file content matches regex (or must NOT match with `negate: true`)
         path: .gitignore
         pattern: "kit:start"

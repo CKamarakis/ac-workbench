@@ -1,0 +1,88 @@
+# Eval cases for the flow judge (spec: flow-recommendation "Labelled eval set").
+# Each description is labelled with the flow a careful person would pick. When one fails,
+# adjust the word lists in plugins/kit/scripts/judge.mjs, never the label.
+# Known limit (by design, conservative): a cosmetic change in a high-risk area (e.g. a typo on the
+# login button) is flagged SuperSpec because the area matches; the user decides.
+skill: judge
+vars:
+  judge: '{{kit}}/scripts/judge.mjs'
+
+cases:
+  - id: openspec-dark-mode-toggle
+    description: 'The description "Add a dark mode toggle to the settings page" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Add a dark mode toggle to the settings page"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: openspec-rename-page-title
+    description: 'The description "Rename the dashboard page title and fix spacing in the header component" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Rename the dashboard page title and fix spacing in the header component"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: openspec-shipping-address-display
+    description: 'The description "Display the shipping address label in a larger font" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Display the shipping address label in a larger font"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: openspec-profile-email-shown
+    description: 'The description "Show the user email address on the profile page" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Show the user email address on the profile page"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: openspec-sort-notes
+    description: 'The description "Sort notes by most recently updated first in the sidebar" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Sort notes by most recently updated first in the sidebar"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: openspec-paypal-word-boundary
+    description: 'The description "Add a hint that we plan to support more providers later" gets plain OpenSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Add a hint that we plan to support more providers later"
+        stdout_match: '^Recommended flow: plain OpenSpec'
+  - id: superspec-stripe-and-migration
+    description: 'The description "Add Stripe payments and migrate the orders table" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Add Stripe payments and migrate the orders table"
+        stdout_match: '^Recommended flow: SuperSpec'
+  - id: superspec-password-reset
+    description: 'The description "Add a password reset flow with email tokens" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Add a password reset flow with email tokens"
+        stdout_match: '^Recommended flow: SuperSpec'
+  - id: superspec-roles
+    description: 'The description "Introduce admin and editor roles with permissions per workspace" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Introduce admin and editor roles with permissions per workspace"
+        stdout_match: '^Recommended flow: SuperSpec'
+  - id: superspec-backfill
+    description: 'The description "Backfill the new owner column for all existing boards" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Backfill the new owner column for all existing boards"
+        stdout_match: '^Recommended flow: SuperSpec'
+  - id: superspec-purge-and-pii
+    description: 'The description "Purge inactive accounts permanently, including their personal data" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Purge inactive accounts permanently, including their personal data"
+        stdout_match: '^Recommended flow: SuperSpec'
+  - id: superspec-wide-and-vague
+    description: 'The description "Rework the UI, API, database queries, notifications and background jobs; scope TBD" gets SuperSpec'
+    checks:
+      - kind: command-exit
+        command: node "{{judge}}" --text "Rework the UI, API, database queries, notifications and background jobs; scope TBD"
+        stdout_match: '^Recommended flow: SuperSpec'
+
+  - id: skill-user-decides
+    description: The judge skill shows the reasons and leaves the flow choice to the user
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/judge/SKILL.md', pattern: '\*\*The user decides\*\*; never switch flows on your own' }
+      - { kind: content-match, path: '{{kit}}/skills/judge/SKILL.md', pattern: 'scripts/judge\.mjs" --file <path>' }

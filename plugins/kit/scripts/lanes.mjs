@@ -72,6 +72,17 @@ export function knowledgeSection(dir) {
 }
 
 /** Library docs rule (followups D5c; spec: skill-routing "Library docs rule"). context7 through npx: no install, no sign-in. */
+/** Quality gates (quality-gates spec "Review owners", flow-recommendation). */
+export function qualityGatesSection() {
+  return [
+    '### Quality gates',
+    '',
+    '- At `/opsx:propose`, run `/kit:judge` on the PRD or description and show its OpenSpec / SuperSpec recommendation with the reasons. The user decides; never switch flows on your own.',
+    '- Before `/opsx:archive`, run `/kit:verify`. A kit hook blocks the archive until the change has a passing verify report. Failing tests and high-severity security findings block; everything else is advice for the user.',
+    '- Override a blocking item only when the user explicitly asks, with their reason (`/kit:verify` records it).',
+  ];
+}
+
 export function libraryDocsSection() {
   return [
     '### Library docs',
@@ -83,7 +94,7 @@ export function libraryDocsSection() {
 }
 
 /** The managed CLAUDE.md block (spec: skill-routing "Projects receive routing rules"). */
-export function routingBlock(map, { kitVersion, knowledgeDir = null, libraryDocs = false } = {}) {
+export function routingBlock(map, { kitVersion, knowledgeDir = null, libraryDocs = false, qualityGates = false } = {}) {
   const rows = map.lanes.map(l => {
     const use = l.owner ? (l.owner.skill ? `\`${l.owner.skill}\`` : `${l.owner.name} (no skill recorded)`)
       : l.conflict.length ? `conflict: ${l.conflict.join(' / ')}, ask` : 'no owner yet, ask';
@@ -106,6 +117,7 @@ export function routingBlock(map, { kitVersion, knowledgeDir = null, libraryDocs
     skip,
     ...(knowledgeDir ? ['', ...knowledgeSection(knowledgeDir)] : []),
     ...(libraryDocs ? ['', ...libraryDocsSection()] : []),
+    ...(qualityGates ? ['', ...qualityGatesSection()] : []),
     BLOCK_END,
   ].join('\n');
 }
@@ -116,6 +128,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const map = laneMap(JSON.parse(fs.readFileSync(file, 'utf8')));
   if (args.includes('--block')) {
     const version = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
-    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge', libraryDocs: true }));
+    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge', libraryDocs: true, qualityGates: true }));
   } else console.log(formatLanes(map));
 }

@@ -17,12 +17,13 @@ function repoWith(files) {
 }
 const ignored = (d, p) => spawnSync('git', ['check-ignore', '-q', p], { cwd: d }).status === 0;
 
-test('.gitignore block ignores licensed folders in any version or spelling', () => {
-  const d = repoWith(['PM-OS-v2.1/a.md', 'pm_os/b.md', 'PMOS 3.0/c.md', 'PM-OS-v1.1/PM-OS/d.md', 'src/app.js']);
-  for (const p of ['PM-OS-v2.1/a.md', 'pm_os/b.md', 'PMOS 3.0/c.md', 'PM-OS-v1.1/PM-OS/d.md']) assert.ok(ignored(d, p), `${p} should be ignored`);
+test('.gitignore block keeps personal Claude Code settings private, and nothing else (quality-gates 6.1)', () => {
+  const d = repoWith(['.claude/settings.local.json', '.claude/settings.json', 'src/app.js']);
+  assert.ok(ignored(d, '.claude/settings.local.json'));
+  assert.equal(ignored(d, '.claude/settings.json'), false);
   assert.equal(ignored(d, 'src/app.js'), false);
-  const untracked = spawnSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: d, encoding: 'utf8' }).stdout;
-  assert.doesNotMatch(untracked, /PM-?OS|pm_os/i);
+  const block = fs.readFileSync(path.join(templates, 'gitignore-block.txt'), 'utf8');
+  assert.equal(block.split(/\r?\n/).filter(l => l && !l.startsWith('#')).length, 1);
 });
 
 test('.gitignore block has exactly one start and one end marker', () => {

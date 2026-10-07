@@ -74,3 +74,17 @@ cases:
       - kind: command-exit
         command: node "{{next}}" --dir .
         stdout_match: 'PRD "zulu" is Ready[\s\S]*other Ready PRDs: alpha'
+
+  - id: tasks-done-suggests-verify
+    description: A change with all tasks done and no verify report gets /kit:verify, then /opsx:archive (quality-gates 5.3)
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# Proposal\n\n## Why\n\nTest.\n\n## What Changes\n\n- x\n"
+        openspec/changes/add-x/design.md: "# Design\n\nx\n"
+        openspec/changes/add-x/specs/x/spec.md: "# Spec Delta\n\n## Purpose\n\nA test capability for the next-step eval sandbox.\n\n## ADDED Requirements\n\n### Requirement: X\nThe system SHALL x.\n\n#### Scenario: X\n- **WHEN** x\n- **THEN** x\n"
+        openspec/changes/add-x/tasks.md: "# Tasks\n\n## 1. X\n\n- [x] 1.1 Done\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:verify[\s\S]*then:  /opsx:archive'

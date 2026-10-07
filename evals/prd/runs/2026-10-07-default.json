@@ -1,9 +1,9 @@
 {
   "skill": "prd",
-  "date": "2026-10-06T22:42:21.485Z",
+  "date": "2026-10-07T13:57:20.978Z",
   "setup": "default",
   "interventions": 0,
-  "duration_ms": 1149,
+  "duration_ms": 1074,
   "summary": {
     "pass": 7,
     "fail": 0,
@@ -31,7 +31,7 @@
     {
       "id": "new-prd-from-notes",
       "outcome": "pass",
-      "duration_ms": 322,
+      "duration_ms": 276,
       "checks": [
         {
           "kind": "command-exit",
@@ -54,7 +54,7 @@
     {
       "id": "section-conflict-protects-user-edits",
       "outcome": "pass",
-      "duration_ms": 387,
+      "duration_ms": 395,
       "checks": [
         {
           "kind": "command-exit",
@@ -87,7 +87,7 @@
     {
       "id": "prd-check-reports-not-guesses",
       "outcome": "pass",
-      "duration_ms": 157,
+      "duration_ms": 134,
       "checks": [
         {
           "kind": "command-exit",
@@ -100,7 +100,7 @@
     {
       "id": "status-only-valid-values",
       "outcome": "pass",
-      "duration_ms": 280,
+      "duration_ms": 265,
       "checks": [
         {
           "kind": "command-exit",
@@ -118,7 +118,7 @@
     {
       "id": "skill-rules",
       "outcome": "pass",
-      "duration_ms": 1,
+      "duration_ms": 2,
       "checks": [
         {
           "kind": "content-match",
@@ -161,7 +161,7 @@
     {
       "id": "shortlist-and-gaps",
       "outcome": "pending",
-      "duration_ms": 1,
+      "duration_ms": 0,
       "checks": [],
       "rubric": [
         {
@@ -187,7 +187,7 @@
     {
       "id": "skill-offers-prds-newest-first",
       "outcome": "pass",
-      "duration_ms": 0,
+      "duration_ms": 1,
       "checks": [
         {
           "kind": "content-match",

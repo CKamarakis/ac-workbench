@@ -1,19 +1,19 @@
 {
-  "skill": "registry",
-  "date": "2026-10-06T22:42:22.640Z",
+  "skill": "judge",
+  "date": "2026-10-07T13:56:55.093Z",
   "setup": "default",
   "interventions": 0,
-  "duration_ms": 2529,
+  "duration_ms": 1715,
   "summary": {
-    "pass": 12,
+    "pass": 13,
     "fail": 0,
     "pending": 0
   },
   "cases": [
     {
-      "id": "valid-registry",
+      "id": "openspec-dark-mode-toggle",
       "outcome": "pass",
-      "duration_ms": 201,
+      "duration_ms": 155,
       "checks": [
         {
           "kind": "command-exit",
@@ -24,61 +24,9 @@
       "rubric": []
     },
     {
-      "id": "missing-field",
+      "id": "openspec-rename-page-title",
       "outcome": "pass",
-      "duration_ms": 200,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "bad-enum",
-      "outcome": "pass",
-      "duration_ms": 185,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "status-verdict-mismatch",
-      "outcome": "pass",
-      "duration_ms": 196,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "unresolved-phase-conflict",
-      "outcome": "pass",
-      "duration_ms": 202,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "resolved-overlap",
-      "outcome": "pass",
-      "duration_ms": 192,
+      "duration_ms": 137,
       "checks": [
         {
           "kind": "command-exit",
@@ -89,22 +37,9 @@
       "rubric": []
     },
     {
-      "id": "missing-install-data",
+      "id": "openspec-shipping-address-display",
       "outcome": "pass",
-      "duration_ms": 197,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "later-without-install",
-      "outcome": "pass",
-      "duration_ms": 186,
+      "duration_ms": 180,
       "checks": [
         {
           "kind": "command-exit",
@@ -115,9 +50,9 @@
       "rubric": []
     },
     {
-      "id": "needs-review-flag",
+      "id": "openspec-profile-email-shown",
       "outcome": "pass",
-      "duration_ms": 176,
+      "duration_ms": 146,
       "checks": [
         {
           "kind": "command-exit",
@@ -128,60 +63,123 @@
       "rubric": []
     },
     {
-      "id": "writes-json-on-success",
+      "id": "openspec-sort-notes",
       "outcome": "pass",
-      "duration_ms": 380,
+      "duration_ms": 148,
       "checks": [
         {
           "kind": "command-exit",
           "pass": true,
           "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-paypal-word-boundary",
+      "outcome": "pass",
+      "duration_ms": 153,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-stripe-and-migration",
+      "outcome": "pass",
+      "duration_ms": 137,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-password-reset",
+      "outcome": "pass",
+      "duration_ms": 129,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-roles",
+      "outcome": "pass",
+      "duration_ms": 134,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-backfill",
+      "outcome": "pass",
+      "duration_ms": 141,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-purge-and-pii",
+      "outcome": "pass",
+      "duration_ms": 127,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-wide-and-vague",
+      "outcome": "pass",
+      "duration_ms": 128,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-user-decides",
+      "outcome": "pass",
+      "duration_ms": 0,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/judge/SKILL.md matches /\\*\\*The user decides\\*\\*; never switch flows on your own/"
         },
         {
           "kind": "content-match",
           "pass": true,
-          "detail": "toolkit.json matches /\"openspec\"/"
-        },
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 0 (expected 0)"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "failure-keeps-previous-json",
-      "outcome": "pass",
-      "duration_ms": 219,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        },
-        {
-          "kind": "content-match",
-          "pass": true,
-          "detail": "toolkit.json matches /^\\{\"previous\": true\\}$/"
-        }
-      ],
-      "rubric": []
-    },
-    {
-      "id": "stale-json-detected",
-      "outcome": "pass",
-      "duration_ms": 195,
-      "checks": [
-        {
-          "kind": "command-exit",
-          "pass": true,
-          "detail": "exit 1 (expected 1)"
-        },
-        {
-          "kind": "content-match",
-          "pass": true,
-          "detail": "toolkit.json matches /^\\{\"stale\": true\\}$/"
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/judge/SKILL.md matches /scripts/judge\\.mjs\" --file <path>/"
         }
       ],
       "rubric": []

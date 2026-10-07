@@ -23,6 +23,7 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 |---|---|
 | `version` | Format version (currently `1`) |
 | `phases` | Workflow phases. Each gets one owner in the lane map |
+| `project_types` | Test policy per project type (and `none`): `tests` (package.json scripts, each `required` or not), `missing_required` (`hard` or `advisory`), `advisory` (checks listed for the user). Used by `/kit:verify` |
 | `situations` | Situation-to-skill guide: `when`, plus `use` and/or `phase` |
 | `tools` | The entries (below) |
 

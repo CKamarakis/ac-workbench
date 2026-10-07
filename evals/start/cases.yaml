@@ -8,7 +8,7 @@ vars:
 
 cases:
   - id: empty-folder-gets-tier2-basics
-    description: An empty folder gets git, .gitignore (licensed folders ignored), OpenSpec pointing at the context doc, CLAUDE.md routing, context doc, stamp, and a project-list entry
+    description: An empty folder gets git, .gitignore (personal settings ignored), OpenSpec pointing at the context doc, CLAUDE.md routing, context doc, stamp, and a project-list entry
     setup:
       files:
         absent.js: "process.exit(require('fs').existsSync(process.argv[2]) ? 1 : 0)"
@@ -18,7 +18,7 @@ cases:
       - { kind: file-exists, path: .git }
       - { kind: file-exists, path: docs/project-context.md }
       - { kind: file-exists, path: .claude/kit.json }
-      - { kind: git-ignored, path: PM-OS-v2.1/notes.md }
+      - { kind: git-ignored, path: .claude/settings.local.json }
       - { kind: content-match, path: .gitignore, pattern: '^# kit:start' }
       - { kind: content-match, path: openspec/config.yaml, pattern: 'docs/project-context\.md' }
       - { kind: content-match, path: CLAUDE.md, pattern: '<!-- kit:routing:start -->[\s\S]*/opsx:apply[\s\S]*<!-- kit:routing:end -->' }

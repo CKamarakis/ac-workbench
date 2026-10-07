@@ -73,8 +73,8 @@ test('command-exit with expected code and stdout match', () => {
 });
 
 test('git-ignored uses the sandbox .gitignore (licensed folder pattern)', () => {
-  const d = makeSandbox({ git_init: true, files: { '.gitignore': '[Pp][Mm][-_ ][Oo][Ss]*/\n', 'PM-OS-v2.1/a.md': 'x', 'src/a.js': 'x' } });
-  assert.equal(runCheck({ kind: 'git-ignored', path: 'PM-OS-v2.1/a.md' }, d).pass, true);
+  const d = makeSandbox({ git_init: true, files: { '.gitignore': 'private/\n', 'private/a.md': 'x', 'src/a.js': 'x' } });
+  assert.equal(runCheck({ kind: 'git-ignored', path: 'private/a.md' }, d).pass, true);
   assert.equal(runCheck({ kind: 'git-ignored', path: 'src/a.js' }, d).pass, false);
 });
 

@@ -367,3 +367,15 @@ test('recommend: yes/no only, and needs recommend_why (prd-pipeline-followups 1.
   t.recommend_why = 'Optional';
   assert.deepEqual(validate(doc).errors, []);
 });
+
+test('project_types: unknown type, empty policy and bad missing_required are rejected (quality-gates 1.1)', () => {
+  const doc = validDoc();
+  doc.project_types = { mystery: { tests: [{ script: 'test', required: true }], missing_required: 'hard' } };
+  assert.match(validate(doc).errors.join('\n'), /project_types\.mystery: unknown project type "mystery"/);
+  doc.project_types = { none: { tests: [], missing_required: 'hard' } };
+  assert.match(validate(doc).errors.join('\n'), /project_types\.none\.tests: needs at least one command/);
+  doc.project_types = { none: { tests: [{ script: 'test' }], missing_required: 'maybe' } };
+  assert.match(validate(doc).errors.join('\n'), /missing_required: must be hard or advisory/);
+  doc.project_types = { none: { tests: [{ script: 'test', required: false }], missing_required: 'advisory' } };
+  assert.deepEqual(validate(doc).errors, []);
+});

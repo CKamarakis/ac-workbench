@@ -12,3 +12,11 @@ cases:
       - kind: content-match
         path: '{{kit}}/skills/ping/SKILL.md'
         pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ping\.mjs'
+  - id: no-misleading-env-line
+    description: Ping doesn't print the unset shell variable (it misled an agent into reporting a problem), and the skill explains it
+    checks:
+      - { kind: command-exit, command: 'node "{{kit}}/scripts/ping.mjs" > out.txt' }
+      - { kind: content-match, path: out.txt, pattern: '^skills \(\d+\): ' }
+      - { kind: content-match, path: out.txt, pattern: 'not set', negate: true }
+      - { kind: content-match, path: '{{kit}}/skills/ping/SKILL.md', pattern: "Don't report it as a problem" }
+      - { kind: content-match, path: '{{kit}}/skills/ping/SKILL.md', pattern: 'task 2\.2', negate: true }

@@ -14,7 +14,7 @@ Gives a flow recommendation the user can check: the matched risk items and the w
    # or
    node "${CLAUDE_PLUGIN_ROOT}/scripts/judge.mjs" --text "<description>"
    ```
-3. Show the result as printed (recommended flow, why, the matched items), and ask which flow to use.
+3. Show the result as printed (recommended flow, why, the matched items), then ask which flow to use **with the AskUserQuestion tool**: the recommended flow first with " (Recommended)" in its label, the other second.
    - **OpenSpec:** continue with `/opsx:propose` as usual.
    - **SuperSpec:** say it's added for this project on demand (it isn't installed by `/kit:start`), and that its setup needs the user's steps; don't install anything without a yes.
 4. The checklist is conservative: a cosmetic change in a risky area (a typo on the login page) can be flagged. Say so when it looks like that, and let the user pick.

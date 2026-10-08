@@ -133,7 +133,7 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask nothing else about tools' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'typeOptions' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'available on demand' }
-      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask \*\*one\*\* question: apply all of it' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask \*\*one\*\* question, \*\*with the AskUserQuestion tool\*\*' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'one question each', negate: true }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'A recommendation is not an answer\.' }
 
@@ -143,3 +143,10 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Summarize in three parts' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: '\*\*Needs you:\*\* only steps that block using the project \*\*now\*\*' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "Don't repeat internal install notes" }
+
+  - id: questions-are-clickable
+    description: The type question and the confirm question use the AskUserQuestion tool, recommended option first
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask with the AskUserQuestion tool\*\* \(clickable options\)' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'with the AskUserQuestion tool\*\*: "Apply all \(Recommended\)"' }
+      - { kind: content-match, path: '{{kit}}/skills/judge/SKILL.md', pattern: 'with the AskUserQuestion tool\*\*: the recommended flow first' }

@@ -20,7 +20,8 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
    - `WARNING`: show it as is.
 
 2. **Ask the one question: the project type.** Run the plan once with `--type none --json` (step 3's command) to get `typeOptions`; the text comes from there, never from memory.
-   - Each option shows its `about` (the tools it adds). If one has `recommended: true`, offer it first with `Recommended (<why>)`; otherwise offer "none" first ("no type-specific tools; add a type later").
+   - **Ask with the AskUserQuestion tool** (clickable options), not as plain text. One option per type plus "none"; each option's description is its `about` (the tools it adds).
+   - If one has `recommended: true`, put it first and add " (Recommended)" to its label, with the `why` in its description; otherwise put "none" first ("no type-specific tools; add a type later").
    - If the user passed a type as an argument, use it and don't ask.
    - **Ask nothing else about tools.** Global and type tools install without questions. Opt-in tools (`offeredTools`, e.g. SuperSpec, Superpowers) are **not** asked about and not installed: they're added on demand when a change needs them. Pass `--opt-in` only when the user explicitly asks for a tool.
 
@@ -38,7 +39,7 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
 
 4. **Confirm with one yes.**
    - One message: a one-line summary of what gets added (the `CREATE` items and tool installs), then each `CHANGE` with its diff, its `about` and `Recommended: <recommend> (<why>)` from the plan JSON.
-   - Ask **one** question: apply all of it? The user may answer "yes, except <file>".
+   - Ask **one** question, **with the AskUserQuestion tool**: "Apply all (Recommended)", "Apply all except some files" (then ask which), "Cancel". The diffs are shown in your message above the question, never inside it.
    - Never apply a change the user didn't confirm. A recommendation is not an answer.
 
 5. **Apply** with the same type, and only the confirmed changes:

@@ -1,6 +1,6 @@
 {
   "name": "kit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Personal Claude Code kit: project starter, next-step routing, feedback inbox, harness review",
   "author": { "name": "Chris Kamarakis" }
 }

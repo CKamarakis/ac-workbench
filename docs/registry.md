@@ -51,6 +51,7 @@ Commit `toolkit.yaml` and `toolkit.json` together. A stale JSON fails `registry:
 | `skills` | no | Phase → the skill or command to use for it, e.g. `build: /opsx:apply`. Shown in the lane map and the CLAUDE.md routing block |
 | `overlaps` | no | Tools it overlaps with. Two active tools owning one phase need this on at least one of them |
 | `skip_skills` | no | That tool's skills which the kit does not use |
+| `install_why` | no | One line for the user when the install reaches beyond the project (e.g. a machine-wide CLI): why it's installed that way. `/kit:start` shows it with the install and in its summary |
 | `first_use` | no | One line for the user: a step the tool needs the first time it's used (e.g. its own init command). `/kit:start` lists it under "Later", never as a setup step |
 | `recommend` | no | `yes` or `no`: the answer `/kit:start` recommends when it offers this opt-in (`project`-tier) tool. Without it the recommendation is `no` ("optional; add it later when a change needs it") |
 | `recommend_why` | with `recommend` | One line shown with the recommendation, e.g. why most projects don't need it |

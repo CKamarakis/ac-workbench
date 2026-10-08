@@ -226,3 +226,13 @@ test('followups 5.5: first_use goes under Later; install notes hidden for INSTAL
   assert.match(text, /Later \(when you first use it\):\n  \S+\s+When you first do UI polish, run \/x init once/);
   assert.doesNotMatch(text, /INTERNAL NOTE/);
 });
+
+test('install_why is shown under an install, not for a present tool', () => {
+  const reg = structuredClone(registry);
+  const t = reg.tools.find(x => x.tier === 'project-type:web-ui' && !x.interactive && ['adopted', 'trial'].includes(x.status));
+  t.install_why = 'machine-wide CLI, idle until called';
+  const text = formatPlan(planProject({ dir: tmp(), registry: reg, type: 'web-ui', version: '9.9.9', today: '2026-10-01', deps: deps() }));
+  assert.ok(text.includes(`INSTALL  ${t.name}`) && text.includes('why: machine-wide CLI, idle until called'), text);
+  const present = formatPlan(planProject({ dir: tmp(), registry: reg, type: 'web-ui', version: '9.9.9', today: '2026-10-01', deps: deps([t.check.split(' ')[1]]) }));
+  assert.doesNotMatch(present, /why: machine-wide CLI/);
+});

@@ -120,7 +120,7 @@ export function formatResult(r) {
   for (const c of r.ran) L.push(`  ran        ${c}`);
   for (const s of r.skipped) L.push(`  skipped    ${s.id}: ${s.reason}`);
   for (const e of r.errors) L.push(`  ERROR      ${e}`);
-  for (const n of r.tools.installed) L.push(`  installed  ${n}`);
+  for (const n of r.tools.installed) { const w = r.plan?.tools?.find(t => t.name === n)?.installWhy; L.push(`  installed  ${n}${w ? `\n             why: ${w}` : ''}`); }
   for (const n of r.tools.present) L.push(`  present    ${n}`);
   for (const f of r.tools.fallback) L.push(`  enabled    ${f.name} (written to .claude/settings.json; the CLI install failed: ${f.error})`);
   for (const f of r.tools.failed) L.push(`  FAILED     ${f.name}: ${f.error}\n             fix: ${f.fix}`);

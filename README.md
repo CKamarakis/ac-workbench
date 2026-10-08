@@ -90,7 +90,7 @@ Plain skills cost little while idle: only their name and one line sit in context
 | **`/code-review`, `/security-review`** | built into Claude Code | When `/kit:verify` runs them, or when you call them |
 | **context7** | nothing to install | Called with `npx` when the agent needs current library docs (a `CLAUDE.md` rule), or after the library-error hint. No sign-in |
 | **Impeccable** | per project, type `web-ui` | Its `/impeccable …` commands when you call them (critique, audit, polish…). **Its hooks run on their own** in that project: at session start, after each edit to a UI file (quick design check) and at the end of each turn (deeper pass). First use: `/impeccable init` |
-| **Playwright CLI** | per project, type `web-ui` (plus the CLI once per machine) | **Only when you ask** for a browser check (in `/kit:verify`); never on every verify |
+| **Playwright CLI** | per project, type `web-ui` (plus the CLI once per machine) | **Only when you ask** for a browser check (in `/kit:verify`); never on every verify. **Why machine-wide:** the `playwright-cli` command is installed once, like git. It's idle until a browser check calls it, and the skill expects that command (each project gets only the skill). Running it through `npx` instead works, but then every browser step asks for permission (tested 2026-10-08) |
 | **SuperSpec + Superpowers** | not installed by default | **On demand**, for a big or risky change (`/kit:judge` recommends it; you decide). Superpowers has a session-start hook, so it's added only when needed |
 | **Emil's skills** | not installed by default | **On demand**, for motion and animation work |
 

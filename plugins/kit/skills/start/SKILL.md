@@ -48,7 +48,7 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
    `--accept` lists only the confirmed `CHANGE` ids (e.g. `CLAUDE.md,.gitignore`). New files are always created. Tool installs can take a few minutes.
 
 6. **Summarize in three parts, in plain words for the user.** Each item appears once.
-   - **Done:** what was written or changed (e.g. "CLAUDE.md: workflow rules updated"), the knowledge folder (new or already there), and the tools now available with one line each on what they're for. A tool shown as `ok` or installed counts as done.
+   - **Done:** what was written or changed (e.g. "CLAUDE.md: workflow rules updated"), the knowledge folder (new or already there), and the tools now available with one line each on what they're for. A tool shown as `ok` or installed counts as done. When a tool has a `why:` line (an install that reaches beyond the project, such as a machine-wide CLI), repeat it in one plain sentence.
    - **Needs you:** only steps that block using the project **now**: a failed install (with its fix line), a `PENDING`/`YOU` step, or a skipped file change and what to do about it. If there's nothing, write "Nothing".
    - **Later:** the `LATER` lines ("when you first …"), and one line listing the tools available on demand.
    - Don't repeat internal install notes (e.g. "unverified on Windows"); they're for the kit, not the user.

@@ -360,6 +360,7 @@ tools:
     source: npm:@playwright/cli
     tier: project-type:web-ui
     reason: Browser checks for web UI projects - on demand only, through /kit:verify when the user asks (not on every verify)
+    install_why: "Its command (playwright-cli) is installed once for the whole machine, like git: it's idle until a browser check calls it, and the skill expects that command. Each project only gets the skill. Without it, every browser step would need a permission prompt (tested 2026-10-08)"
     cost: free
     status: adopted
     scope: project

@@ -206,7 +206,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
 
   // tools by tier
   const { chosen, offered } = selectTools(registry, { type, optIn });
-  const tools = chosen.map(({ entry, why }) => ({ ...toolAction(entry, abs, deps), why, ...(entry.first_use ? { firstUse: entry.first_use } : {}) }));
+  const tools = chosen.map(({ entry, why }) => ({ ...toolAction(entry, abs, deps), why, ...(entry.first_use ? { firstUse: entry.first_use } : {}), ...(entry.install_why ? { installWhy: entry.install_why } : {}) }));
 
   // stamp
   const stamp = {
@@ -269,7 +269,7 @@ export function formatPlan(p) {
   if (p.tools.length) lines.push('', 'Tools for this project:');
   for (const t of p.tools) {
     const tag = { present: 'ok', install: 'INSTALL', pending: 'YOU' }[t.action];
-    lines.push(`  ${tag.padEnd(8)} ${t.name.padEnd(16)} ${t.why}${t.command && t.action !== 'present' ? `\n           ${t.command}` : ''}${t.note && t.action === 'pending' ? `\n           note: ${t.note}` : ''}`);
+    lines.push(`  ${tag.padEnd(8)} ${t.name.padEnd(16)} ${t.why}${t.command && t.action !== 'present' ? `\n           ${t.command}` : ''}${t.note && t.action === 'pending' ? `\n           note: ${t.note}` : ''}${t.installWhy && t.action !== 'present' ? `\n           why: ${t.installWhy}` : ''}`);
   }
   const later = p.tools.filter(x => x.firstUse);
   if (later.length) {

@@ -137,6 +137,7 @@ export function validate(doc) {
     }
 
     if (!isMissing(entry.first_use) && typeof entry.first_use !== 'string') errors.push(`${id}.first_use: must be one line of text`);
+    if (!isMissing(entry.install_why) && typeof entry.install_why !== 'string') errors.push(`${id}.install_why: must be one line of text`);
     if (!isMissing(entry.recommend) && !['yes', 'no'].includes(entry.recommend)) {
       errors.push(`${id}.recommend: "${entry.recommend}" is not one of yes, no`);
     }

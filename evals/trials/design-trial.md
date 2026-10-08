@@ -62,7 +62,7 @@ Afterwards, answer per tool: **would you want it in your next project?** (yes / 
 - **User:** "cool tool", "still happy with its behavior".
 
 **Playwright browser check (run by this agent with `playwright-cli` 0.1.22 on Windows, 2026-10-08):**
-- It reused the dev server already on port 3001. It logged in as the trial user, with credentials read from `.env.local` and command output suppressed, so nothing was printed, and reached the **protected workspace**. It took 5 screenshots: desktop open and collapsed, mobile, mobile drawer, mobile after Escape. They are kept in the copy at `browser-check/`, not committed.
+- It reused the dev server already on port 3001. It logged in as the trial user, with credentials read from `.env.local` and command output suppressed, so nothing was printed, and reached the **protected workspace**. It took 5 screenshots: desktop open and collapsed, mobile, mobile drawer, mobile after Escape. They were never committed, and were deleted with the copy on 2026-10-08; the findings above are the record.
 - **Confirmed fixed:** `aria-expanded` (measured).
 - **Confirmed still broken:**
   - the collapsed desktop shows a full-width 37px bar (measured: `main` starts at y=37);
@@ -79,7 +79,7 @@ Afterwards, answer per tool: **would you want it in your next project?** (yes / 
 - trial user deleted, with leftovers `{"items":0,"item_content":0,"attachments":0,"user_settings":0,"storage":0,"user":0}`;
 - the copy's `.env.local` and `scripts/kit-trial-user.mjs` deleted;
 - the browser session closed.
-- The dev server on 3001 is the user's own and is still running; stop it when you're done.
+- The dev server on 3001 was stopped, and the whole copy (`Projects/temp/Toughbubble`) was deleted on 2026-10-08 at the user's request. The real Toughbubble was untouched (checked: no changes).
 
 ## Proposed verdicts (the user confirms)
 

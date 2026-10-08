@@ -6,6 +6,7 @@
 //   run                                      run the policy's tests + changed-files check, write the report
 //   finding --source security|code --severity high|medium|low --text "..."
 //   reviewed --source security|code --how ran|substitute|skipped [--note "why"]
+//   browser --result pass|issues [--issue "..."]... [--shots a.png,b.png]   only when the user asks
 //   override --item <id> --reason "..."      only when the user asks
 //   status                                   missing | pass | fail | overridden
 //   prepush --install                        opt-in git pre-push hook (never overwrites)
@@ -121,6 +122,7 @@ export function render(state) {
     '## Tests', '', '| Script | Required | Result |', '|---|---|---|',
     ...(state.tests.length ? state.tests.map(t => `| ${t.script} | ${t.required ? 'yes' : 'no'} | ${t.result} |`) : ['| - | - | no test commands in the policy |']), '',
     '## Reviews', '', '| Review | How | Note |', '|---|---|---|', rv('security'), rv('code'), '',
+    ...(state.browser ? ['## Browser check (on request)', '', `result: ${state.browser.result}  (date: ${state.browser.date})`, '', ...(state.browser.shots.length ? ['Screenshots:', ...state.browser.shots.map(s => `- ${s}`), ''] : [])] : []),
     '## HARD (blocks archive)', '', ...(hard.length ? ['| Id | Item | Detail |', '|---|---|---|', ...hard.map(row)] : ['None.']), '',
     '## ADVISORY (your call)', '', ...(adv.length ? ['| Id | Item | Detail |', '|---|---|---|', ...adv.map(row)] : ['None.']), '',
     '## Overrides', '', ...(state.overrides.length ? ['| Item | Reason | Date |', '|---|---|---|', ...state.overrides.map(o => `| ${o.item} | ${esc(o.reason)} | ${o.date} |`)] : ['None.']), '',
@@ -155,10 +157,10 @@ export function runVerify({ dir, change, registry = loadRegistry(), run = defaul
   }
   for (const f of untestedFiles(dir, changedFiles(dir, change))) items.push({ id: `U:${f}`, level: 'ADVISORY', what: 'changed source file without a matching test', detail: f, source: 'untested' });
   (policy.advisory ?? []).forEach((a, n) => items.push({ id: `P${n + 1}`, level: 'ADVISORY', what: `policy check: ${a}`, source: 'policy' }));
-  const findings = (prev?.items ?? []).filter(i => i.source === 'security' || i.source === 'code');
+  const findings = (prev?.items ?? []).filter(i => i.source === 'security' || i.source === 'code' || i.source === 'browser');
   const all = [...items, ...findings];
   const overrides = (prev?.overrides ?? []).filter(o => all.some(i => i.id === o.item));
-  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {} });
+  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(prev?.browser ? { browser: prev.browser } : {}) });
 }
 
 export function setReview({ dir, change, source, how, note }) {
@@ -169,6 +171,20 @@ export function setReview({ dir, change, source, how, note }) {
   const state = readState(file);
   if (!state) throw new Error('no report yet: run "verify.mjs run" first');
   state.reviews = { ...(state.reviews ?? {}), [source]: { how, note: note ? String(note).trim() : '', date: today() } };
+  return save(file, state);
+}
+
+/** Records an on-request browser check (design-trial D5). Issues are ADVISORY (B1…); a re-run replaces the last one. */
+export function setBrowser({ dir, change, result: res, issues = [], shots = [] }) {
+  if (!['pass', 'issues'].includes(res)) throw new Error('--result must be pass or issues');
+  const list = (Array.isArray(issues) ? issues : [issues]).map(s => String(s).trim()).filter(Boolean);
+  if (res === 'issues' && !list.length) throw new Error('--result issues needs at least one --issue "..."');
+  const file = reportPath(dir, change);
+  const state = readState(file);
+  if (!state) throw new Error('no report yet: run "verify.mjs run" first');
+  state.items = state.items.filter(i => i.source !== 'browser');
+  list.forEach((text, n) => state.items.push({ id: `B${n + 1}`, level: 'ADVISORY', what: 'browser check', detail: text, source: 'browser' }));
+  state.browser = { result: res, date: today(), shots: (Array.isArray(shots) ? shots : String(shots ?? '').split(',')).map(s => String(s).trim()).filter(Boolean) };
   return save(file, state);
 }
 
@@ -226,6 +242,7 @@ function parseArgs(argv) {
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--json' || a === '--install') o[a.slice(2)] = true;
+    else if (a === '--issue') (o.issues ??= []).push(argv[++i]);
     else if (a.startsWith('--')) o[a.slice(2)] = argv[++i];
     else throw new Error(`unexpected argument ${a}`);
   }
@@ -250,11 +267,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     let out, code = 0;
     if (o.cmd === 'run') { const s = runVerify(o); out = o.json ? s : summary(s); code = result(s) === 'fail' ? 1 : 0; }
     else if (o.cmd === 'finding') { const s = addFinding(o); out = o.json ? s : summary(s); }
+    else if (o.cmd === 'browser') { const s = setBrowser({ ...o, result: o.result, shots: o.shots ?? [] }); out = o.json ? s : summary(s); }
     else if (o.cmd === 'reviewed') { const s = setReview(o); out = o.json ? s : summary(s); }
     else if (o.cmd === 'override') { const s = addOverride(o); out = o.json ? s : summary(s); }
     else if (o.cmd === 'status') { const s = verifyStatus(o); out = o.json ? s : `${s.change}: ${s.status}${s.hard?.length ? `\n  ${s.hard.join('\n  ')}` : ''}`; }
     else if (o.cmd === 'prepush' && o.install) { const r = installPrepush(o); out = o.json ? r : r.installed ? `installed ${r.path} (runs npm run ${r.script})` : `not installed: ${r.reason} (${r.path})`; }
-    else throw new Error('commands: run, finding, reviewed, override, status, prepush --install');
+    else throw new Error('commands: run, finding, reviewed, browser, override, status, prepush --install');
     console.log(typeof out === 'string' ? out : JSON.stringify(out, null, 2));
     process.exitCode = code;
   } catch (e) {

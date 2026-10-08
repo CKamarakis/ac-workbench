@@ -158,6 +158,16 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - **Hooks:** they ship in the kit plugin (`plugins/kit/hooks/`) and are inert without `.claude/kit.json`. A failed Bash command fires `PostToolUseFailure` (seen live; not on the docs page read).
 - **Evidence:** `evals/trials/quality-gates-hooks.md`, `evals/trials/quality-gates-live.md`.
 
+## Design tools (M4, done 2026-10-08)
+
+- **Impeccable: adopted** (`web-ui`, owner of ui-polish).
+  - Specific, low-noise findings, and it asks before big steps.
+  - Its hooks run on their own in `web-ui` projects (session start, after UI edits, end of turn).
+  - **Watch:** it widens scope and cost. Name the target and the scope in prompts.
+- **Playwright CLI: adopted,** for browser checks **only on request** (`/kit:verify`). It worked behind login on Windows.
+- **Emil: on demand** (user decision), for motion work only.
+- **Evidence:** `evals/trials/design-trial.md`. The trial ran on the Toughbubble copy against the Supabase dev project with one trial user, deleted afterwards with no leftovers.
+
 ## Open ideas
 
 - Flow recommendation (OpenSpec vs SuperSpec) from a risk checklist, plus a SuperSpec A/B re-test on a big or risky change, measured in quality and tokens. Input for M3, see the roadmap.

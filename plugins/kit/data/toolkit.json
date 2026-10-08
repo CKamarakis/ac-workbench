@@ -26,9 +26,7 @@
         }
       ],
       "missing_required": "hard",
-      "advisory": [
-        "browser check for UI flows the change touches"
-      ]
+      "advisory": []
     },
     "none": {
       "tests": [
@@ -491,9 +489,9 @@
       "name": "playwright-cli",
       "source": "npm:@playwright/cli",
       "tier": "project-type:web-ui",
-      "reason": "Browser checks for web UI projects (verify phase)",
+      "reason": "Browser checks for web UI projects - on demand only, through /kit:verify when the user asks (not on every verify)",
       "cost": "free",
-      "status": "trial",
+      "status": "adopted",
       "scope": "project",
       "check": "playwright-cli --version && node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/playwright-cli'))\"",
       "install": {
@@ -522,6 +520,12 @@
           "status": "trial",
           "rationale": "Full README read; package @playwright/cli verified; CLI + skills preferred over MCP; trial on the first web-ui project",
           "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "adopted",
+          "rationale": "M4 trial - logged in and drove protected pages on Windows (desktop + 390px), measured and screenshotted real issues the code reviews could only suspect (37px expand bar, mobile drawer ignores Escape); compact snapshots, cheap per check; used on demand by design. User confirmed",
+          "evidence": "evals/trials/design-trial.md"
         }
       ]
     },
@@ -668,7 +672,7 @@
       "tier": "project-type:web-ui",
       "reason": "Design guidance for the agent - 24 commands (shape, critique, audit, polish, harden ...) and 61 deterministic checks",
       "cost": "free",
-      "status": "trial",
+      "status": "adopted",
       "scope": "project",
       "check": "node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))\"",
       "install": {
@@ -699,14 +703,22 @@
           "status": "trial",
           "rationale": "Full README read; per-project install; trial on the first web-ui project",
           "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "adopted",
+          "rationale": "M4 trial on the Toughbubble copy - specific, real findings (2 P1 the M3 code review missed or under-rated), low noise (1 false positive), asks before big steps, works on Windows (hooks + browser detector). Watch scope and cost (~69k output tokens for one warm-up; it added PRODUCT.md, DESIGN.md and a whole-sidebar critique) - name target and scope in the prompt. User confirmed",
+          "evidence": "evals/trials/design-trial.md"
         }
       ]
     },
     {
       "name": "emil-skills",
       "source": "github:emilkowalski/skills",
-      "tier": "project-type:web-ui",
-      "reason": "Animation and interface-detail skills (review/improve animations, apple-design, pick-ui-library, mobile-native)",
+      "tier": "project",
+      "reason": "Animation and interface-detail skills (review/improve animations, apple-design, pick-ui-library, mobile-native); for motion-specific work",
+      "recommend": "no",
+      "recommend_why": "A specialist for motion work; add it when a change is about animation, not for every session",
       "cost": "free",
       "status": "trial",
       "scope": "project",
@@ -714,11 +726,11 @@
       "install": {
         "win32": "npx -y skills@latest add emilkowalski/skills -a claude-code -s * -y --copy"
       },
-      "install_note": "Verified 2026-10-01 (sandbox) - project-level by default (-g would be user-level, never use it); 13 skills copied into .claude/skills (--copy avoids symlinks on Windows).",
+      "install_note": "Verified 2026-10-01 (sandbox) - project-level by default (-g would be user-level, never use it); 14 skills copied into .claude/skills (--copy avoids symlinks on Windows; counted 2026-10-08).",
       "rubric": {
         "problem_fit": "Strong on motion and the small details agents get wrong",
         "overlap": "Impeccable owns ui-polish; Emil is used for motion only",
-        "context_cost": "13 skills, loaded on demand",
+        "context_cost": "14 skill descriptions in every session when installed; that's why it's on demand",
         "run_cost": "Free",
         "trust": "Emil Kowalski (Vercel, Linear), 42k stars",
         "reversibility": "Remove the skill folders",
@@ -744,6 +756,12 @@
           "status": "trial",
           "rationale": "Full README read; motion specialist next to Impeccable; trial on the first web-ui project",
           "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "trial",
+          "rationale": "User decision - not loaded by default (no longer a web-ui type tool); available on demand for motion-specific missions. Whether Impeccable already covers motion is checked during normal work",
+          "evidence": "evals/trials/design-trial.md"
         }
       ]
     },

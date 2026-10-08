@@ -59,7 +59,8 @@ Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/
 - **Where they run:**
   - secrets: a gitleaks pre-commit hook;
   - tests and reviews: `/kit:verify`. A kit hook blocks `openspec archive` until the change has a passing report;
-  - tests before every push: opt-in per project.
+  - tests before every push: opt-in per project;
+  - a **browser check** (Playwright: log in, click through the changed flows, screenshots): only when you ask, e.g. before a release. Its findings are advisory.
 - **When a build or test fails on a library API,** the kit tells the agent to look up current docs (context7, no sign-in).
 
 The hooks ship in the kit plugin and do nothing outside kit projects.
@@ -75,6 +76,25 @@ The hooks ship in the kit plugin and do nothing outside kit projects.
 ```
 
 Plain Markdown in your repo: no external service, no quota. Notes you add by hand as `.md` are picked up as they are.
+
+## Tools in use, and when they load
+
+Plain skills cost little while idle: only their name and one line sit in context until one is called. Hooks and workflow plugins act on their own, so those are kept to what each project needs.
+
+| Tool | Installed | When it loads or runs |
+|---|---|---|
+| **kit** (this plugin) | once per machine, for every session | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes; the other adds a "look up the docs" hint when a build or test fails on a library |
+| **OpenSpec** | CLI once per machine; its `/opsx:…` skills per project (by `/kit:start`) | When you plan or build: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` |
+| **git, gh, jq** | once per machine (`/kit:setup`) | Only when a command calls them |
+| **gitleaks** | once per machine | On every `git commit`, in repos with the pre-commit hook enabled |
+| **`/code-review`, `/security-review`** | built into Claude Code | When `/kit:verify` runs them, or when you call them |
+| **context7** | nothing to install | Called with `npx` when the agent needs current library docs (a `CLAUDE.md` rule), or after the library-error hint. No sign-in |
+| **Impeccable** | per project, type `web-ui` | Its `/impeccable …` commands when you call them (critique, audit, polish…). **Its hooks run on their own** in that project: at session start, after each edit to a UI file (quick design check) and at the end of each turn (deeper pass). First use: `/impeccable init` |
+| **Playwright CLI** | per project, type `web-ui` (plus the CLI once per machine) | **Only when you ask** for a browser check (in `/kit:verify`); never on every verify |
+| **SuperSpec + Superpowers** | not installed by default | **On demand**, for a big or risky change (`/kit:judge` recommends it; you decide). Superpowers has a session-start hook, so it's added only when needed |
+| **Emil's skills** | not installed by default | **On demand**, for motion and animation work |
+
+Everything else in [`toolkit.yaml`](toolkit.yaml) (Notion, ECC, task-observer, claude-mem…) was evaluated and is **not in use**. Its verdict says why.
 
 ## How tools are chosen
 

@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-07 (M3 quality gates built: kit 0.4.0, `/kit:verify`, `/kit:judge`, archive gate, live trial passed)
+Last updated: 2026-10-08 (M4 design trial done: Impeccable and Playwright adopted, Emil on demand; kit 0.5.0)
 
 ## North star: the workflow this kit exists for
 
@@ -16,7 +16,7 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
 | 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
 | 6 | Build | answer, test | `/opsx:apply`; SuperSpec for big or risky changes; Context7 | M1 | ✅ |
-| 7 | Design | direct, judge | Impeccable (owner), Emil (motion), Figma/Miro MCP per project | M4 | ⬜ trial |
+| 7 | Design | direct, judge | Impeccable (adopted, owner of ui-polish); Playwright CLI (adopted, browser checks on request); Emil (on demand, motion); Figma/Miro MCP per project, later | M4 | ✅ |
 | 8 | Tests, right-sized per project | set the bar | test policy per project type (registry); `/kit:verify`; Playwright CLI (web UI, advisory) | M3 | ✅ |
 | 9 | Security | — | gitleaks ✅; `/security-review` in `/kit:verify` (high blocks; a substitute review is recorded when it can't run); ECC AgentShield (candidate) | M3 | ✅ |
 | 10 | Code review | — | `/code-review` (owner of review; advisory in `/kit:verify`) | M3 | ✅ |
@@ -40,13 +40,13 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M1 | `kit-local-mvp` | registry, evals, `/kit:setup`, lane map, `/kit:start`, `/kit:next`, tag `v0.1.0` | A fresh folder gets the full setup with one command; a re-run on a Toughbubble **copy** shows diffs only | **done**, tagged `v0.1.0`; archived 2026-10-07 (the usage review, 9.4, moved to M6) |
 | M2 | `prd-pipeline` | `/kit:capture`, `/kit:prd`, `knowledge/` folder via `/kit:start`, PRD-aware `/kit:next` | An idea dictated by voice ends as a Ready PRD in a project's `knowledge/prds/`, and `/opsx:propose` in that project uses it | **done**: `prd-pipeline` and `prd-pipeline-followups` built (kit 0.3.0) and archived 2026-10-07 |
 | M3 | `quality-gates` | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | **done**, archived 2026-10-07 (kit 0.4.0; live trial on the Toughbubble copy passed) |
-| M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | not started |
+| M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | **done** 2026-10-08 (`design-trial`, kit 0.5.0; evidence `evals/trials/design-trial.md`) |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
 | M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
 
 ## Current position and next actions
 
-1. **Now:** M1–M3 are done and archived (kit 0.4.0, installed). Next on the roadmap: M4 design trial, M5 cockpit/feedback, M6 usage review (~2026-10-13).
+1. **Now:** M1–M4 are done (kit 0.5.0). **Use the kit on a real project** (Toughbubble: `/kit:start`, then real work such as the lightbox), to feed the M6 usage review. Then M5 (cockpit, feedback, harness review).
 2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/archive/2026-10-07-prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archived 2026-10-07 with the other two.
    - Still open from the trials (`evals/trials/prd-pipeline-live.md`):
      - **parked** (user): keeping loose notes manageable, decided after real use;
@@ -86,3 +86,4 @@ Open decisions:
 | 2026-10-06 | **Notion dropped as the PRD store; PRDs and notes move to Markdown in each project's `knowledge/` folder** (P5 revised, P6 dropped). Asana, Google Docs and Obsidian were checked and left out of v1 | Live spike: Notion's SQL query limit hit after ~10 calls on the free plan. Asana's MCP has no tool for project briefs, Google Docs needs a Cloud project and makes per-section edits clumsy, and Obsidian has no official MCP. Markdown in git needs no MCP and has no limits. Final home stays open (configurable path). On-plan alternative: keep Notion and use fetch only (untested) | user | Stage 3 and the M2 row reworded; v1 scope in `project-context.md` |
 | 2026-10-06 | **`/kit:start` asks one question (project type); no opt-in questions.** Global and type tools install without asking; Superpowers (session-start hook) and MCP servers come on demand, when a change needs them. Plain skills, SuperSpec's schema and Impeccable are fine to keep present | Live trial: too many setup questions without context. Checked what costs context while idle: plain skills almost nothing; Superpowers' session-start hook and MCP servers do; Impeccable's hooks filter by file type (docs). A skill added mid-session works once the session touches its file (tested live) | user | Folded into `prd-pipeline-followups` (project-starter spec, tasks 5.3–5.4). Superpowers on demand goes with the M3 flow judge. README bookkeeping added (6.3) |
 | 2026-10-07 | M3 built with two additions beyond the plan: a `/kit:judge` skill (the routing rules needed an entry point for the flow judge), and recorded review status (`ran` / `substitute` / `skipped`) after the live trial showed `/security-review` silently not running. Also fixed an M1 bug: `/kit:next` skipped changes whose tasks were all done | Found while building and in the live trial | user (live trial) | `quality-gates` spec and tasks updated; kit 0.4.0 |
+| 2026-10-08 | M4 trial narrowed by the user: Emil is not trialled and moves to on-demand (motion missions only); the lightbox build was dropped from the trial (it's real work for the real Toughbubble). Impeccable was judged on a sidebar warm-up and Playwright on a sidebar browser check behind login | The user wants to start real use soon; the warm-up already gave enough evidence for both verdicts | user | Impeccable and Playwright adopted, Emil on demand; `design-trial` tasks 4.1–4.2 marked dropped |

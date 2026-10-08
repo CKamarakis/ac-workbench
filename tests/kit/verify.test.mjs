@@ -154,3 +154,33 @@ test('failure detail keeps readable error lines only, capped', () => {
   assert.doesNotMatch(d, /⎯|7\||\x1b/);
   assert.ok(failureDetail('x'.repeat(500)).length <= 200);
 });
+
+// design-trial 1.1-1.2: no browser reminder by default; on-request browser check
+import { setBrowser } from '../../plugins/kit/scripts/verify.mjs';
+
+test('default web-ui verify lists no browser item (registry policy)', async () => {
+  const { loadRegistry } = await import('../../plugins/kit/scripts/setup.mjs');
+  const d = project();
+  const s = runVerify({ dir: d, change: 'add-x', registry: loadRegistry(), run: runner({}) });
+  assert.ok(!s.items.some(i => /browser/i.test(`${i.what} ${i.detail ?? ''}`)));
+  assert.doesNotMatch(fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8'), /Browser check/);
+});
+
+test('browser check: pass, issues (advisory, ordered), shots, replaced on re-run, kept across run', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  setBrowser({ dir: d, change: 'add-x', result: 'pass', shots: 'browser/a.png,browser/b.png' });
+  let md = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md, /## Browser check \(on request\)\n\nresult: pass  \(date: \d{4}-\d\d-\d\d\)\n\nScreenshots:\n- browser\/a\.png\n- browser\/b\.png/);
+  setBrowser({ dir: d, change: 'add-x', result: 'issues', issues: ['close button overlaps image', 'no focus trap'] });
+  md = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md, /\| B1 \| browser check \| close button overlaps image \|[\s\S]*\| B2 \| browser check \| no focus trap \|/);
+  assert.equal(verifyStatus({ dir: d, change: 'add-x' }).status, 'pass');
+  setBrowser({ dir: d, change: 'add-x', result: 'pass' });
+  assert.doesNotMatch(fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8'), /\| B1 \|/);
+  setBrowser({ dir: d, change: 'add-x', result: 'issues', issues: ['x'] });
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  assert.match(fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8'), /\| B1 \| browser check \| x \|/);
+  assert.throws(() => setBrowser({ dir: d, change: 'add-x', result: 'issues' }), /needs at least one --issue/);
+  assert.throws(() => setBrowser({ dir: d, change: 'add-x', result: 'meh' }), /pass or issues/);
+});

@@ -1,0 +1,183 @@
+{
+  "skill": "verify",
+  "date": "2026-10-08T09:49:29.974Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 5245,
+  "summary": {
+    "pass": 6,
+    "fail": 0,
+    "pending": 1
+  },
+  "cases": [
+    {
+      "id": "passing-tests-pass",
+      "outcome": "pass",
+      "duration_ms": 1153,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /^# Verify: add-x\\r?\\n\\r?\\nresult: pass/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "failing-test-blocks",
+      "outcome": "pass",
+      "duration_ms": 1320,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "override-needs-reason",
+      "outcome": "pass",
+      "duration_ms": 1475,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 2 (expected 2)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /\\| T:test \\| flaky upstream, tracked in #12 \\|/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never override on your own/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*HARD items first\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /verify\\.mjs\" finding --dir \\. --change <name> --source security/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Don't edit `verify.md` by hand/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /If `/security-review` can't run/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never leave it unrecorded/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "severity-mapping",
+      "outcome": "pending",
+      "duration_ms": 0,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "maps-severity",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-self-override",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "browser-check-recorded-advisory",
+      "outcome": "pass",
+      "duration_ms": 1295,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /## Browser check \\(on request\\)[\\s\\S]*- browser/open\\.png/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "browser-check-only-on-request",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*Only when the user asks\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never as part of a default verify/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /always advisory and never block/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

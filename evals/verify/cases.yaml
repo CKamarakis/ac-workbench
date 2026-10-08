@@ -73,3 +73,25 @@ cases:
             description: Exploitable issues are recorded as high security findings; style nits as low code findings
           - name: no-self-override
             description: Does not override a HARD item without the user's explicit request and reason
+
+  - id: browser-check-recorded-advisory
+    description: An on-request browser check records its issues as advisory, with screenshots, and the result stays pass (design-trial 1.3)
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{v}}" run --dir . --change add-x', expect: 0 }
+      - kind: command-exit
+        command: 'node "{{v}}" browser --dir . --change add-x --result issues --issue "close button overlaps the image" --issue "no focus trap" --shots browser/open.png'
+        stdout_match: 'PASS[\s\S]*advisory B1: browser check - close button overlaps the image[\s\S]*advisory B2: browser check - no focus trap'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '## Browser check \(on request\)[\s\S]*- browser/open\.png' }
+
+  - id: browser-check-only-on-request
+    description: The skill runs a browser check only when the user asks, and never as HARD
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Only when the user asks\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never as part of a default verify' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'always advisory and never block' }

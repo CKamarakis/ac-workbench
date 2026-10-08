@@ -1,0 +1,312 @@
+{
+  "skill": "capture",
+  "date": "2026-10-08T09:47:49.141Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 1853,
+  "summary": {
+    "pass": 9,
+    "fail": 0,
+    "pending": 3
+  },
+  "cases": [
+    {
+      "id": "note-written-with-title-and-date",
+      "outcome": "pass",
+      "duration_ms": 183,
+      "checks": [
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/notes/2026-10-06-gift-card-purchase-flow.md exists"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/notes/2026-10-06-gift-card-purchase-flow.md matches /^---\\r?\\ntitle: Gift card purchase flow\\r?\\ndate: 2026-10-06\\r?\\nsource: voice\\r?\\n---/"
+        }
+      ],
+      "rubric": [],
+      "input": {
+        "status": 0
+      }
+    },
+    {
+      "id": "collision-never-overwrites",
+      "outcome": "pass",
+      "duration_ms": 376,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/notes/2026-10-06-idea.md matches /first/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "topic-and-configured-folder",
+      "outcome": "pass",
+      "duration_ms": 210,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "docs/knowledge/notes/checkout/2026-10-06-pay.md exists"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "archive-cited-note-updates-prd",
+      "outcome": "pass",
+      "duration_ms": 358,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/archive/notes/2026-10-06-a.md exists"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/gift-cards.md matches /  - archive/notes/2026-10-06-a\\.md/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "archive-is-never-listed",
+      "outcome": "pass",
+      "duration_ms": 176,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "list.txt matches /Live note/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "list.txt does not match /Old note/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/knowledge\\.mjs/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /Write nothing until the user confirms or edits the title/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /name those PRDs to the user before moving/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /Never read, list or shortlist anything under `archive/`/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /Offer a PRD update/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /per-section update/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /If nothing matches, say nothing about PRDs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "title-proposed-from-dictation",
+      "outcome": "pending",
+      "duration_ms": 0,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "proposes-title",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "waits-for-yes",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "offers-prd-update-after-late-note",
+      "outcome": "pending",
+      "duration_ms": 1,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "offers-matching-prd",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-change-without-yes",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "silent-when-no-match",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "import-transcript-from-notes",
+      "outcome": "pass",
+      "duration_ms": 368,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/notes/2026-10-06-call-with-anna.md matches /source: call with anna\\.txt[\\s\\S]*---\\r?\\n\\r?\\nAnna: gift cards should expire after 12 months\\./"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "import-from-outside-keeps-original",
+      "outcome": "pass",
+      "duration_ms": 176,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "downloads/interview.txt exists"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/notes/2026-10-06-interview.md matches /Raw interview text/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-import-rules",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /## Import a file/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /is \\*\\*replaced\\*\\* by the new note/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /Don't summarise, reword or clean it up/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/capture/SKILL.md matches /not imported yet/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "import-title-proposal",
+      "outcome": "pending",
+      "duration_ms": 0,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "proposes-title",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "explains-original",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

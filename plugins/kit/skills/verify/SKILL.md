@@ -38,6 +38,20 @@ If it prints `error:`, show it and stop.
    - Result `pass`: say the change can be archived (`/opsx:archive`).
    - Result `fail`: offer to fix the HARD items, then re-run step 2. A fixed finding is cleared by re-running the review and not recording it again; for a stale one, say so.
 
+## Browser check (on request)
+
+**Only when the user asks** (e.g. before a release, or after a big UI change). Never as part of a default verify.
+
+1. Start the app with `npm run dev`, or reuse one that's already running, and wait until the page responds.
+2. With the Playwright CLI skill, log in using the test credentials named in `.env.local` (e.g. `KIT_TRIAL_EMAIL` / `KIT_TRIAL_PASSWORD`). Read them from the file, and never print them.
+3. Walk the flows this change touches, including pages behind login: click, use the keyboard (Tab, arrows, Escape), and check different widths when layout matters.
+4. Save screenshots into `openspec/changes/<name>/browser/`.
+5. Record the outcome. Issues are always advisory and never block:
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" browser --dir . --change <name> --result pass|issues [--issue "<what, where>"]... --shots browser/a.png,browser/b.png
+   ```
+6. Report what you saw, with the screenshot paths, and say which issues the code reviews hadn't caught.
+
 ## Overrides
 
 - **Never override on your own.** Only when the user explicitly says to accept a HARD item, ask for their reason, then:

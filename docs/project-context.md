@@ -15,7 +15,7 @@ Constraints:
 
 **Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
 
-Active changes: [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1, M2 and M3 (`quality-gates`) are archived; current specs are in [`openspec/specs/`](../openspec/specs/).
+Active changes: [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1–M4 are archived; current specs are in [`openspec/specs/`](../openspec/specs/).
 
 ```
  ac-workbench (marketplace repo)

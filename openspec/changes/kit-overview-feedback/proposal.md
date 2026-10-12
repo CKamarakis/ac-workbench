@@ -1,5 +1,7 @@
 # Proposal: kit-overview-feedback
 
+> **Reshaped 2026-10-12 (user, roadmap drift log):** the cockpit moves after v1; `kit-feedback` (private inbox) is dropped in favour of public GitHub issues; `harness-review` moves to milestone M11 and will get its own change. This change is kept for its specs as reference.
+
 ## Why
 
 Split out of `kit-local-mvp` on 2026-10-01. The user's workflow needs the core kit (starter, routing) and the capture → PRD → Notion pipeline first. The overview page, the feedback loop and the harness review make the kit easier to run and improve, but they block nothing. Motivation for each piece: `kit-local-mvp/proposal.md` (Why, update and feedback model). Order: `docs/roadmap.md`.

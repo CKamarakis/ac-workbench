@@ -8,8 +8,8 @@
 
 ## 2. Scan (`docs.mjs scan`)
 
-- [ ] 2.1 `spec.md` parser: requirement names, text, scenarios split into GIVEN/WHEN/THEN/AND rows (design D3). Verify with `tests/kit/docs.test.mjs` on fixtures copied from real specs: names kept; a scenario without GIVEN gives two rows; a malformed spec returns a warning, not a throw
-- [ ] 2.2 Spec discovery and tree from folder paths (flat and nested). Verify: `storms/stickies` and `storms/saving` → one Storms node with two children; a flat spec → one level
+- [x] 2.1 `spec.md` parser: requirement names, text, scenarios split into GIVEN/WHEN/THEN/AND rows (design D3). Verify with `tests/kit/docs.test.mjs` on fixtures copied from real specs: names kept; a scenario without GIVEN gives two rows; a malformed spec returns a warning, not a throw
+- [x] 2.2 Spec discovery and tree from folder paths (flat and nested). Verify: `storms/stickies` and `storms/saving` → one Storms node with two children; a flat spec → one level
 - [ ] 2.3 History per capability from `openspec/changes/archive/*/specs/<path>/` with the first line of each proposal's Why; an archived change without specs is "no spec changes". Verify on a fixture archive
 - [ ] 2.4 `scan --json`: missing and stale capability notes (git date of the note vs the newest archive touching its capability), tools in `package.json` not in `tools.md` and the reverse, cards found, page older than the newest archive. Verify the "Stale note" and "Unlisted tool" scenarios; no `package.json` → reported, not an error
 

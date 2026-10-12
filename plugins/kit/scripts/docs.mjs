@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { readDecisions } from './decisions.mjs';
-import { prdLink } from './next.mjs';
+import { prdLink } from './knowledge.mjs';
 import { renderPage } from './docs-page.mjs';
 
 const posix = p => p.split(path.sep).join('/');

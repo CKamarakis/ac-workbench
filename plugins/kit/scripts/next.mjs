@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { laneMap } from './lanes.mjs';
 import { loadRegistry } from './setup.mjs';
 import { locate, pathWith } from './locate.mjs';
-import { knowledgeDir, listKnowledge } from './knowledge.mjs';
+import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
+import { scan as docsScan } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine } from './decisions.mjs';
 
@@ -30,13 +31,8 @@ function step(map, phase, reason, extra = {}) {
 
 // ---------- PRD rules (spec: skill-routing "Next-step suggestion uses PRD status"; design D5, D7) ----------
 
-export const PRD_LINE = /PRD:\s*`?([^\s`@]+\.md)`?\s*@\s*`?([0-9a-f]{4,40}|uncommitted)`?/i;
-
-/** The PRD line of a proposal, or null. */
-export function prdLink(proposalText) {
-  const m = PRD_LINE.exec(proposalText ?? '');
-  return m ? { path: m[1].replace(/\\/g, '/'), commit: m[2].toLowerCase() } : null;
-}
+// PRD_LINE and prdLink live in knowledge.mjs, shared with docs.mjs without an import cycle; re-exported here.
+export { PRD_LINE, prdLink } from './knowledge.mjs';
 
 /**
  * Pure PRD rules, checked before the OpenSpec rules. Input:
@@ -90,7 +86,13 @@ export function questionsLine(knowledge) {
  *   statusOf: name -> { artifacts: [{ id, status }], isPlanningComplete }               (openspec status --json)
  *   map: laneMap(registry)
  */
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null }) {
+/** kit-docs: a one-line reminder when the docs page is older than the newest archive (spec: skill-routing
+ *  "Stale docs page suggested"). Never the next step itself. `page` is docs.mjs scan().page. */
+export function docsLine(page) {
+  return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
+}
+
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -99,7 +101,7 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
   const { suggestion, warnings } = prdSuggest({ knowledge, map, activeCount: active.length, changedSince });
   const questions = questionsLine(knowledge);
-  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(warnings.length ? { warnings } : {}) });
+  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(warnings.length ? { warnings } : {}) });
   if (suggestion) return withWarnings(suggestion);
   return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
 }
@@ -154,6 +156,7 @@ export function format(s) {
   if (s.then) lines.push(`  then:  ${s.then}`);
   if (s.open) lines.push(`  open:  ${s.open}`);
   if (s.questions) lines.push(`  later: ${s.questions}`);
+  if (s.docs) lines.push(`  docs:  ${s.docs}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherActive?.length) lines.push(`  other active changes: ${s.otherActive.join(', ')}`);
@@ -254,11 +257,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const ri = args.indexOf('--registry');
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
+  let docs = null;
+  try { docs = docsLine(docsScan({ dir }).page); } catch { /* no docs reminder */ }
   const s = suggest({ openspec, statusOf: name => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return null; // folder names reach a shell string: kebab-case only
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }) });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

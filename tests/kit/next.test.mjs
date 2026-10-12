@@ -280,3 +280,18 @@ test('6.2: a Draft PRD with open questions adds a reminder to any suggestion; Re
   assert.equal(questionsLine(K({ prds: [P('a', 'Draft', { openQuestions: 0 }), P('b', 'Ready', { openQuestions: 3 })] })), null);
   assert.equal(suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K() }).questions, undefined);
 });
+
+// kit-docs 5.2: stale docs page reminder (never the next step)
+import { docsLine } from '../../plugins/kit/scripts/next.mjs';
+test('kit-docs: a stale docs page adds a reminder line; no page -> none; the step is unchanged', () => {
+  assert.equal(docsLine({ exists: true, stale: true }), 'docs page is older than the last archive; run /kit:docs');
+  assert.equal(docsLine({ exists: true, stale: false }), null);
+  assert.equal(docsLine({ exists: false, stale: false }), null);
+  assert.equal(docsLine(null), null);
+  const line = docsLine({ exists: true, stale: true });
+  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map, docs: line });
+  assert.equal(s.phase, 'brainstorm');
+  assert.equal(s.docs, line);
+  assert.match(format(s), /\n  docs:  docs page is older than the last archive; run \/kit:docs/);
+  assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).docs, undefined);
+});

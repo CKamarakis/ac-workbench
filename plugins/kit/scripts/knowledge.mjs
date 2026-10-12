@@ -20,6 +20,15 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { locate } from './locate.mjs';
 
+// The PRD line a proposal carries (spec: skill-routing "Next-step suggestion uses PRD status"); used by next, ready and docs.
+export const PRD_LINE = /PRD:\s*`?([^\s`@]+\.md)`?\s*@\s*`?([0-9a-f]{4,40}|uncommitted)`?/i;
+
+/** The PRD line of a proposal, or null. */
+export function prdLink(proposalText) {
+  const m = PRD_LINE.exec(proposalText ?? '');
+  return m ? { path: m[1].replace(/\\/g, '/'), commit: m[2].toLowerCase() } : null;
+}
+
 export const DEFAULT_DIR = 'knowledge';
 export const SUBDIRS = ['notes', 'prds', 'assets', 'archive'];
 export const STATUSES = ['Draft', 'Review', 'Ready', 'Building', 'Shipped'];

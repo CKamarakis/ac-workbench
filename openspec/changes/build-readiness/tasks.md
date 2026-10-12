@@ -42,7 +42,8 @@
   - never blocks, never commits.
 
   Verify that `npm run evals` loads the skill
-- [ ] 3.3 `evals/ready/cases.yaml` (design D8): trigger and non-trigger cases, plus judgment cases with a rubric (a planted missing error case, a planted PRD/spec difference, a planted overlapping dependency). Verify with `npm run evals`: all trigger cases route to `/kit:ready`, and the judgment cases pass the rubric
+- [x] 3.3 `evals/ready/cases.yaml` (design D8): trigger and non-trigger cases, plus judgment cases with a rubric (a planted missing error case, a planted PRD/spec difference, a planted overlapping dependency). Verify with `npm run evals`: all trigger cases route to `/kit:ready`, and the judgment cases pass the rubric
+  - Accepted by the user 2026-10-12 on the live trial (7.1): `/kit:ready` asked about real missing cases in a requirement. The planted PRD/spec difference and overlapping dependency were not exercised live
 
 ## 4. Docs sync in verify
 

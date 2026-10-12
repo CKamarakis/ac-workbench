@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-08 (M4 design trial done: Impeccable and Playwright adopted, Emil on demand; kit 0.5.0)
+Last updated: 2026-10-12 (build-readiness proposed ahead of M6; kit-docs planned after it)
 
 ## North star: the workflow this kit exists for
 
@@ -15,6 +15,7 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | 3 | Store and retrieve context | review | Markdown in the project repo (`knowledge/`); Notion dropped 2026-10-06 | M2 | ✅ |
 | 4 | Plan: proposal, specs, design | review, decide | OpenSpec (adopted) | M1 | ✅ |
 | 5 | Task list | approve | OpenSpec tasks | M1 | ✅ |
+| 5b | Ready to build? (gaps, differences, decisions) | decide | `/kit:ready` | M7 | ⬜ |
 | 6 | Build | answer, test | `/opsx:apply`; SuperSpec for big or risky changes; Context7 | M1 | ✅ |
 | 7 | Design | direct, judge | Impeccable (adopted, owner of ui-polish); Playwright CLI (adopted, browser checks on request); Emil (on demand, motion); Figma/Miro MCP per project, later | M4 | ✅ |
 | 8 | Tests, right-sized per project | set the bar | test policy per project type (registry); `/kit:verify`; Playwright CLI (web UI, advisory) | M3 | ✅ |
@@ -22,6 +23,7 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | 10 | Code review | — | `/code-review` (owner of review; advisory in `/kit:verify`) | M3 | ✅ |
 | 11 | Delivery | test, accept | `/opsx:archive`; deploys out of scope for now | M1 | ◐ |
 | 12 | See everything in one place | look | cockpit | M5 | ⬜ |
+| 13 | Living product docs (what's built, and why) | look | docs sync in `/kit:verify` (M7); `/kit:docs` page (M8) | M7, M8 | ⬜ |
 
 Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, `/kit:start`, `/kit:next`, lane map, evals.
 
@@ -42,6 +44,8 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M3 | `quality-gates` | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | **done**, archived 2026-10-07 (kit 0.4.0; live trial on the Toughbubble copy passed) |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | **done**, archived 2026-10-08 (`design-trial`, kit 0.5.0; evidence `evals/trials/design-trial.md`) |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
+| M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **proposed** 2026-10-12 (0/16 tasks); when to build it is the user's call |
+| M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory, backfill | See that change once proposed | planned, not proposed; after M7 has been used once |
 | M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
 
 ## Current position and next actions
@@ -53,7 +57,8 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
      - **idea:** offer to tidy hand-made notes that have no frontmatter;
      - **check in M6:** a Ready PRD outranks an active change in `/kit:next`.
    - Test bed: `Projects/temp/Toughbubble` (a copy), before touching the real Toughbubble.
-3. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
+3. **Proposed 2026-10-12:** [`build-readiness`](../openspec/changes/build-readiness/) (M7), ahead of M6 by the user's choice. `kit-docs` (M8) comes after M7 has been used once. Source: `knowledge/notes/2026-10-12-living-docs-and-build-readiness-given-when-then-readiness-ch.md`.
+4. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
 
 Inputs for the M3 explore (agreed with the user, 2026-10-06; all built in `quality-gates` except the two marked later):
 - **Flow recommendation:** a short risk checklist checked at proposal time: payments, auth, personal data, data migration; hard to undo or wide reach; vague spec or open questions in the PRD. It recommends plain OpenSpec or SuperSpec with the reason; the user decides. Tested with an eval set of example change descriptions, each labelled with the expected flow.
@@ -88,3 +93,4 @@ Open decisions:
 | 2026-10-07 | M3 built with two additions beyond the plan: a `/kit:judge` skill (the routing rules needed an entry point for the flow judge), and recorded review status (`ran` / `substitute` / `skipped`) after the live trial showed `/security-review` silently not running. Also fixed an M1 bug: `/kit:next` skipped changes whose tasks were all done | Found while building and in the live trial | user (live trial) | `quality-gates` spec and tasks updated; kit 0.4.0 |
 | 2026-10-08 | M4 trial narrowed by the user: Emil is not trialled and moves to on-demand (motion missions only); the lightbox build was dropped from the trial (it's real work for the real Toughbubble). Impeccable was judged on a sidebar warm-up and Playwright on a sidebar browser check behind login | The user wants to start real use soon; the warm-up already gave enough evidence for both verdicts | user | Impeccable and Playwright adopted, Emil on demand; `design-trial` tasks 4.1–4.2 marked dropped |
 | 2026-10-12 | **Proposed, not yet scheduled:** living docs and build-readiness. Given/When/Then user stories and scenarios; a readiness check before `/opsx:apply` (open decisions, differences, key points to confirm, asked in one batch); docs sync in `/kit:verify` before archive; a static docs page built from `openspec show --json` and the archived designs | First real use on Toughbubble: many decisions came up only during apply, `design.md` and the specs weren't updated as requirements changed in testing, and the feature's behaviors are hard to track. On-plan alternative: keep using the kit and raise these at M6 | user (proposal) | Treated as M6 usage-review findings; order and scope decided at M6. Note: `knowledge/notes/2026-10-12-living-docs-and-build-readiness-given-when-then-readiness-ch.md` |
+| 2026-10-12 | **Living docs and build-readiness proposed now, ahead of M6**, split in two: `build-readiness` (M7: readiness check, decision record, docs sync, Given/When/Then) and `kit-docs` (M8: docs page, foundations, tools inventory, backfill). Flow: plain OpenSpec. `/kit:judge` said SuperSpec on two false positives ("permissions", "backfill"); the user chose OpenSpec | The user's choice after the explore. The Storms dry run showed the docs stopping before 29 code commits. On-plan alternative: wait for the M6 review | user | Supersedes the row above. M7 and M8 added; M5 and M6 unchanged |

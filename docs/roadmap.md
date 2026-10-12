@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-12 (M6 usage review done; next M8 kit-docs, then a follow-up change, then M5)
+Last updated: 2026-10-12 (M8 kit-docs proposed with SuperSpec, building; then a follow-up change, then M5)
 
 ## North star: the workflow this kit exists for
 
@@ -45,12 +45,12 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | **done**, archived 2026-10-08 (`design-trial`, kit 0.5.0; evidence `evals/trials/design-trial.md`) |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
 | M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **done** 2026-10-12, archived (kit 0.6.4); trial done ([`build-readiness-live.md`](../evals/trials/build-readiness-live.md)), two fixes in 0.6.1, PRD open questions now-or-later in 0.6.2 (6.2), verify fixes in 0.6.3 and 0.6.4 (7 low review findings → M6) |
-| M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory, backfill | See that change once proposed | planned, not proposed; after M7 has been used once |
+| M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory; rebuilt during archive (backfill moved to its own change) | The page builds for this repo and for the Toughbubble copy (nested Storms specs, canvas card, tools inventory) | **proposed** 2026-10-12 (SuperSpec, kit 0.7.0); building, native execution |
 | M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | **done** 2026-10-12: [`usage-review-1.md`](../evals/trials/usage-review-1.md), Context7 A/B in [`context7-ab.md`](../evals/trials/context7-ab.md) |
 
 ## Current position and next actions
 
-1. **Now:** M1–M4, M6 and M7 are done (kit 0.6.4). **Next: M8** (`kit-docs`, `/opsx:propose` on a new branch), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
+1. **Now:** M1–M4, M6 and M7 are done (kit 0.6.4). **Now: M8** (`kit-docs`, proposed 2026-10-12 on branch `kit-docs`; [change](../openspec/changes/kit-docs/), plan in `plan.md`), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
    - **M8 scope, decided by the user 2026-10-12 before `/opsx:propose`** (on branch `kit-docs`):
      - **Flow: SuperSpec** (the user's choice; `/kit:judge` matched "backfill"). Schema in `openspec/schemas/superspec/`; Superpowers on in `.claude/settings.local.json` only. Restart the session, then `/opsx:propose kit-docs --schema superspec`.
      - **Tree levels:** nested spec folders (`specs/storms/stickies/spec.md`) give product → sub-feature.

@@ -10,7 +10,7 @@ import { prdLink } from './knowledge.mjs';
 import { renderPage } from './docs-page.mjs';
 
 const posix = p => p.split(path.sep).join('/');
-const lines = text => String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
+const lines = text => String(text ?? '').replace(/^﻿/, '').replace(/\r\n?/g, '\n').split('\n');
 const KW = /^\s*-\s+\*\*(GIVEN|WHEN|THEN|AND)\*\*\s*(.*)$/;
 
 /** One spec.md: purpose, requirements (names kept; `openspec show --json` drops them) and scenario rows. */
@@ -95,7 +95,8 @@ export function specTree(specs) {
   return sort(roots);
 }
 
-const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
+// Windows editors may save a UTF-8 BOM; it would hide frontmatter and the first heading.
+const read = f => { try { return fs.readFileSync(f, 'utf8').replace(/^﻿/, ''); } catch { return null; } };
 const list = d => { try { return fs.readdirSync(d, { withFileTypes: true }); } catch { return []; } };
 
 /** Section bodies of a Markdown file by `## ` heading. */
@@ -287,7 +288,11 @@ export function buildModel({ dir }) {
   const und = undecided(dir, specs.map(s => s.path), warnings);
   const pages = {};
   for (const s of specs) {
-    const spec = parseSpec(read(s.file));
+    const text = read(s.file);
+    const spec = parseSpec(text);
+    // Missing sources degrade to a warning row, never a silent "No requirements yet." (spec: living-docs).
+    if (text == null) spec.warnings.push('spec could not be read');
+    else if (!spec.requirements.length && /^##\s+Requirements\s*$/m.test(lines(text).join('\n'))) spec.warnings.push('no requirements could be read from this spec');
     const note = parseNote(read(path.join(dir, 'knowledge', 'docs', ...s.path.split('/')) + '.md') ?? '');
     const names = new Set(spec.requirements.map(r => r.name));
     const touched = archives.filter(a => a.specPaths.includes(s.path));
@@ -328,6 +333,8 @@ export function buildModel({ dir }) {
     tools: pkgs ? parseTools(read(path.join(dir, 'knowledge', 'docs', 'tools.md')) ?? '') : null,
     toolsNote: pkgs ? null : 'No package.json in this project.',
     undecidedByChange,
+    // Archived changes that touched no spec still belong in the history (spec: living-docs "Missing sources degrade").
+    noSpecChanges: archives.filter(a => !a.specPaths.length).map(({ folder, date, change, why }) => ({ folder, date, change, why })),
   };
 }
 

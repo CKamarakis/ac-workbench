@@ -121,13 +121,16 @@ const SCRIPT = (cmp) => `
 (function(){
 var compareNodes=${cmp};
 function show(){
-  var h=decodeURIComponent(location.hash.slice(1))||'overview';
-  var view=h.indexOf('foundations/')===0?'foundations':h;
+  var raw=location.hash.slice(1),h;
+  try{h=decodeURIComponent(raw)}catch(e){h=raw}
+  h=h||'overview';
+  // Spec pages live under spec/ so a spec named tools, foundations or overview can't collide with those views.
+  var view=h.indexOf('foundations/')===0?'foundations':h.indexOf('spec/')===0?'spec:'+h.slice(5):h;
   var pages=document.querySelectorAll('.page'),found=false;
   for(var i=0;i<pages.length;i++){var on=pages[i].getAttribute('data-page')===view;pages[i].classList.toggle('on',on);if(on)found=true;}
   if(!found){document.querySelector('.page[data-page="overview"]').classList.add('on');view='overview';}
   var links=document.querySelectorAll('nav a[href]');
-  for(var j=0;j<links.length;j++){if(links[j].getAttribute('href')==='#'+view)links[j].setAttribute('aria-current','page');else links[j].removeAttribute('aria-current');}
+  for(var j=0;j<links.length;j++){if(links[j].getAttribute('href')==='#'+(view.indexOf('spec:')===0?'spec/'+view.slice(5):view))links[j].setAttribute('aria-current','page');else links[j].removeAttribute('aria-current');}
   if(h.indexOf('foundations/')===0){var cards=document.querySelectorAll('[data-card]');for(var k=0;k<cards.length;k++)if(cards[k].getAttribute('data-card')===h.slice(12))cards[k].scrollIntoView();}
   else window.scrollTo(0,0);
 }
@@ -155,8 +158,8 @@ function treeItems(nodes) {
     const attrs = `data-path="${esc(n.path)}" data-name="${esc(n.name.toLowerCase())}" data-created="${dateAttr(n.created)}" data-updated="${dateAttr(n.updated)}"`;
     const badge = n.undecided ? ` <span class="badge" title="${n.undecided} undecided">${n.undecided}</span>` : '';
     // A product opens and closes; its own spec (if any) is a link inside the summary.
-    if (kids) return `<li class="prod" ${attrs}><details open><summary>${n.hasSpec ? `<a href="#${esc(n.path)}">${esc(n.name)}</a>` : esc(n.name)}${badge}</summary>${kids}</details></li>`;
-    return `<li ${attrs}><a href="#${esc(n.path)}">${esc(n.name)}${badge}</a></li>`;
+    if (kids) return `<li class="prod" ${attrs}><details open><summary>${n.hasSpec ? `<a href="#spec/${esc(n.path)}">${esc(n.name)}</a>` : esc(n.name)}${badge}</summary>${kids}</details></li>`;
+    return `<li ${attrs}><a href="#spec/${esc(n.path)}">${esc(n.name)}${badge}</a></li>`;
   }).join('');
 }
 
@@ -174,7 +177,7 @@ function subPage(p, path) {
   const orphan = p.orphanWhy?.length ? `<section><h3 class="sh">Notes without a requirement</h3>${p.orphanWhy.map(o => `<p class="for">${esc(o.requirement)}</p><p>${linkCards(o.text)}</p>`).join('')}</section>` : '';
   const last = p.history?.[0];
   const history = p.history?.length ? `<section class="history"><h3>History</h3><ol>${p.history.map(h => `<li><b>${esc(h.change)}</b>${h.date ? ` · ${esc(h.date)}` : ''}${h.why ? ` — ${esc(h.why)}` : ''}</li>`).join('')}</ol></section>` : '';
-  return `<section class="page" data-page="${esc(path)}"><div class="main">
+  return `<section class="page" data-page="spec:${esc(path)}"><div class="main">
 <div class="crumb">${p.crumb.map(esc).join(' › ')}</div><h2>${esc(p.title)}</h2>${p.purpose ? `<p class="purpose">${esc(p.purpose)}</p>` : ''}
 ${p.warnings.map(w => `<p class="warn">${esc(w)}</p>`).join('')}${p.how ? `<div class="how"><b>How it works, roughly</b>${esc(p.how)}</div>` : ''}
 ${reqs || '<p class="empty">No requirements yet.</p>'}${history}</div>
@@ -201,12 +204,13 @@ function overview(m) {
   const all = Object.entries(m.undecidedByChange ?? {}).flatMap(([, list]) => list);
   const pageUnd = Object.entries(m.pages).flatMap(([p, pg]) => pg.undecided.map(u => ({ ...u, path: p })));
   const count = all.length + pageUnd.length;
-  const list = pageUnd.map(u => `<div class="und"><a href="#${esc(u.path)}">${esc(m.pages[u.path].title)}</a>: ${esc(u.text)}<small>${esc(u.change)} · since ${esc(u.date)}</small></div>`).join('')
+  const list = pageUnd.map(u => `<div class="und"><a href="#spec/${esc(u.path)}">${esc(m.pages[u.path].title)}</a>: ${esc(u.text)}<small>${esc(u.change)} · since ${esc(u.date)}</small></div>`).join('')
     + all.map(undItem).join('');
   return `<section class="page wide" data-page="overview"><div class="main"><h2>${esc(m.title)}</h2>
 ${m.empty ? '<p class="purpose">No specs yet. Behaviors appear here once a change is archived.</p>' : `<p class="purpose">${plural(Object.keys(m.pages).length, 'sub-feature')}. Pick one on the left.</p>`}
 ${m.warnings.map(w => `<p class="warn">${esc(w)}</p>`).join('')}
-<h3 style="margin-top:28px">Undecided${count ? ` (${count})` : ''}</h3>${count ? list : '<p class="empty">Nothing undecided.</p>'}</div></section>`;
+<h3 style="margin-top:28px">Undecided${count ? ` (${count})` : ''}</h3>${count ? list : '<p class="empty">Nothing undecided.</p>'}
+${m.noSpecChanges?.length ? `<section class="history"><h3>Other archived changes</h3><ol>${m.noSpecChanges.map(h => `<li><b>${esc(h.change)}</b>${h.date ? ` · ${esc(h.date)}` : ''} · no spec changes${h.why ? ` — ${esc(h.why)}` : ''}</li>`).join('')}</ol></section>` : ''}</div></section>`;
 }
 
 export function renderPage(m) {

@@ -271,3 +271,25 @@ test('titles keep acronyms', async () => {
   assert.equal(segmentName('ui-api-sso'), 'UI API SSO');
   assert.equal(segmentName('moving-around'), 'Moving around');
 });
+
+// Final review fixes
+test('final: a UTF-8 BOM does not hide frontmatter or the purpose', () => {
+  const d = project();
+  w(d, 'knowledge/prds/storms-canvas.md', '﻿---\ntitle: Storms canvas\nstatus: Shipped\n---\n');
+  w(d, 'openspec/specs/storms/saving/spec.md', `﻿# s\n\n## Purpose\nSaving boards.\n\n## Requirements\n\n${REQ('Save')}`);
+  const m = buildModel({ dir: d });
+  assert.equal(m.pages['storms/stickies'].prd.status, 'Shipped');
+  assert.equal(m.pages['storms/saving'].purpose, 'Saving boards.');
+});
+
+test('final: archives without spec changes are kept for the page', () => {
+  const d = project();
+  archive(d, '2026-10-08-trial');
+  assert.deepEqual(buildModel({ dir: d }).noSpecChanges.map(a => a.folder), ['2026-10-08-trial']);
+});
+
+test('final: a spec with a Requirements section but no readable requirement gets a warning', () => {
+  const d = project();
+  w(d, 'openspec/specs/odd/spec.md', '# odd\n\n## Requirements\n\nRequirement: missing heading marks\n');
+  assert.ok(buildModel({ dir: d }).pages.odd.warnings.some(x => /no requirements could be read/.test(x)));
+});

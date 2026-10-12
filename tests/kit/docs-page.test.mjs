@@ -87,3 +87,25 @@ test('products open and close', () => {
   const html = renderPage(model());
   assert.match(html, /<details open><summary>Storms[^<]*<span class="badge"[^>]*>1<\/span><\/summary><ul data-tree>/);
 });
+
+// Final review fixes
+test('final: spec pages cannot collide with the fixed views', () => {
+  const m = model();
+  m.tree.push({ name: 'Tools', path: 'tools', hasSpec: true, created: null, updated: null, undecided: 0, children: [] });
+  m.pages.tools = { title: 'Tools', crumb: ['Tools'], purpose: '', prd: null, how: null, requirements: [], orphanWhy: [], history: [], undecided: [], warnings: [] };
+  const html = renderPage(m);
+  assert.equal(count(html, /data-page="tools"/g), 1);
+  assert.match(html, /data-page="spec:tools"/);
+  assert.match(html, /href="#spec\/tools"/);
+  assert.match(html, /href="#spec\/storms\/stickies"/);
+});
+
+test('final: a malformed hash cannot break the page script', () => {
+  assert.match(renderPage(model()), /try\{h=decodeURIComponent\(raw\)\}catch\(e\)\{h=raw\}/);
+});
+
+test('final: archived changes without spec changes are listed', () => {
+  const m = model();
+  m.noSpecChanges = [{ folder: '2026-10-08-design-trial', date: '2026-10-08', change: 'design-trial', why: 'Try design tools.' }];
+  assert.match(renderPage(m), /design-trial[\s\S]*no spec changes/);
+});

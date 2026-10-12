@@ -23,8 +23,8 @@
 
 ## 4. Skill (`/kit:docs`)
 
-- [ ] 4.1 Write `plugins/kit/skills/docs/SKILL.md`: scan; draft only missing or stale capability notes, inventory entries and cards in the formats of the living-docs spec; "why" only for decisions with depth; show each draft with its path; ask per item in one batch (yes / change / skip); write only yeses; build; never edit specs, archives or `decisions.md`; never commit
-- [ ] 4.2 Eval cases in `evals/docs/cases.yaml`: nothing missing → no questions, page rebuilt; a skipped draft writes nothing; a small preference choice gets no "why"; never commits. Run `npm run evals`
+- [x] 4.1 Write `plugins/kit/skills/docs/SKILL.md`: scan; draft only missing or stale capability notes, inventory entries and cards in the formats of the living-docs spec; "why" only for decisions with depth; show each draft with its path; ask per item in one batch (yes / change / skip); write only yeses; build; never edit specs, archives or `decisions.md`; never commit
+- [x] 4.2 Eval cases in `evals/docs/cases.yaml`: nothing missing → no questions, page rebuilt; a skipped draft writes nothing; a small preference choice gets no "why"; never commits. Run `npm run evals`
 
 ## 5. Links into the kit
 

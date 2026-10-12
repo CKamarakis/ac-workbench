@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stickies — v2 sketch (sample data)</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:16px/1.6 system-ui,"Segoe UI",sans-serif;color:#1f2430;display:grid;grid-template-columns:290px 1fr 380px;background:#fff}
+nav{background:#f5f6f8;border-right:1px solid #e3e6eb;padding:22px 16px}
+nav h1{font-size:17px;margin-bottom:2px}
+nav .sub{font-size:13px;color:#5f6673;margin-bottom:14px}
+.sort{display:flex;gap:4px;margin-bottom:16px;font-size:13px}
+.sort span{border:1px solid #d5d9e0;border-radius:6px;padding:3px 9px;color:#3b4252;background:#fff}
+.sort span.on{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.grp{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5f6673;margin:14px 0 4px 10px}
+nav a{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;border-radius:6px;font-size:14px;color:#3b4252}
+nav a.prod{font-weight:600;color:#1f2430}
+nav a.child{padding-left:26px}
+nav a.on{background:#e6eefc;color:#1d4ed8;font-weight:600}
+nav small{font-size:12px;color:#5f6673}
+.pill{background:#fef3c7;color:#92400e;border-radius:999px;padding:0 8px;font-size:12px;font-weight:600}
+main{padding:32px 48px;max-width:840px;overflow:hidden}
+.crumb{font-size:13px;color:#5f6673}
+h2{font-size:28px;margin:2px 0 6px}
+.how{background:#f8fafc;border-left:3px solid #1d4ed8;padding:10px 14px;margin:14px 0 6px;font-size:15px}
+.req{border:1px solid #e3e6eb;border-radius:8px;padding:16px 20px;margin-top:18px}
+.req h3{font-size:17px;margin-bottom:4px}
+.story{padding:10px 0 10px;border-top:1px dashed #d5d9e0;margin-top:10px}
+.story:first-of-type{border-top:0}
+.story .t{font-size:14px;font-weight:600;color:#3b4252;margin-bottom:4px}
+.story .t span{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:#e6eefc;color:#1d4ed8;font-size:12px;margin-right:8px}
+.row{display:grid;grid-template-columns:70px 1fr;font-size:15px;background:#f8fafc;padding:3px 12px}
+.row b{font-size:12px;color:#1d4ed8;line-height:1.9}
+aside{background:#eef2f8;border-left:1px solid #dfe5ee;padding:30px 26px;font-size:15px}
+aside h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;margin:0 0 6px}
+aside p{margin-bottom:22px}
+aside .und{background:#fff7e0;border:1px solid #f1d27a;border-radius:6px;padding:8px 10px}
+aside a{color:#1d4ed8}
+</style></head><body>
+<nav><h1>Toughbubble</h1><div class="sub">living docs · sample data</div>
+<div class="sort"><span class="on">Last updated</span><span>Most recent</span><span>A–Z</span></div>
+<div class="grp">App</div>
+<a>Foundations</a><a>Tools</a>
+<div class="grp">Products</div>
+<a class="prod">Storms <small>4</small></a>
+<a class="child on">Stickies <span class="pill">1</span></a>
+<a class="child">Saving</a><a class="child">Moving around</a><a class="child">Undo</a>
+<a class="prod">Notes <small>2</small></a>
+<a class="child">Editor</a><a class="child">Images</a>
+<a class="prod">Account</a>
+</nav>
+<main><div class="crumb">Storms › Stickies</div><h2>Stickies</h2>
+<p>Sticky notes you place, move and stack on a board.</p>
+<div class="how"><b>How it works, roughly:</b> drawn on a canvas; 200×200 by default; “bring to front” changes only one sticky.</div>
+<div class="req"><h3>Bring a sticky to the front</h3><p>A sticky the user picks SHALL be drawn above all others.</p>
+<div class="story"><div class="t"><span>1</span>Pick a covered sticky</div>
+<div class="row"><b>GIVEN</b><span>two stickies overlap</span></div><div class="row"><b>WHEN</b><span>the user clicks the one underneath</span></div><div class="row"><b>THEN</b><span>it comes to the front, and nothing else moves</span></div></div>
+<div class="story"><div class="t"><span>2</span>After reload</div>
+<div class="row"><b>GIVEN</b><span>a sticky was brought to the front</span></div><div class="row"><b>WHEN</b><span>the board reloads</span></div><div class="row"><b>THEN</b><span>it is still on top</span></div></div>
+</div></main>
+<aside><h4>Why</h4><p>One sort key per sticky, so bringing one to the front saves one sticky, not the whole board.</p>
+<h4>Changed by</h4><p>storms-canvas · 2026-10-12</p>
+<h4>From PRD</h4><p><a>Storms canvas</a> · Ready</p>
+<h4>Undecided</h4><div class="und">Should a corrupt board load as empty? <small>since 2026-10-12</small></div></aside>
+</body></html>

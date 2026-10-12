@@ -55,9 +55,10 @@ The agent writes small Markdown notes once; `docs.mjs build` renders everything.
 
 ### D4: The page
 - One file, inline CSS and JS, no network.
-- Left: tree (App foundations · Tools · products › sub-features), an "undecided" badge with a count, a search box (requirement names and scenario text).
-- Middle: the sub-feature's "How it works, roughly", then requirements, each with its scenarios as GIVEN / WHEN / THEN rows.
-- Right: for the selected requirement: its "why", linked cards, the change that added or last changed it, open decisions.
+- Left: project name, a sort control (sort by name / last updated / created, ascending or descending; default last updated, newest first), then the tree (App: Foundations, Tools; Products: products › sub-features), an "undecided" badge with a count. No item numbers. Search deferred (user, 2026-10-12).
+- Middle: breadcrumb and title, the sub-feature's "How it works, roughly", then requirements, each with its user stories numbered 1, 2, 3 and separated by a divider, each story as GIVEN / WHEN / THEN rows. No margin line numbers.
+- Right (a light panel): for the selected sub-feature or requirement: its "why", the change that added or last changed it, the PRD it came from (title and status, from the archived proposals' `PRD:` line via `prdLink` in `next.mjs`), linked cards, open decisions.
+- Look: the category-standard three-panel docs style chosen by the user over the rolled "patent" and the "drawing set" directions (sketches in `.impeccable/mocks/decision/`, final one `canon-v2.html`), because colour makes it easier to read and to spot things. The right panel is light, not dark.
 - A History view per sub-feature: archived changes, newest first, each with the first line of its proposal's "Why".
 - Visual design comes from Impeccable (`/impeccable shape` naming this page as the target; then `critique` and `audit` on the built page). Its findings are fixed in the script's template.
 

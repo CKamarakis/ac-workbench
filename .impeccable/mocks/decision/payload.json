@@ -1,0 +1,52 @@
+{
+  "title": "Choose the visual world for the docs page",
+  "question": "The roll assigned The Patent Specification. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Patent Specification",
+      "kicker": "THE ROLL",
+      "lineage": "granted patent documents: bibliographic front page, numbered claims, margin line numbers",
+      "thesis": "Each sub-feature reads like a granted patent: what it does is claimed, numbered and exact; why it's built that way is the description beside it.",
+      "palette": ["#f6f6f3", "#15171c", "#c8cbd2", "#0b5d47"],
+      "materials": ["bibliographic front page with (54)/(57) codes", "margin line numbers", "hatched UNDECIDED stamp"],
+      "viewport": "Left: claims index (sub-features numbered 01–11) with search and hatched UNDECIDED stamps. Middle: a front page (title, abstract, last changed by) over a calm serif column of numbered claims, each scenario a 'wherein' clause with GIVEN/WHEN/THEN rows. Right: Description (why), References cited (foundation cards), Related application data (history), Undecided.",
+      "risk": "Can read legalistic or cold if the codes and line numbers take over the column; they must stay in the frame.",
+      "raised": [
+        { "from": "challenger-cutting-bench", "raise": "State is a mark, not a hue: undecided is a hatched ink stamp, deferred is a struck rule, so it survives greyscale and colour-blind reading." },
+        { "from": "challenger-iridescent-cloud", "raise": "Colour lives only in hairlines and codes; the reading column stays achromatic." }
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html"
+    },
+    {
+      "id": "model-pick",
+      "label": "The Drawing Set",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "architects' construction drawing sets: sheet index, title block, revision clouds, revision table",
+      "thesis": "The product as a set of construction sheets: each sub-feature a sheet, open decisions as revision clouds, history as the revision table.",
+      "palette": ["#fbfbfa", "#22252b", "#d9dce1", "#c2185b"],
+      "materials": ["sheet border with grid letters", "title block", "revision clouds"],
+      "viewport": "A framed sheet: sheet index on the left, behaviors in the middle, general notes (why) on the right, title block with revisions along the bottom.",
+      "risk": "The most familiar 'builder' metaphor; the title block costs vertical space on short screens.",
+      "html": ".impeccable/mocks/decision/model-pick.html"
+    },
+    { "id": "challenger-exposure-record", "label": "Exposure Record", "verdict": "declined", "lineage": "darkroom exposure record cards", "palette": ["#2a2a2a", "#e8e8e8", "#c0287a"], "materials": ["zone ramp", "hatch overlays"], "case": "Fuses poorly: a darkroom tool is a costume on a reading page; readers don't identify with it.", "kept": "A single strict tonal ramp as the only greys." },
+    { "id": "challenger-cutting-bench", "label": "Cutting Bench Select Rail", "verdict": "declined", "lineage": "film editing bench", "palette": ["#0b0b0b", "#ff7a1a", "#ffffff"], "materials": ["perforated rail", "tape flags"], "case": "Fuses poorly: a rail replaces the navigation a reader expects; loses on clarity.", "kept": "State as a mark, not a hue (raised into the roll)." },
+    { "id": "challenger-orizuru", "label": "Orizuru Fold Sequence", "verdict": "declined", "lineage": "origami crane diagrams", "palette": ["#d8402b", "#f4efe6", "#1a1a1a"], "materials": ["washi", "crease lines"], "case": "Fuses poorly: a fold sequence implies one linear path; sub-features are a tree.", "kept": "A strict numbered margin column." },
+    { "id": "challenger-iridescent-cloud", "label": "Iridescent Cloud Edge", "verdict": "declined", "lineage": "atmospheric optics", "palette": ["#ffffff", "#4a5160", "#9ad8c4"], "materials": ["spectral fringe"], "case": "Fuses poorly: no tie to builders or product records.", "kept": "Colour confined to hairlines (raised into the roll)." },
+    { "id": "challenger-generative-identity", "label": "Generative Parametric Identity", "verdict": "declined", "lineage": "parametric brand systems", "palette": ["#3a5bd9", "#f2f2f2"], "materials": ["seeded marks"], "case": "Fuses poorly: a page that changes look per seed contradicts a byte-identical rebuild.", "kept": "Every token derived from one source." },
+    { "id": "challenger-warm-consumer", "label": "Warm Consumer App", "verdict": "declined", "lineage": "consumer app UI", "palette": ["#fff6ee", "#ffffff", "#ff5a36"], "materials": ["soft cards"], "case": "Fuses poorly: thumb-first cards hide a dense reference tree.", "kept": "The accent only where something can be done." }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "Three-panel docs like Redoc: grey sidebar, white column, dark right panel, blue accent.",
+    "palette": ["#ffffff", "#1f2430", "#263040", "#1d4ed8"],
+    "materials": ["clean three-panel grid", "rounded cards"],
+    "viewport": "Sidebar tree with search, requirement cards with scenario boxes, a dark 'why' panel.",
+    "risk": "Indistinguishable from any API docs by design.",
+    "html": ".impeccable/mocks/decision/canon.html"
+  },
+  "steer": true
+}

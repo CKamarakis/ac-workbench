@@ -102,16 +102,17 @@
 ### Task 4: Page design with Impeccable (task 3.1)
 
 **Files:**
-- Create: `plugins/kit/scripts/docs-page.mjs`, `tests/kit/fixtures/docs/model.json` (a hand-written model: Storms › Stickies, Saving; one card; two tools; one undecided)
+- Create: `plugins/kit/scripts/docs-page.mjs`, `tests/kit/docs-page.test.mjs`, `tests/kit/fixtures/docs/model.json` (a hand-written model: Storms › Stickies, Saving; one card; two tools; one undecided)
 - Modify: `evals/trials/kit-docs.md`
 
 **Interfaces:**
-- Produces: `renderPage(model: Model) → string` (pure, no I/O). `Model = { title, builtFrom: string|null, tree: Node[], pages: Record<path, { how: string|null, requirements: { name, text, scenarios, why: {text, cards}[], change: string|null }[], orphanWhy: {requirement,text}[], history: Arch[], undecided: Undecided[], warnings: string[] }>, cards: Card[], tools: Tools|null, undecidedByChange: Record<change, Undecided[]>, empty: boolean }`, `Undecided = { change, id, text, date, status }`.
+- Produces: `renderPage(model: Model) → string` (pure, no I/O). Search is deferred (user, 2026-10-12). `Model = { title, builtFrom: string|null, tree: (Node & { created: string|null, updated: string|null })[], pages: Record<path, { prd: { title, status, path } | null, how: string|null, requirements: { name, text, scenarios, why: {text, cards}[], change: string|null }[], orphanWhy: {requirement,text}[], history: Arch[], undecided: Undecided[], warnings: string[] }>, cards: Card[], tools: Tools|null, undecidedByChange: Record<change, Undecided[]>, empty: boolean }`, `Undecided = { change, id, text, date, status }`.
 
-- [ ] **Step 1:** In this repo, run `/impeccable init` only if Impeccable asks for it. Then `/impeccable shape` with this prompt scope: *target `plugins/kit/scripts/docs-page.mjs` producing one offline HTML file; three panels (tree / behavior / why) like Redoc; scenario rows labelled GIVEN/WHEN/THEN/AND; "undecided" badge with count in the tree; a History view per sub-feature; a search box; user-centric reading, not API docs; light and dark; no web fonts, no CDN.*
-- [ ] **Step 2:** Implement `renderPage` from its direction. Inline CSS/JS; tree navigation by hash (`#storms/stickies`); search filters requirement names and scenario text client-side from a JSON blob in `<script type="application/json">` (escaped `<` as `<`), rendered with `textContent`.
-- [ ] **Step 3:** Write `renderPage(model.json)` to a temp file and open it in a browser; check the panels against the shape output. Record Impeccable's output-token use (from the session) under "3.1 Impeccable shape" in `evals/trials/kit-docs.md`.
-- [ ] **Step 4: Commit** `git commit -m "kit-docs 4: page template (Impeccable shape)"`
+- [x] **Step 1:** Direction chosen with the user (2026-10-12): the category-standard three-panel style, adjusted — light right panel, sort control instead of search, no item numbers, no margin line numbers, numbered and separated user stories, PRD link. Reference sketch: `.impeccable/mocks/decision/canon-v2.html`. `PRODUCT.md` written by Impeccable's init.
+- [ ] **Step 2:** Write the failing tests in `tests/kit/docs-page.test.mjs` against `model.json`: stories numbered `1`, `2` with a separator element between them; the tree carries `data-updated` / `data-created` / `data-name` per node and the sort control defaults to "Last updated", descending; the `From PRD` line renders title and status; `renderPage` is pure (same model → same string).
+- [ ] **Step 3:** Implement `renderPage` matching `canon-v2.html`. Inline CSS/JS; tree navigation by hash (`#storms/stickies`); sorting client-side by re-ordering existing nodes (no `innerHTML` from source text); text set via escaping at build time only.
+- [ ] **Step 4:** Open `renderPage(model.json)` in a browser and compare with `canon-v2.html`. Note Impeccable's token use under "3.1 Impeccable shape" in `evals/trials/kit-docs.md`.
+- [ ] **Step 5: Commit** `git commit -m "kit-docs 4: page template (Impeccable shape)"`
 
 ### Task 5: `build` (tasks 3.2–3.4)
 
@@ -131,6 +132,7 @@
   - `project without specs` (spec scenario): only a card → `model.empty === true`, page contains "no specs yet" and the card title, exit 0.
   - `unparsable spec and unreadable decisions.md` → warnings, build still writes the file.
   - `no package.json` → `model.tools === null`, page says "no package.json".
+  - `sub-feature dates and PRD link` (spec scenarios "Default sort", "PRD link"): archives `2026-10-07-a` and `2026-10-12-b` touch `storms/stickies` → node `created: '2026-10-07'`, `updated: '2026-10-12'`; product `storms` takes newest updated / oldest created; proposal of `b` with `PRD: knowledge/prds/storms-canvas.md @ abc1234` and that PRD (`title: Storms canvas`, `status: Shipped`) → `pages['storms/stickies'].prd` = `{ title: 'Storms canvas', status: 'Shipped', path: 'knowledge/prds/storms-canvas.md' }`; page contains `From PRD`.
   - `page stores the newest archive`: `<meta name="kit-docs-archive" content="2026-10-12-b">`.
 - [ ] **Step 2: Run** — expected FAIL.
 - [ ] **Step 3: Implement** `undecided`, `buildModel`, `build` and the `build` CLI command. Write the file with `\n` endings.
@@ -216,7 +218,7 @@
 - Create: `knowledge/docs/index.html` and the confirmed notes/cards for this repo
 - Modify: `evals/trials/kit-docs.md`, `docs/roadmap.md`, `openspec/changes/kit-docs/tasks.md`
 
-- [ ] **Step 1: This repo.** Run `/kit:docs` live; confirm drafts with the user; open the page; check tree (11 flat specs), scenario rows, history (6 archives), search, the `kit-docs` open decisions if any. Evidence under "6.1".
+- [ ] **Step 1: This repo.** Run `/kit:docs` live; confirm drafts with the user; open the page; check tree (11 flat specs), scenario rows, history (6 archives), the sort control, the `kit-docs` open decisions if any. Evidence under "6.1".
 - [ ] **Step 2: Toughbubble copy** (`Projects/temp/Toughbubble`; reinstall the kit per project if needed). In the copy only: regroup Storms specs into `openspec/specs/storms/<sub>/`; run `/kit:docs`; confirm the "Storms draws on a canvas" card (evidence from the explore note), the tools inventory from its `package.json` (TipTap as one tool), and one open decision shown as undecided. Evidence under "6.2" with screenshots or page excerpts.
 - [ ] **Step 3:** `npm test`, `npm run evals`, `npm run registry:check` — all PASS; paste the summary lines into the trial file.
 - [ ] **Step 4:** Roadmap: M8 status and exit criteria met (both pages build), north-star row 13; tick `tasks.md`.

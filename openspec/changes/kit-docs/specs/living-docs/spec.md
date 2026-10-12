@@ -53,10 +53,13 @@ A missing source SHALL be reported, never treated as an error.
 ### Requirement: Docs page build
 `docs.mjs build` SHALL write one self-contained HTML file at `knowledge/docs/index.html` that works offline (no network requests). It SHALL contain:
 - a tree: App foundations, Tools, then products and sub-features from the spec folder paths (`storms/stickies` → Storms › Stickies; a flat spec is one level);
-- per sub-feature: "How it works, roughly" when its note has one, then each requirement with its scenarios split into GIVEN, WHEN, THEN and AND rows;
+- per sub-feature: "How it works, roughly" when its note has one, then each requirement with its scenarios (user stories) numbered from 1 within the requirement, visibly separated from each other, and split into GIVEN, WHEN, THEN and AND rows;
 - per requirement: its "why" entries, the foundation cards they link, and the archived change that added or last changed it;
+- per sub-feature: the PRD it came from, when an archived change that touched it names one in its proposal (`PRD: <path> @ <commit>`), with the PRD's title and status;
 - per sub-feature: a history of the archived changes that touched it, newest first, each with the first line of its proposal's Why;
-- a search over requirement names and scenario text.
+- a sort control for the tree: sort by name, last updated or created, ascending or descending; the default is last updated, newest first. A sub-feature's created date is its oldest archived change, its updated date its newest; one never updated has the same date for both; a product takes the newest updated and oldest created of its sub-features. The sort applies among products and among each product's sub-features.
+
+Search is not part of this change (deferred by the user, 2026-10-12).
 
 The build SHALL read requirement names from `spec.md` itself. It SHALL produce the same file for the same sources. Every piece of source text SHALL be HTML-escaped.
 
@@ -69,6 +72,21 @@ The build SHALL read requirement names from `spec.md` itself. It SHALL produce t
 - **GIVEN** a scenario with a `- **GIVEN**`, a `- **WHEN**` and a `- **THEN**` line
 - **WHEN** the page is built
 - **THEN** the scenario shows three labelled rows
+
+#### Scenario: Numbered user stories
+- **GIVEN** a requirement with three scenarios
+- **WHEN** the page is built
+- **THEN** they show as stories 1, 2 and 3, each separated from the next
+
+#### Scenario: Default sort
+- **GIVEN** Saving was last changed on 2026-10-12 and Stickies on 2026-10-07
+- **WHEN** the page opens
+- **THEN** the tree lists Saving above Stickies, and the sort control shows "Last updated", newest first
+
+#### Scenario: PRD link
+- **GIVEN** the archived change that touched Stickies has `PRD: knowledge/prds/storms-canvas.md @ abc1234` in its proposal, and that PRD's title is "Storms canvas" with status `Shipped`
+- **WHEN** the page is built
+- **THEN** Stickies shows "From PRD: Storms canvas · Shipped"
 
 #### Scenario: Markup in spec text
 - **GIVEN** a requirement whose text contains `<script>`

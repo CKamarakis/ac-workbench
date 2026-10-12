@@ -30,11 +30,11 @@
 
 - [x] 5.1 Archive gate (`hooks/archive-gate.mjs`): on allow, when `knowledge/docs/` exists, add the rebuild reminder to `additionalContext` (with the open-decisions text if both). Verify with tests for both scenarios of "Docs page rebuild at archive"
 - [x] 5.2 `next.mjs`: the stale-page reminder line (never the next step itself). Verify the "Page behind the archive" and "No page yet" scenarios
-- [ ] 5.3 `toolkit.yaml`: `docs` phase after `close`, owned by the kit with `/kit:docs`; `npm run registry`; check the lane map and the routing block
-- [ ] 5.4 `/kit:ready` skill: the new-tool check also reads `knowledge/docs/tools.md` purposes; add an eval case for "Purpose found in the inventory"
-- [ ] 5.5 `/kit:verify` skill (docs sync): propose a foundation card for a decision shaping more than one sub-feature, and `replaced` for a contradicted card; add an eval case for both docs-sync scenarios
-- [ ] 5.6 `/kit:start` skill: `/kit:docs` once under Later; no docs folders created. Add or update an eval case
-- [ ] 5.7 README: `/kit:docs`, the curated files, the rebuild at archive
+- [x] 5.3 `toolkit.yaml`: `docs` phase after `close`, owned by the kit with `/kit:docs`; `npm run registry`; check the lane map and the routing block
+- [x] 5.4 `/kit:ready` skill: the new-tool check also reads `knowledge/docs/tools.md` purposes; add an eval case for "Purpose found in the inventory"
+- [x] 5.5 `/kit:verify` skill (docs sync): propose a foundation card for a decision shaping more than one sub-feature, and `replaced` for a contradicted card; add an eval case for both docs-sync scenarios
+- [x] 5.6 `/kit:start` skill: `/kit:docs` once under Later; no docs folders created. Add or update an eval case
+- [x] 5.7 README: `/kit:docs`, the curated files, the rebuild at archive
 
 ## 6. Trials and close
 

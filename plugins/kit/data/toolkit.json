@@ -12,6 +12,7 @@
     "review",
     "ui-polish",
     "close",
+    "docs",
     "kit-issues"
   ],
   "project_types": {
@@ -411,6 +412,7 @@
         "prd",
         "ready",
         "verify",
+        "docs",
         "kit-issues"
       ],
       "skills": {
@@ -418,6 +420,7 @@
         "prd": "/kit:prd",
         "ready": "/kit:ready",
         "verify": "/kit:verify",
+        "docs": "/kit:docs",
         "kit-issues": "/kit:feedback"
       },
       "verdicts": [

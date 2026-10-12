@@ -113,3 +113,11 @@ test('build-readiness 5.2: routing block carries the /kit:ready and Given/When/T
   assert.ok(judge >= 0 && verify > judge + 2, 'judge and verify lines are still there, around the new ones');
   assert.equal(routingBlock(laneMap(fixture('resolved-overlap')), {}).includes('/kit:ready`: it lists'), false, 'only with qualityGates');
 });
+
+test('kit-docs 5.3: the real registry has a docs phase after close, owned by the kit with /kit:docs', () => {
+  const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));
+  assert.equal(reg.phases.indexOf('docs'), reg.phases.indexOf('close') + 1);
+  const lane = laneMap(reg).lanes.find(l => l.phase === 'docs');
+  assert.equal(lane.owner.name, 'kit');
+  assert.equal(lane.owner.skill, '/kit:docs');
+});

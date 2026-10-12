@@ -41,6 +41,8 @@ If it prints `error:`, show it and stop.
    2. **Sort each item.** Every receipt item gets exactly one place: proposed, or left out. Items under "Visible changes" are behaviors; never leave them out.
       - **Behavior** (the user can observe it) and not covered by a scenario → propose a scenario (`- **GIVEN**`/`WHEN`/`THEN`) under its requirement in the delta spec.
       - **Decision with depth** (it trades something, shapes more than one behavior, or would surprise someone later) and not in `design.md` → propose it with its reason.
+        - If it shapes more than one sub-feature, or trades a limit for a gain across the product, **also** propose a foundation card (`knowledge/foundations/<slug>.md`, or `<product>/<slug>.md`; format in the `/kit:docs` skill), written only on a yes.
+        - If it contradicts an existing card, propose setting that card to `status: replaced` with `replaced_by`, never deleting it.
       - **How the build ran** (push cadence, task dispatch, test ports, review batching) → left out. List these in one line; propose nothing.
       - Small or preference choices get no "why". Don't propose them for `design.md`.
    3. **Flag** an item when the built behavior changes what the user sees in a way the specs didn't plan, or could lose or hide data. Ask it first, as "this is what was built; is it what you want?":

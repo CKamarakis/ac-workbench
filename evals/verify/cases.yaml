@@ -141,3 +141,19 @@ cases:
             description: The corrupt-board ruling is flagged and asked as "is it what you want?" before any spec text is written
           - name: no-hard
             description: Nothing from the docs sync becomes a HARD item
+
+  - id: card-for-cross-feature-decision
+    description: A decision with depth that shapes several sub-features is also proposed as a foundation card (kit-docs, docs-sync "Foundation card proposals")
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*also\*\* propose a foundation card' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'status: replaced` with `replaced_by`, never deleting it' }
+
+  - id: no-card-for-single-feature
+    description: A decision with depth that affects only one sub-feature goes to design.md only
+    input:
+      prompt: "/kit:verify add-saving — the build split saves into chunks of 5,000 (affects Saving only)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: design-only
+            description: Proposes the split-saves decision for design.md, and proposes no foundation card

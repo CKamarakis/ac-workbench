@@ -172,3 +172,22 @@ cases:
         criteria:
           - name: reuse-recommended
             description: A new-tool item names @dnd-kit/core and recommends reusing it over react-beautiful-dnd
+
+  - id: inventory-purpose-reuse
+    description: A planned rich-text editor is matched against the tools inventory's purposes (kit-docs, build-readiness "Purpose found in the inventory")
+    setup:
+      files:
+        package.json: '{"dependencies":{"@tiptap/react":"2"}}'
+        knowledge/docs/tools.md: "## Rich text\n\n### TipTap\n- packages: @tiptap/react\n- for: rich text in stickies\n"
+        openspec/changes/add-notes/proposal.md: "# Proposal\n\nRich notes.\n"
+        openspec/changes/add-notes/tasks.md: "- [ ] 1.1 Add Lexical for the note editor\n"
+        openspec/changes/add-notes/design.md: "# Design\n\nUse Lexical as the rich-text editor for notes.\n"
+        openspec/changes/add-notes/specs/notes/spec.md: "## ADDED Requirements\n\n### Requirement: Rich notes\nThe app SHALL format note text.\n\n#### Scenario: Bold\n- **WHEN** the user presses Ctrl+B\n- **THEN** the selection is bold\n"
+    input:
+      prompt: "/kit:ready add-notes"
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'knowledge/docs/tools.md' }
+      - kind: rubric
+        criteria:
+          - name: names-tiptap
+            description: The new-tool item names TipTap, says the inventory already has it for rich text, and recommends reusing it over Lexical

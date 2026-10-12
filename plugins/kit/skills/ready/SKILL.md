@@ -23,7 +23,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/decisions.mjs" <command> --dir . --change <n
    - **gap:** a behavior with no scenario, especially empty, error, loading, permission and limit cases, UI states and copy, and the data's shape. The scan's `vague` hits and requirements with 0 scenarios are leads; judge each one, and don't list a hit that's fine in context.
    - **difference:** the PRD, the specs and the design disagree. Quote both sides with their paths.
    - **confirm:** a key assumption or high-impact behavior that looks decided but that the user should check, such as something that changes what users see, or could lose or hide data.
-   - **new-tool:** a dependency the design or tasks plan to add. Compare it with the scan's `dependencies`. If an existing one covers the same purpose, recommend reusing it. If `dependencies` is `null`, say in one line that the tool check was skipped (no `package.json`).
+   - **new-tool:** a dependency the design or tasks plan to add. Compare it with the scan's `dependencies`. If the project has a tools inventory (`knowledge/docs/tools.md`), also match on each tool's `for:` purpose (e.g. "TipTap — rich text in stickies" covers another rich-text editor), and name the inventory entry. If an existing one covers the same purpose, recommend reusing it. If `dependencies` is `null`, say in one line that the tool check was skipped (no `package.json`).
    - **Leave out small or preference choices** (naming, a colour, a port). Don't invent items to fill the list; zero items is a fine result.
 4. **Show the list first:** "N decisions for you", each in one line with its kind and where it came from. Order: confirm, difference, gap, new-tool. Then record each one:
    ```bash

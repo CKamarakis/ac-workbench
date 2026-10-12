@@ -19,7 +19,9 @@ The repo is a Claude Code plugin marketplace with one plugin, `kit`.
                                             |
                          /kit:verify   -->  tests + security + code review + docs sync  -->  verify.md
                                             |  passes (or you override with a reason)
-                         /opsx:archive -->  PRD Shipped
+                         /opsx:archive -->  PRD Shipped; rebuild the docs page into the archive commit?
+                                            |
+                         /kit:docs     -->  knowledge/docs/index.html: what's built, why, what's undecided
  Not sure what's next?  /kit:next
 ```
 
@@ -50,6 +52,7 @@ Run `/kit:start` once in the project folder (again only to re-sync after a kit u
 | `/kit:judge` | Recommend plain OpenSpec or SuperSpec for a change, from a risk checklist, with the reasons. You decide |
 | `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Warns, never blocks |
 | `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests, and a **docs sync** (what was built goes into the specs and `design.md`, on your yes); writes `verify.md` |
+| `/kit:docs` | Build the project's docs page (`knowledge/docs/index.html`): products › sub-features, their Given/When/Then user stories, the why where it matters, foundation cards, the tools inventory, history and open decisions. Drafts missing notes and asks you per item; the page itself is rebuilt by a script at no token cost |
 | `/kit:setup` | Install or check the machine toolset |
 | `/kit:start` | Set up or re-sync a project |
 
@@ -76,6 +79,8 @@ The hooks ship in the kit plugin and do nothing outside kit projects.
    notes/      one Markdown file per note (<date>-<title>.md); optional topic folders
    prds/       one PRD per file, with status and the notes it came from
    assets/     images and screenshots
+   docs/       the docs page (index.html, rebuilt by /kit:docs and at archive), notes per sub-feature (<path>.md: how it works, why), tools.md
+   foundations/ cards for technical choices that shape more than one sub-feature (app-wide, or <product>/)
    archive/    moved here on request; the kit never reads it
 ```
 

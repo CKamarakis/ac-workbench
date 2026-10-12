@@ -10,3 +10,7 @@ evals/**/sandbox/
 
 # Local-only Claude Code settings (e.g. Superpowers for SuperSpec changes)
 .claude/settings.local.json
+
+# Impeccable (tool; reinstall per clone: npx -y impeccable install --providers=claude --scope=project)
+.claude/skills/impeccable/
+.claude/agents/impeccable-*.md

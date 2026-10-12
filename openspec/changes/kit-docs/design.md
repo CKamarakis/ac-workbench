@@ -102,5 +102,5 @@ The agent writes small Markdown notes once; `docs.mjs build` renders everything.
 
 ## Open Questions
 
-- **Unverified:** `/opsx:archive` into nested spec paths (see Risks).
+- ~~`/opsx:archive` into nested spec paths~~ **Checked 2026-10-12 (task 1.1):** OpenSpec 1.13.2 merges a delta into `specs/a/b/spec.md`; evidence in `evals/trials/kit-docs.md`.
 - **Unverified:** Impeccable's bash-syntax hooks on Windows in this repo (they worked on the Toughbubble copy in M4).

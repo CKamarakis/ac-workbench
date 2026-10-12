@@ -2,9 +2,9 @@
 
 ## 1. Checks before building
 
-- [ ] 1.1 Nested-path archive check (design Open Questions). In a throwaway folder: `openspec init`, a spec at `specs/a/b/spec.md`, a change with a delta at `specs/a/b/spec.md`, then `openspec archive`. Record whether the delta merged into the nested path in `evals/trials/kit-docs.md`. If not, note the fallback (flat paths plus a hand-made nested fixture) in `design.md` before group 3
-- [ ] 1.2 Keep Impeccable out of git (design D8): gitignore `.claude/skills/impeccable/` and `.claude/agents/impeccable-*.md`; the files it creates (`PRODUCT.md`, `DESIGN.md`) stay committed. Verify with `git status --short`
-- [ ] 1.3 Bump the kit to `0.7.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.1 Nested-path archive check (design Open Questions). In a throwaway folder: `openspec init`, a spec at `specs/a/b/spec.md`, a change with a delta at `specs/a/b/spec.md`, then `openspec archive`. Record whether the delta merged into the nested path in `evals/trials/kit-docs.md`. If not, note the fallback (flat paths plus a hand-made nested fixture) in `design.md` before group 3
+- [x] 1.2 Keep Impeccable out of git (design D8): gitignore `.claude/skills/impeccable/` and `.claude/agents/impeccable-*.md`; the files it creates (`PRODUCT.md`, `DESIGN.md`) stay committed. Verify with `git status --short`
+- [x] 1.3 Bump the kit to `0.7.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
 
 ## 2. Scan (`docs.mjs scan`)
 

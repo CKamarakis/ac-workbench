@@ -7,3 +7,6 @@ cockpit/
 # Eval sandboxes (temp folders created by tools/run-evals.mjs)
 evals/**/sandbox/
 .eval-sandbox*/
+
+# Local-only Claude Code settings (e.g. Superpowers for SuperSpec changes)
+.claude/settings.local.json

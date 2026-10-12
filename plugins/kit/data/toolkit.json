@@ -6,6 +6,7 @@
     "brainstorm",
     "artifacts",
     "plan",
+    "ready",
     "build",
     "verify",
     "review",
@@ -59,6 +60,11 @@
       "when": "I'm ready to write it down as a change",
       "phase": "artifacts",
       "use": "/opsx:propose"
+    },
+    {
+      "when": "the plan is done; check it is ready to build",
+      "phase": "ready",
+      "use": "/kit:ready"
     },
     {
       "when": "the plan is done and I want to build",
@@ -397,12 +403,14 @@
       "phases": [
         "capture",
         "prd",
+        "ready",
         "verify",
         "kit-issues"
       ],
       "skills": {
         "capture": "/kit:capture",
         "prd": "/kit:prd",
+        "ready": "/kit:ready",
         "verify": "/kit:verify",
         "kit-issues": "/kit:feedback"
       },

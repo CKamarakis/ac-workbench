@@ -67,6 +67,22 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '--expect <hash>' }
       - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'PRD: <knowledge>/prds/<slug>\.md @ <commit>' }
       - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: "The status changes only on the user's yes" }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '\*\*Requirements as stories:\*\* "Given <starting state>, when <the user does X>, then <what they see>"' }
+
+  - id: draft-writes-stories
+    description: 'A draft from the note "dragging a sticky moves it; letting go saves the position" has at least one Given/When/Then story'
+    setup:
+      files:
+        knowledge/notes/2026-10-12-sticky-drag.md: "---\ntitle: Sticky drag\ndate: 2026-10-12\n---\nDragging a sticky moves it; letting go saves the position.\n"
+    input:
+      prompt: "/kit:prd sticky dragging"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: story-form
+            description: The Requirements section has at least one line of the form "Given …, when …, then …" taken from the note (e.g. given a sticky, when I drag it and let go, then it stays there after a reload)
+          - name: plain-where-fitting
+            description: Rules without a starting state (if any) stay short plain statements, not forced stories
 
   - id: shortlist-and-gaps
     description: With notes on checkout and onboarding, "gift cards" shortlists checkout notes with reasons and marks gaps

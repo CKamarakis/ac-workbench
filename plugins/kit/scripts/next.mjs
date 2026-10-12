@@ -11,6 +11,7 @@ import { loadRegistry } from './setup.mjs';
 import { locate, pathWith } from './locate.mjs';
 import { knowledgeDir, listKnowledge } from './knowledge.mjs';
 import { verifyStatus } from './verify.mjs';
+import { decisionStatus, openLine } from './decisions.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 
@@ -81,7 +82,7 @@ export function prdSuggest({ knowledge, map, activeCount = 0, changedSince = () 
  *   statusOf: name -> { artifacts: [{ id, status }], isPlanningComplete }               (openspec status --json)
  *   map: laneMap(registry)
  */
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -91,10 +92,17 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   const { suggestion, warnings } = prdSuggest({ knowledge, map, activeCount: active.length, changedSince });
   const withWarnings = s => (warnings.length ? { ...s, warnings } : s);
   if (suggestion) return withWarnings(suggestion);
-  return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf }));
+  return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
 }
 
-function openspecSuggest({ active, statusOf, map, verifyOf }) {
+function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null }) {
+  const s = openspecStep({ active, statusOf, map, verifyOf, decisionsOf });
+  // build-readiness D3: open decisions ride along on any suggestion for the change; never a gate.
+  const open = s.change ? openLine(decisionsOf(s.change)) : null;
+  return open ? { ...s, open } : s;
+}
+
+function openspecStep({ active, statusOf, map, verifyOf, decisionsOf }) {
   if (!active.length) return step(map, 'brainstorm', 'No active change: explore the next idea before proposing it.');
 
   const change = active[0];
@@ -102,7 +110,10 @@ function openspecSuggest({ active, statusOf, map, verifyOf }) {
   const st = statusOf(change.name) ?? {};
   const arts = st.artifacts ?? [];
   const extra = { change: change.name, ...(others.length ? { otherActive: others } : {}) };
-  const planningDone = st.isPlanningComplete ?? st.isComplete ?? (arts.length > 0 && arts.every(a => a.status === 'done' || a.status === 'skipped'));
+  const doneId = id => arts.some(a => a.id === id && (a.status === 'done' || a.status === 'skipped'));
+  // Ready to apply = OpenSpec's applyRequires are done (an optional design.md left unwritten doesn't hold it back).
+  const planningDone = st.applyRequires?.length ? st.applyRequires.every(doneId)
+    : (st.isPlanningComplete ?? st.isComplete ?? (arts.length > 0 && arts.every(a => a.status === 'done' || a.status === 'skipped')));
 
   if (!planningDone) {
     const next = arts.find(a => a.status === 'ready');
@@ -113,6 +124,11 @@ function openspecSuggest({ active, statusOf, map, verifyOf }) {
   }
   const total = change.totalTasks ?? 0, completed = change.completedTasks ?? 0;
   if (total === 0 || completed < total) {
+    // build-readiness D3: offer the readiness check once, before the first task, when the lane map has an owner for it.
+    if (completed === 0 && total > 0 && !decisionsOf(change.name)?.readyAt && lane(map, 'ready').owner) {
+      const build = lane(map, 'build');
+      return step(map, 'ready', `Planning of "${change.name}" is complete and no task has started: check it's ready to build (it warns, never blocks).`, { ...extra, then: build.owner ? (build.owner.skill ?? build.owner.name) : null });
+    }
     return step(map, 'build', `Planning of "${change.name}" is complete; ${total - completed} of ${total} tasks are open.`, extra);
   }
   const close = lane(map, 'close');
@@ -129,6 +145,7 @@ export function format(s) {
   const lines = [`Next: ${s.use}`, `  why:   ${s.reason}`, `  phase: ${s.phase}${s.owner ? ` (owner: ${s.owner})` : ''}`];
   if (s.prd) lines.push(`  prd:   ${s.prd}`);
   if (s.then) lines.push(`  then:  ${s.then}`);
+  if (s.open) lines.push(`  open:  ${s.open}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherActive?.length) lines.push(`  other active changes: ${s.otherActive.join(', ')}`);
@@ -172,7 +189,7 @@ export function gitChangedSince(dir) {
   };
 }
 
-function openspecJson(args, cwd) {
+export function openspecJson(args, cwd) {
   const os = locate('openspec');
   if (!os) return null;
   const r = spawnSync(`"${os.path}" ${args}`, { cwd, shell: true, encoding: 'utf8', env: { ...process.env, PATH: pathWith({ os }) }, timeout: 60000 });
@@ -188,6 +205,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const ri = args.indexOf('--registry');
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
-  const s = suggest({ openspec, statusOf: name => openspecJson(`status --change "${name}" --json`, dir), map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } } });
+  const s = suggest({ openspec, statusOf: name => openspecJson(`status --change "${name}" --json`, dir), map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }) });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

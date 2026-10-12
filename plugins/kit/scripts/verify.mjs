@@ -8,6 +8,8 @@
 //   reviewed --source security|code --how ran|substitute|skipped [--note "why"]
 //   browser --result pass|issues [--issue "..."]... [--shots a.png,b.png]   only when the user asks
 //   override --item <id> --reason "..."      only when the user asks
+//   docs-scan                                read-only: docs last updated, code commits since, receipt, deps
+//   docs-sync --proposed N --written N --declined N --left-out N [--unplanned a,b]   record the docs-sync summary
 //   status                                   missing | pass | fail | overridden
 //   prepush --install                        opt-in git pre-push hook (never overwrites)
 import fs from 'node:fs';
@@ -16,6 +18,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadRegistry } from './setup.mjs';
 import { locate } from './locate.mjs';
+import { decisionStatus, openLine } from './decisions.mjs';
 
 const DATA = /<!-- kit-verify-data (\{[\s\S]*?\}) -->/;
 const SEVERITIES = ['high', 'medium', 'low'];
@@ -59,9 +62,14 @@ const SRC = /^(src|app)\/.*\.(ts|tsx|js|jsx)$/;
 const isTest = f => /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/.test(f) || /(^|\/)(__tests__|tests?)\//.test(f);
 const isSource = f => SRC.test(f) && !isTest(f) && !/\.d\.ts$/.test(f) && !/(^|\/)[^/]*\.config\.[^/]+$/.test(f);
 
+/** The commit the change started from: merge-base with main/master, else the change folder's first commit. */
+export function baseCommit(dir, change) {
+  return git(dir, ['merge-base', 'HEAD', 'main']) ?? git(dir, ['merge-base', 'HEAD', 'master'])
+    ?? ((git(dir, ['log', '--reverse', '--format=%H', '--', `openspec/changes/${change}`]) ?? '').split('\n')[0] || null);
+}
+
 export function changedFiles(dir, change) {
-  const base = git(dir, ['merge-base', 'HEAD', 'main']) ?? git(dir, ['merge-base', 'HEAD', 'master'])
-    ?? (git(dir, ['log', '--reverse', '--format=%H', '--', `openspec/changes/${change}`]) ?? '').split('\n')[0] ?? null;
+  const base = baseCommit(dir, change);
   const diff = base ? git(dir, ['diff', '--name-only', base]) : git(dir, ['diff', '--name-only', 'HEAD']);
   const untracked = git(dir, ['ls-files', '--others', '--exclude-standard']);
   return [...new Set([...(diff ?? '').split('\n'), ...(untracked ?? '').split('\n')].map(s => s.trim()).filter(Boolean))].sort();
@@ -81,6 +89,78 @@ export function failureDetail(out) {
   const pick = lines.filter(l => /(error|fail|throw|expected|cannot|not )/i.test(l));
   const text = (pick.length ? pick : lines).slice(-3).join(' / ');
   return text.length > 200 ? text.slice(0, 197) + '...' : text;
+}
+
+// ---------- docs sync (build-readiness design D5; spec: docs-sync) ----------
+
+const PLANNING = ['proposal.md', 'design.md', 'tasks.md', 'specs'];
+// The docs themselves: ticking boxes in tasks.md is progress, not a docs update.
+const DOCS = ['proposal.md', 'design.md', 'specs'];
+
+/** List items under apply-receipt headings about rulings, visible changes or decisions. */
+export function receiptItems(text) {
+  const items = [];
+  let on = false;
+  for (const raw of String(text ?? '').split(/\r?\n/)) {
+    const h = /^#{1,4}\s+(.+)$/.exec(raw);
+    if (h) { on = /ruling|visible change|decision/i.test(h[1]); continue; }
+    const m = on && /^\s*(?:[-*]|\d+\.)\s+(.+)$/.exec(raw);
+    if (m && !/^\s{2,}/.test(raw)) items.push(m[1].replace(/\*\*/g, '').trim());
+  }
+  return items;
+}
+
+function depsAt(text) {
+  try { const p = JSON.parse(text); return { ...(p.dependencies ?? {}), ...(p.devDependencies ?? {}) }; } catch { return null; }
+}
+
+/** Read-only signals for the docs sync: when the docs stopped, what the build recorded, dependency changes. */
+export function docsScan({ dir, change }) {
+  const cdir = changeDir(dir, change);
+  const rel = `openspec/changes/${change}`;
+  const last = git(dir, ['log', '-1', '--format=%h %cs', '--', ...DOCS.map(p => `${rel}/${p}`)]);
+  const [hash, date] = last ? last.split(' ') : [null, null];
+  const since = hash ? git(dir, ['log', '--format=%h', `${hash}..HEAD`, '--', '.', ':(exclude)openspec', ':(exclude,glob)**/*.md']) : null;
+  let receipt = null;
+  try { receipt = receiptItems(fs.readFileSync(path.join(cdir, 'apply.md'), 'utf8')); } catch { /* no receipt */ }
+
+  const base = baseCommit(dir, change);
+  const before = (base && depsAt(git(dir, ['show', `${base}:package.json`]) ?? '')) ?? {};
+  let now = null;
+  try { now = depsAt(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')); } catch { /* no package.json */ }
+  let deps = null;
+  if (now) {
+    const plan = PLANNING.flatMap(p => {
+      const f = path.join(cdir, p);
+      try { return fs.statSync(f).isDirectory() ? fs.readdirSync(f, { recursive: true }).filter(x => String(x).endsWith('.md')).map(x => fs.readFileSync(path.join(f, String(x)), 'utf8')) : [fs.readFileSync(f, 'utf8')]; } catch { return []; }
+    }).join('\n').toLowerCase();
+    const added = Object.keys(now).filter(k => !(k in before)).sort();
+    deps = {
+      added: added.map(name => ({ name, planned: plan.includes(name.toLowerCase()) })),
+      removed: Object.keys(before).filter(k => !(k in now)).sort(),
+    };
+  }
+  return {
+    change,
+    docsUpdated: hash ? { commit: hash, date } : null,
+    codeCommitsSince: since == null ? null : since.split('\n').filter(Boolean).length,
+    receipt,
+    deps,
+  };
+}
+
+export function setDocsSync({ dir, change, proposed = 0, written = 0, declined = 0, leftOut = 0, unplanned = [] }) {
+  const n = v => { const x = Number(v ?? 0); if (!Number.isInteger(x) || x < 0) throw new Error('counts must be whole numbers ≥ 0'); return x; };
+  const file = reportPath(dir, change);
+  const state = readState(file);
+  if (!state) throw new Error('no report yet: run "verify.mjs run" first');
+  const s = docsScan({ dir, change });
+  state.docsSync = {
+    date: today(), docsUpdated: s.docsUpdated, codeCommitsSince: s.codeCommitsSince, receipt: s.receipt != null,
+    proposed: n(proposed), written: n(written), declined: n(declined), leftOut: n(leftOut),
+    unplanned: (Array.isArray(unplanned) ? unplanned : String(unplanned ?? '').split(',')).map(x => String(x).trim()).filter(Boolean),
+  };
+  return save(file, state);
 }
 
 // ---------- report state ----------
@@ -110,6 +190,16 @@ export function reviewItems(state) {
   return out;
 }
 
+function docsSection(d) {
+  if (!d) return ['## Docs sync', '', 'Not run yet.', ''];
+  return [
+    '## Docs sync', '',
+    `docs last updated: ${d.docsUpdated ? `${d.docsUpdated.date} (${d.docsUpdated.commit})` : 'never committed'}; code commits since: ${d.codeCommitsSince ?? 'unknown'}${d.receipt ? '' : '; no apply receipt'}  (date: ${d.date})`, '',
+    '| Proposed | Written | Declined | Left out |', '|---|---|---|---|', `| ${d.proposed} | ${d.written} | ${d.declined} | ${d.leftOut} |`, '',
+    `unplanned dependencies: ${d.unplanned.length ? d.unplanned.join(', ') : 'none'}`, '',
+  ];
+}
+
 export function render(state) {
   state.result = result(state);
   const hard = state.items.filter(i => i.level === 'HARD');
@@ -123,6 +213,7 @@ export function render(state) {
     ...(state.tests.length ? state.tests.map(t => `| ${t.script} | ${t.required ? 'yes' : 'no'} | ${t.result} |`) : ['| - | - | no test commands in the policy |']), '',
     '## Reviews', '', '| Review | How | Note |', '|---|---|---|', rv('security'), rv('code'), '',
     ...(state.browser ? ['## Browser check (on request)', '', `result: ${state.browser.result}  (date: ${state.browser.date})`, '', ...(state.browser.shots.length ? ['Screenshots:', ...state.browser.shots.map(s => `- ${s}`), ''] : [])] : []),
+    ...docsSection(state.docsSync),
     '## HARD (blocks archive)', '', ...(hard.length ? ['| Id | Item | Detail |', '|---|---|---|', ...hard.map(row)] : ['None.']), '',
     '## ADVISORY (your call)', '', ...(adv.length ? ['| Id | Item | Detail |', '|---|---|---|', ...adv.map(row)] : ['None.']), '',
     '## Overrides', '', ...(state.overrides.length ? ['| Item | Reason | Date |', '|---|---|---|', ...state.overrides.map(o => `| ${o.item} | ${esc(o.reason)} | ${o.date} |`)] : ['None.']), '',
@@ -157,10 +248,12 @@ export function runVerify({ dir, change, registry = loadRegistry(), run = defaul
   }
   for (const f of untestedFiles(dir, changedFiles(dir, change))) items.push({ id: `U:${f}`, level: 'ADVISORY', what: 'changed source file without a matching test', detail: f, source: 'untested' });
   (policy.advisory ?? []).forEach((a, n) => items.push({ id: `P${n + 1}`, level: 'ADVISORY', what: `policy check: ${a}`, source: 'policy' }));
+  const open = openLine(decisionStatus({ dir, change }));
+  if (open) items.push({ id: 'O:decisions', level: 'ADVISORY', what: open, detail: `openspec/changes/${change}/decisions.md`, source: 'decisions' });
   const findings = (prev?.items ?? []).filter(i => i.source === 'security' || i.source === 'code' || i.source === 'browser');
   const all = [...items, ...findings];
   const overrides = (prev?.overrides ?? []).filter(o => all.some(i => i.id === o.item));
-  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(prev?.browser ? { browser: prev.browser } : {}) });
+  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(prev?.browser ? { browser: prev.browser } : {}), ...(prev?.docsSync ? { docsSync: prev.docsSync } : {}) });
 }
 
 export function setReview({ dir, change, source, how, note }) {
@@ -250,6 +343,15 @@ function parseArgs(argv) {
   return o;
 }
 
+function docsScanText(s) {
+  const L = [`docs-scan ${s.change}`,
+    `  docs last updated: ${s.docsUpdated ? `${s.docsUpdated.date} (${s.docsUpdated.commit})` : 'never committed'}; code commits since: ${s.codeCommitsSince ?? 'unknown'}`,
+    `  apply receipt:     ${s.receipt ? `${s.receipt.length} items` : 'none'}`,
+    ...(s.receipt ?? []).map((x, i) => `    ${i + 1}. ${x}`),
+    `  dependencies:      ${s.deps ? `added ${s.deps.added.map(d => `${d.name}${d.planned ? '' : ' (unplanned)'}`).join(', ') || 'none'}; removed ${s.deps.removed.join(', ') || 'none'}` : 'no package.json'}`];
+  return L.join('\n');
+}
+
 function summary(s) {
   const r = result(s);
   const hard = s.items.filter(i => i.level === 'HARD');
@@ -270,9 +372,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     else if (o.cmd === 'browser') { const s = setBrowser({ ...o, result: o.result, shots: o.shots ?? [] }); out = o.json ? s : summary(s); }
     else if (o.cmd === 'reviewed') { const s = setReview(o); out = o.json ? s : summary(s); }
     else if (o.cmd === 'override') { const s = addOverride(o); out = o.json ? s : summary(s); }
+    else if (o.cmd === 'docs-scan') { const s = docsScan(o); out = o.json ? s : docsScanText(s); }
+    else if (o.cmd === 'docs-sync') { const s = setDocsSync({ ...o, leftOut: o['left-out'] }); out = o.json ? s : summary(s); }
     else if (o.cmd === 'status') { const s = verifyStatus(o); out = o.json ? s : `${s.change}: ${s.status}${s.hard?.length ? `\n  ${s.hard.join('\n  ')}` : ''}`; }
     else if (o.cmd === 'prepush' && o.install) { const r = installPrepush(o); out = o.json ? r : r.installed ? `installed ${r.path} (runs npm run ${r.script})` : `not installed: ${r.reason} (${r.path})`; }
-    else throw new Error('commands: run, finding, reviewed, browser, override, status, prepush --install');
+    else throw new Error('commands: run, finding, reviewed, browser, override, docs-scan, docs-sync, status, prepush --install');
     console.log(typeof out === 'string' ? out : JSON.stringify(out, null, 2));
     process.exitCode = code;
   } catch (e) {

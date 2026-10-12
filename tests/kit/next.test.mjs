@@ -218,3 +218,43 @@ test('quality-gates 5.3 fix: a change openspec reports as "complete" (all tasks 
   assert.equal(s.phase, 'verify');
   assert.equal(s.change, 'add-x');
 });
+
+// build-readiness 5.3
+const regReady = { ...registry, phases: ['brainstorm', 'artifacts', 'plan', 'ready', 'build', 'verify', 'close'],
+  tools: [...registry.tools, { name: 'kit', status: 'adopted', phases: ['ready'], skills: { ready: '/kit:ready' } }] };
+const mapReady = laneMap(regReady);
+const planned = () => ({ isPlanningComplete: true });
+
+test('build-readiness 5.3: planning complete, no task checked, no readiness check -> /kit:ready, then apply', () => {
+  const s = suggest({ openspec: { root: {}, changes: [change('add-x', 0, 8)] }, statusOf: planned, map: mapReady, decisionsOf: () => ({ exists: false, open: 0, oldest: null, readyAt: null }) });
+  assert.equal(s.phase, 'ready');
+  assert.equal(s.use, '/kit:ready');
+  assert.equal(s.then, '/opsx:apply');
+  assert.match(s.reason, /warns, never blocks/);
+});
+
+test('build-readiness 5.3: build once readyAt is set, or a task is checked', () => {
+  const ran = suggest({ openspec: { root: {}, changes: [change('add-x', 0, 8)] }, statusOf: planned, map: mapReady, decisionsOf: () => ({ exists: true, open: 0, oldest: null, readyAt: { date: '2026-10-12' } }) });
+  assert.equal(ran.phase, 'build');
+  const started = suggest({ openspec: { root: {}, changes: [change('add-x', 1, 8)] }, statusOf: planned, map: mapReady });
+  assert.equal(started.phase, 'build');
+  const oldRegistry = suggest({ openspec: { root: {}, changes: [change('add-x', 0, 8)] }, statusOf: planned, map });
+  assert.equal(oldRegistry.phase, 'build', 'no ready owner in the lane map -> unchanged behavior');
+});
+
+test('build-readiness 5.3: open decisions add a line to any suggestion; absent at zero', () => {
+  const dec = open => () => ({ exists: true, open, oldest: '2026-10-12', readyAt: { date: '2026-10-12' } });
+  const s = suggest({ openspec: { root: {}, changes: [change('add-x', 2, 8)] }, statusOf: planned, map: mapReady, decisionsOf: dec(2) });
+  assert.equal(s.open, '2 decisions still open since 2026-10-12');
+  assert.match(format(s), /open:  2 decisions still open since 2026-10-12/);
+  const v = suggest({ openspec: { root: {}, changes: [change('add-x', 8, 8)] }, statusOf: planned, map: mapReady, decisionsOf: dec(1), verifyOf: () => 'missing' });
+  assert.equal(v.phase, 'verify');
+  assert.equal(v.open, '1 decision still open since 2026-10-12');
+  assert.equal(suggest({ openspec: { root: {}, changes: [change('add-x', 2, 8)] }, statusOf: planned, map: mapReady, decisionsOf: dec(0) }).open, undefined);
+});
+
+test('build-readiness 5.3: applyRequires done = planning complete, even with an optional design unwritten', () => {
+  const st = () => ({ isPlanningComplete: false, applyRequires: ['tasks'], artifacts: [{ id: 'proposal', status: 'done' }, { id: 'specs', status: 'done' }, { id: 'design', status: 'ready' }, { id: 'tasks', status: 'done' }] });
+  const s = suggest({ openspec: { root: {}, changes: [change('add-x', 2, 8)] }, statusOf: st, map });
+  assert.equal(s.phase, 'build');
+});

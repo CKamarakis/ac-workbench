@@ -5,7 +5,7 @@
 version: 1
 
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).
-phases: [capture, prd, brainstorm, artifacts, plan, build, verify, review, ui-polish, close, kit-issues]
+phases: [capture, prd, brainstorm, artifacts, plan, ready, build, verify, review, ui-polish, close, kit-issues]
 
 # Test policy per project type (spec: toolkit-registry "Test policy per project type").
 # /kit:verify runs these package.json scripts. Projects without a type use "none".
@@ -36,6 +36,9 @@ situations:
   - when: I'm ready to write it down as a change
     phase: artifacts
     use: /opsx:propose
+  - when: the plan is done; check it is ready to build
+    phase: ready
+    use: /kit:ready
   - when: the plan is done and I want to build
     phase: build
     use: /opsx:apply
@@ -289,10 +292,11 @@ tools:
       license: Own work
     reviewed_version: 0.1.0
     reviewed_on: 2026-10-01
-    phases: [capture, prd, verify, kit-issues]
+    phases: [capture, prd, ready, verify, kit-issues]
     skills:
       capture: /kit:capture
       prd: /kit:prd
+      ready: /kit:ready
       verify: /kit:verify
       kit-issues: /kit:feedback
     verdicts:

@@ -23,6 +23,7 @@ If it prints `error:`, show it and stop. Don't do the step by hand.
 5. **Fill each section** with `section-get` (for the hash) and then `section-set` (see below), section by section. Since the file is new, you can fill all sections after one yes on the whole draft.
    - **Anything not in the picked notes or the user's words is not a fact.** Mark it "Assumption:" or list it under Open questions. Never invent users, numbers or quotes.
    - Keep it short and plain: one or two pages, every line useful for deciding or building.
+   - **Requirements as stories:** "Given <starting state>, when <the user does X>, then <what they see>", grouped by flow or screen. Replace the template's example line. Keep a short plain statement where there's no meaningful starting state or action (a limit, a rule). The proposal step turns these stories into spec scenarios.
 6. **Show the user** the result and the path.
 
 ## Update a PRD per section

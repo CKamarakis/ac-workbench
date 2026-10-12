@@ -1,11 +1,30 @@
 // PreToolUse(Bash) hook: blocks `openspec archive <change>` until /kit:verify passed (quality-gates design D4;
-// spec: quality-gates "Archive gate"). Inert outside kit projects (no .claude/kit.json). Zero dependencies.
+// spec: quality-gates "Archive gate"). On an allowed archive it adds a reminder about open decisions (build-readiness D6).
+// Inert outside kit projects (no .claude/kit.json). Zero dependencies.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyStatus } from '../scripts/verify.mjs';
+import { decisionStatus, openLine } from '../scripts/decisions.mjs';
 
 const ARCHIVE = /\bopenspec(?:\.cmd)?["']?\s+archive((?:\s+-{1,2}[\w-]+)*)\s+([a-z0-9][a-z0-9-]*)/;
+
+/** The change an `openspec archive` command names in a kit project, or null. */
+function archived(event, projectDir) {
+  if (!projectDir || !fs.existsSync(path.join(projectDir, '.claude', 'kit.json'))) return null;
+  if (event?.tool_name && event.tool_name !== 'Bash') return null;
+  const m = ARCHIVE.exec(event?.tool_input?.command ?? '');
+  if (!m || !fs.existsSync(path.join(projectDir, 'openspec', 'changes', m[2]))) return null;
+  return m[2];
+}
+
+/** On an allowed archive: a reminder about open decisions (never a block; build-readiness D6), or null. */
+export function reminder(event, projectDir) {
+  const change = archived(event, projectDir);
+  if (!change || gate(event, projectDir)) return null;
+  const line = openLine(decisionStatus({ dir: projectDir, change }));
+  return line ? `Kit reminder for "${change}": ${line} (openspec/changes/${change}/decisions.md). Tell the user; the archive is not blocked.` : null;
+}
 
 /** Pure decision: null = allow, or a deny reason. */
 export function gate(event, projectDir) {
@@ -27,7 +46,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     try {
       const ev = JSON.parse(raw || '{}');
       const reason = gate(ev, process.env.CLAUDE_PROJECT_DIR || ev.cwd || process.cwd());
+      const dir = process.env.CLAUDE_PROJECT_DIR || ev.cwd || process.cwd();
       if (reason) process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason } }));
+      else {
+        // No permissionDecision: normal permissions still apply (trial: evals/trials/build-readiness-hooks.md).
+        const context = reminder(ev, dir);
+        if (context) process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: context } }));
+      }
     } catch { /* never break the session over a hook error */ }
   });
 }

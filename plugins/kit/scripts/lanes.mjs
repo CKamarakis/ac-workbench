@@ -78,6 +78,8 @@ export function qualityGatesSection() {
     '### Quality gates',
     '',
     '- At `/opsx:propose`, run `/kit:judge` on the PRD or description and show its OpenSpec / SuperSpec recommendation with the reasons. The user decides; never switch flows on your own.',
+    '- Spec scenarios: when the PRD has Given/When/Then stories, write the scenarios from them; add a `- **GIVEN**` line whenever a behavior depends on a starting state.',
+    '- After planning is complete and before `/opsx:apply`, offer `/kit:ready`: it lists gaps, differences, points to confirm and new tools, and asks the decisions in one batch. It warns and never blocks.',
     '- Before `/opsx:archive`, run `/kit:verify`. A kit hook blocks the archive until the change has a passing verify report. Failing tests and high-severity security findings block; everything else is advice for the user.',
     '- Override a blocking item only when the user explicitly asks, with their reason (`/kit:verify` records it).',
   ];

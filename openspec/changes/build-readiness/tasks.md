@@ -2,27 +2,27 @@
 
 ## 1. Hook trial and version
 
-- [ ] 1.1 Hook trial before building on it (design D6). In a throwaway folder with `.claude/kit.json`:
+- [x] 1.1 Hook trial before building on it (design D6). In a throwaway folder with `.claude/kit.json`:
   - make a PreToolUse(Bash) probe that prints `hookSpecificOutput.additionalContext` with no `permissionDecision` for a marked command;
   - check in a live session that the command runs and the agent sees the text.
 
   Record the result in `evals/trials/build-readiness-hooks.md`. If it doesn't reach the agent, switch D6 to its fallback and update `design.md` before group 4
-- [ ] 1.2 Bump the kit to `0.6.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.2 Bump the kit to `0.6.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
 
 ## 2. Decision record (`decisions.mjs`)
 
-- [ ] 2.1 `add`, `decide`, `later`, `list` and the rendered `decisions.md` with its `kit-decisions-data` block (design D1, D2). Verify with `tests/kit/decisions.test.mjs` on a temp change folder:
+- [x] 2.1 `add`, `decide`, `later`, `list` and the rendered `decisions.md` with its `kit-decisions-data` block (design D1, D2). Verify with `tests/kit/decisions.test.mjs` on a temp change folder:
   - first `add` creates the file;
   - ids run `D1`, `D2`… and are never reused;
   - `decide` records the answer, where it was written and the date;
   - `later` keeps the item counted as open;
   - a hand-edited table is re-rendered from the data block;
   - an unknown `--kind` is rejected with `error:`
-- [ ] 2.2 `ready-done` and the exported `decisionStatus({ dir, change })` → `{ exists, open, oldest, readyAt }`. Verify with tests: no file → `exists: false, open: 0`; one `later` from 2026-10-12 → `open: 1, oldest: 2026-10-12`; `ready-done` with zero items still sets `readyAt`
+- [x] 2.2 `ready-done` and the exported `decisionStatus({ dir, change })` → `{ exists, open, oldest, readyAt }`. Verify with tests: no file → `exists: false, open: 0`; one `later` from 2026-10-12 → `open: 1, oldest: 2026-10-12`; `ready-done` with zero items still sets `readyAt`
 
 ## 3. Readiness check (`ready.mjs` + `/kit:ready`)
 
-- [ ] 3.1 `ready.mjs scan --json` (design D1):
+- [x] 3.1 `ready.mjs scan --json` (design D1):
   - the artifact paths;
   - the linked PRD, through `PRD_LINE`;
   - vague-word hits as `file:line` (the list in design Open Questions);
@@ -31,7 +31,7 @@
   - incomplete planning → `planningComplete: false` plus the next artifact.
 
   Verify with `tests/kit/ready.test.mjs` on fixture changes: a `TBD` in a spec is reported with its line; a missing `package.json` gives `null`; a change without tasks reports the next artifact
-- [ ] 3.2 Write `plugins/kit/skills/ready/SKILL.md` following design D4:
+- [x] 3.2 Write `plugins/kit/skills/ready/SKILL.md` following design D4:
   - scan;
   - the four item kinds;
   - the counted list first;
@@ -46,13 +46,13 @@
 
 ## 4. Docs sync in verify
 
-- [ ] 4.1 `verify.mjs docs-scan --json` (design D5): `docsUpdated`, `codeCommitsSince`, `receipt` (items under ruling, visible-change or decision headings, or `null`), and `deps.added`/`deps.removed` against the change's base commit. Verify with tests on a temp git repo:
+- [x] 4.1 `verify.mjs docs-scan --json` (design D5): `docsUpdated`, `codeCommitsSince`, `receipt` (items under ruling, visible-change or decision headings, or `null`), and `deps.added`/`deps.removed` against the change's base commit. Verify with tests on a temp git repo:
   - artifacts committed, then 3 code commits → `codeCommitsSince: 3`;
   - `verify.md`/`decisions.md` commits don't count as doc updates;
   - an `apply.md` with a "Rulings" list returns its items;
   - an added devDependency appears in `deps.added`
-- [ ] 4.2 `verify.mjs docs-sync` stores the summary. `run` renders the docs-sync section, plus an ADVISORY item for open decisions from `decisionStatus`. Verify with tests: the docs-sync section appears with its counts; one open decision adds "1 decision still open since <date>" as advisory, and the result stays `pass`
-- [ ] 4.3 Update `plugins/kit/skills/verify/SKILL.md` with a docs-sync step after the reviews:
+- [x] 4.2 `verify.mjs docs-sync` stores the summary. `run` renders the docs-sync section, plus an ADVISORY item for open decisions from `decisionStatus`. Verify with tests: the docs-sync section appears with its counts; one open decision adds "1 decision still open since <date>" as advisory, and the result stays `pass`
+- [x] 4.3 Update `plugins/kit/skills/verify/SKILL.md` with a docs-sync step after the reviews:
   - scan;
   - sort each item (behavior / decision with depth / how the build ran);
   - flag possibly unwanted items;
@@ -63,13 +63,13 @@
 
 ## 5. Routing, next step and archive reminder
 
-- [ ] 5.1 `toolkit.yaml` (design D7): phase `ready` after `plan`; the kit owns `ready: /kit:ready`; a new `situations` entry. Run `npm run registry`. Verify that the lane map prints `ready  kit: /kit:ready` between `plan` and `build`, and that `tools/` registry tests pass
-- [ ] 5.2 `lanes.mjs` routing block: the `/kit:ready` line and the Given/When/Then line. Verify with `tests/kit/lanes.test.mjs` (both lines are present in the generated block, and the existing lines are unchanged)
-- [ ] 5.3 `next.mjs` (design D3): planning complete, no task checked and no `readyAt` → phase `ready` with `then: /opsx:apply`; open decisions add the "N still open since" line to any suggestion for the change. Verify with `tests/kit/next.test.mjs`:
+- [x] 5.1 `toolkit.yaml` (design D7): phase `ready` after `plan`; the kit owns `ready: /kit:ready`; a new `situations` entry. Run `npm run registry`. Verify that the lane map prints `ready  kit: /kit:ready` between `plan` and `build`, and that `tools/` registry tests pass
+- [x] 5.2 `lanes.mjs` routing block: the `/kit:ready` line and the Given/When/Then line. Verify with `tests/kit/lanes.test.mjs` (both lines are present in the generated block, and the existing lines are unchanged)
+- [x] 5.3 `next.mjs` (design D3): planning complete, no task checked and no `readyAt` → phase `ready` with `then: /opsx:apply`; open decisions add the "N still open since" line to any suggestion for the change. Verify with `tests/kit/next.test.mjs`:
   - suggests `/kit:ready` before the first task;
   - suggests build once `readyAt` is set, or a task is checked;
   - the open-decision line appears, and is absent at zero
-- [ ] 5.4 `archive-gate.mjs`: on allow with open decisions, output `additionalContext`, or apply the fallback recorded in 1.1. Verify with `tests/kit/hooks.test.mjs`: pass plus 2 open → allowed with the reminder; pass plus 0 open → no output; no verify → still denied
+- [x] 5.4 `archive-gate.mjs`: on allow with open decisions, output `additionalContext`, or apply the fallback recorded in 1.1. Verify with `tests/kit/hooks.test.mjs`: pass plus 2 open → allowed with the reminder; pass plus 0 open → no output; no verify → still denied
 
 ## 6. PRD template
 
@@ -81,4 +81,4 @@
   - run `/kit:verify` on `storms-canvas` and check that the docs sync finds what the manual dry run found (`docsUpdated` 2026-10-10, 29 code commits; the 4 behaviors; the 4 decisions; `fake-indexeddb` unplanned; 2 flags; 10 rulings left out);
   - run `/kit:ready` on a fresh small change in the copy;
   - record the findings and the token use in `evals/trials/build-readiness-live.md`
-- [ ] 7.2 Update the README (new `/kit:ready`, docs sync in verify), `docs/project-context.md` (a build-readiness section) and `docs/roadmap.md` (status). Verify that `npm test` and `npm run evals` pass
+- [x] 7.2 Update the README (new `/kit:ready`, docs sync in verify), `docs/project-context.md` (a build-readiness section) and `docs/roadmap.md` (status). Verify that `npm test` and `npm run evals` pass

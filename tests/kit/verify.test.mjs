@@ -184,3 +184,76 @@ test('browser check: pass, issues (advisory, ordered), shots, replaced on re-run
   assert.throws(() => setBrowser({ dir: d, change: 'add-x', result: 'issues' }), /needs at least one --issue/);
   assert.throws(() => setBrowser({ dir: d, change: 'add-x', result: 'meh' }), /pass or issues/);
 });
+
+// build-readiness 4.1: docs-scan
+import { docsScan, receiptItems, setDocsSync } from '../../plugins/kit/scripts/verify.mjs';
+import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
+
+function docsProject() {
+  const d = project();
+  w(d, 'package.json', JSON.stringify({ scripts: { test: 'x' }, devDependencies: { vitest: '^3' } }));
+  g(d, 'add', '.'); g(d, 'commit', '-qm', 'pkg');
+  g(d, 'switch', '-qc', 'feat');
+  w(d, 'openspec/changes/add-x/design.md', '# Design\n\nUse Playwright for the speed test.\n');
+  w(d, 'openspec/changes/add-x/specs/a/spec.md', '## ADDED Requirements\n');
+  g(d, 'add', '.'); g(d, 'commit', '-qm', 'docs');
+  return d;
+}
+const commit = (d, rel, text, msg) => { w(d, rel, text); g(d, 'add', '.'); g(d, 'commit', '-qm', msg); };
+
+test('docs-scan: artifacts committed, then 3 code commits -> codeCommitsSince 3', () => {
+  const d = docsProject();
+  for (const n of [1, 2, 3]) commit(d, `src/f${n}.ts`, 'x', `code ${n}`);
+  commit(d, 'README.md', 'docs only', 'readme');
+  const s = docsScan({ dir: d, change: 'add-x' });
+  assert.match(s.docsUpdated.date, /^\d{4}-\d\d-\d\d$/);
+  assert.equal(s.codeCommitsSince, 3);
+});
+
+test('docs-scan: verify.md, decisions.md and ticked tasks are not doc updates', () => {
+  const d = docsProject();
+  const before = docsScan({ dir: d, change: 'add-x' }).docsUpdated.commit;
+  commit(d, 'src/a.ts', 'x', 'code');
+  commit(d, 'openspec/changes/add-x/verify.md', 'v', 'verify');
+  commit(d, 'openspec/changes/add-x/decisions.md', 'd', 'decisions');
+  commit(d, 'openspec/changes/add-x/tasks.md', '- [x] 1.1\n', 'tick');
+  const s = docsScan({ dir: d, change: 'add-x' });
+  assert.equal(s.docsUpdated.commit, before);
+  assert.equal(s.codeCommitsSince, 1);
+});
+
+test('docs-scan: an apply.md with rulings returns its items; none -> null', () => {
+  const d = docsProject();
+  assert.equal(docsScan({ dir: d, change: 'add-x' }).receipt, null);
+  w(d, 'openspec/changes/add-x/apply.md', '# Apply\n\n## Rulings made during apply\n\n1. Corrupt body loads empty.\n2. **Port** 3101 for the speed test.\n   - nested detail\n\n## Evidence\n\n- 514 tests\n\n## Visible changes worth knowing\n\n- Shadows only at 50% zoom.\n');
+  assert.deepEqual(docsScan({ dir: d, change: 'add-x' }).receipt, ['Corrupt body loads empty.', 'Port 3101 for the speed test.', 'Shadows only at 50% zoom.']);
+  assert.deepEqual(receiptItems('## Notes\n- x\n'), []);
+});
+
+test('docs-scan: an added devDependency appears, planned when an artifact names it (any case)', () => {
+  const d = docsProject();
+  commit(d, 'package.json', JSON.stringify({ scripts: { test: 'x' }, devDependencies: { 'fake-indexeddb': '^6', playwright: '^1' } }), 'deps');
+  const s = docsScan({ dir: d, change: 'add-x' });
+  assert.deepEqual(s.deps.added, [{ name: 'fake-indexeddb', planned: false }, { name: 'playwright', planned: true }]);
+  assert.deepEqual(s.deps.removed, ['vitest']);
+});
+
+// build-readiness 4.2: docs-sync summary and open decisions in the report
+test('docs-sync section appears with its counts; open decisions are advisory and the result stays pass', () => {
+  const d = docsProject();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  const md0 = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md0, /## Docs sync\n\nNot run yet\./);
+  setDocsSync({ dir: d, change: 'add-x', proposed: 6, written: 5, declined: 1, leftOut: 10, unplanned: 'fake-indexeddb' });
+  addDecision({ dir: d, change: 'add-x', kind: 'confirm', text: 'Corrupt board loads empty?', from: 'apply.md' });
+  later({ dir: d, change: 'add-x', id: 'D1' });
+  const s = runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  const md = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md, /## Docs sync\n\ndocs last updated: \d{4}-\d\d-\d\d \(\w+\); code commits since: 0/);
+  assert.match(md, /\| 6 \| 5 \| 1 \| 10 \|/);
+  assert.match(md, /unplanned dependencies: fake-indexeddb/);
+  assert.match(md, /\| O:decisions \| 1 decision still open since \d{4}-\d\d-\d\d \|/);
+  assert.equal(verifyStatus({ dir: d, change: 'add-x' }).status, 'pass');
+  assert.equal(s.items.find(i => i.id === 'O:decisions').level, 'ADVISORY');
+  assert.throws(() => setDocsSync({ dir: d, change: 'add-x', proposed: -1 }), /whole numbers/);
+});

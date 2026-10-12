@@ -158,6 +158,19 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - **Hooks:** they ship in the kit plugin (`plugins/kit/hooks/`) and are inert without `.claude/kit.json`. A failed Bash command fires `PostToolUseFailure` (seen live; not on the docs page read).
 - **Evidence:** `evals/trials/quality-gates-hooks.md`, `evals/trials/quality-gates-live.md`.
 
+## Build readiness (M7, built 2026-10-12)
+
+Change [`build-readiness`](../openspec/changes/build-readiness/), kit 0.6.0. Why: the first real build (Toughbubble's Storms) surfaced decisions during apply, and its docs stopped being updated before 29+ code commits.
+
+- **`/kit:ready`** (new phase `ready`, between `plan` and `build`): lists gaps, differences (PRD vs specs vs design), points to confirm and new tools (checked against `package.json`), and asks them in one batch, with "Later". Answers go into the delta specs (Given/When/Then) or `design.md`. **It warns and never blocks.**
+- **Decision record:** `<change>/decisions.md`, written only by `decisions.mjs`. Open items, including "Later", come back in `/kit:next`, `/kit:verify` and at archive (a hook reminder through `additionalContext`, tested live: `evals/trials/build-readiness-hooks.md`).
+- **Docs sync in `/kit:verify`:**
+  - `verify.mjs docs-scan` reports when the docs (proposal, design, specs; not ticked tasks) were last committed, the code commits since, the apply-receipt items, and added dependencies that no artifact mentions;
+  - the agent sorts each item: behavior → scenario; decision with depth → `design.md`; how the build ran → left out;
+  - it flags possibly unwanted behavior, and writes only on a yes. Advisory.
+- **Given/When/Then:** PRD requirements are stories; the routing block carries them into scenarios, with `GIVEN` when there's a starting state.
+- **Next:** `kit-docs` (M8): the docs page, foundations, tools inventory and backfill (`/kit:docs`). Source: `knowledge/notes/2026-10-12-living-docs-and-build-readiness-given-when-then-readiness-ch.md`.
+
 ## Design tools (M4, done 2026-10-08)
 
 - **Impeccable: adopted** (`web-ui`, owner of ui-polish).

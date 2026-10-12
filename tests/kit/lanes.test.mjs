@@ -101,3 +101,15 @@ test('quality-gates 5.2: routing block carries the judge and verify-before-archi
   assert.match(block, /Before `\/opsx:archive`, run `\/kit:verify`/);
   assert.match(block, /only when the user explicitly asks, with their reason/);
 });
+
+test('build-readiness 5.2: routing block carries the /kit:ready and Given/When/Then rules; earlier lines unchanged', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { qualityGates: true });
+  assert.match(block, /before `\/opsx:apply`, offer `\/kit:ready`/);
+  assert.match(block, /It warns and never blocks\./);
+  assert.match(block, /Given\/When\/Then stories, write the scenarios from them; add a `- \*\*GIVEN\*\*` line/);
+  const lines = block.split('\n');
+  const judge = lines.findIndex(l => l.includes('run `/kit:judge`'));
+  const verify = lines.findIndex(l => l.includes('Before `/opsx:archive`, run `/kit:verify`'));
+  assert.ok(judge >= 0 && verify > judge + 2, 'judge and verify lines are still there, around the new ones');
+  assert.equal(routingBlock(laneMap(fixture('resolved-overlap')), {}).includes('/kit:ready`: it lists'), false, 'only with qualityGates');
+});

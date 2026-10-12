@@ -95,3 +95,49 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Only when the user asks\*\*' }
       - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never as part of a default verify' }
       - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'always advisory and never block' }
+
+  # build-readiness 4.3: docs sync
+  - id: docs-scan-finds-unplanned-dependency
+    description: docs-scan reports when the docs stopped, the receipt items, and a dependency no artifact mentions
+    setup:
+      git_init: true
+      files:
+        package.json: '{ "scripts": { "test": "node -e \"0\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/design.md: "# Design\n\nUse Playwright for the speed test.\n"
+        openspec/changes/add-x/apply.md: "# Apply\n\n## Rulings made during apply\n\n1. The speed test runs its own dev server on port 3101.\n2. A corrupt stored body loads as an empty board.\n"
+    checks:
+      - { kind: command-exit, command: 'git -c user.email=t@t -c user.name=t add . && git -c user.email=t@t -c user.name=t commit -qm docs' }
+      - { kind: command-exit, command: 'node -e "require(''fs'').writeFileSync(''package.json'', JSON.stringify({scripts:{test:''x''},devDependencies:{''fake-indexeddb'':''^6'',playwright:''^1''}}))"' }
+      - kind: command-exit
+        command: node "{{v}}" docs-scan --dir . --change add-x
+        stdout_match: 'apply receipt:\s+2 items[\s\S]*added fake-indexeddb \(unplanned\), playwright;'
+
+  - id: docs-sync-skill-rules
+    description: The docs-sync step sorts, flags, writes only on a yes, and never blocks
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*How the build ran\*\*.*left out' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'is it what you want\?' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Write only on a yes\.\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'The docs sync never adds a HARD item' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'verify\.mjs" docs-sync --dir \. --change <name>' }
+
+  - id: docs-sync-sorts-receipt
+    description: Given a receipt with a process ruling and a "corrupt data loads empty" ruling, the first is left out and the second is flagged
+    setup:
+      git_init: true
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/specs/board/spec.md: "## ADDED Requirements\n\n### Requirement: Load a board\nA saved board SHALL load with its items.\n\n#### Scenario: Load\n- **WHEN** the user opens a board\n- **THEN** its items appear\n"
+        openspec/changes/add-x/apply.md: "# Apply\n\n## Rulings made during apply\n\n1. The speed test runs its own dev server on port 3101.\n2. A corrupt stored body loads as an empty board and is logged.\n"
+    input:
+      prompt: "/kit:verify add-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: process-left-out
+            description: The port-3101 ruling is listed as left out (how the build ran), with nothing proposed for it
+          - name: corrupt-flagged
+            description: The corrupt-board ruling is flagged and asked as "is it what you want?" before any spec text is written
+          - name: no-hard
+            description: Nothing from the docs sync becomes a HARD item

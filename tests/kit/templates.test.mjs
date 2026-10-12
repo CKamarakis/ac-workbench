@@ -49,3 +49,11 @@ test('prd-pipeline 5.3: templates point PRDs to knowledge/, not Notion', () => {
     assert.doesNotMatch(t, /Notion/, f);
   }
 });
+
+test('build-readiness 6.1: the PRD template asks for Given/When/Then stories, with an example and the plain-statement escape', () => {
+  const t = fs.readFileSync(path.join(templates, 'prd.md'), 'utf8');
+  const req = t.split('## Requirements')[1].split('\n## ')[0];
+  assert.match(req, /\*\*Given\*\* a starting state, \*\*when\*\* the user does something, \*\*then\*\* what they see/);
+  assert.match(req, /^- Given .+, when .+, then .+\.$/m);
+  assert.match(req, /short plain statement when there's no real starting state/);
+});

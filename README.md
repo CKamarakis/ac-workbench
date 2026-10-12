@@ -13,9 +13,11 @@ The repo is a Claude Code plugin marketplace with one plugin, `kit`.
                                             v
                          /opsx:propose  -->  OpenSpec change   (/kit:judge: OpenSpec or SuperSpec? you decide)
                                             |
+                         /kit:ready    -->  gaps, differences, points to confirm, new tools
+                                            |  you decide in one batch ("Later" stays open); never blocks
                          /opsx:apply   -->  code + tests
                                             |
-                         /kit:verify   -->  tests + security + code review  -->  verify.md
+                         /kit:verify   -->  tests + security + code review + docs sync  -->  verify.md
                                             |  passes (or you override with a reason)
                          /opsx:archive -->  PRD Shipped
  Not sure what's next?  /kit:next
@@ -46,7 +48,8 @@ Run `/kit:start` once in the project folder (again only to re-sync after a kit u
 | `/kit:prd` | Draft a PRD from the notes you pick, update it section by section (never overwriting your edits), and mark it Ready |
 | `/kit:next` | Tell you the next step and which skill to use, from your PRDs and OpenSpec state |
 | `/kit:judge` | Recommend plain OpenSpec or SuperSpec for a change, from a risk checklist, with the reasons. You decide |
-| `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests; writes `verify.md` |
+| `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Warns, never blocks |
+| `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests, and a **docs sync** (what was built goes into the specs and `design.md`, on your yes); writes `verify.md` |
 | `/kit:setup` | Install or check the machine toolset |
 | `/kit:start` | Set up or re-sync a project |
 
@@ -55,7 +58,8 @@ Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/
 ### Quality gates
 
 - **Block:** a failing required test, a missing required test command (for `web-ui`), a high-severity security finding. You can override one, with a reason that is recorded.
-- **Advise:** everything else (review comments, changed files without tests, optional test suites). Your call.
+- **Advise:** everything else (review comments, changed files without tests, optional test suites, the docs sync, open decisions). Your call.
+- **Decisions** from `/kit:ready` and the docs sync are kept per change in `decisions.md`. Open ones (including "Later") come back in `/kit:next`, `/kit:verify` and at archive, as a reminder, never a block.
 - **Where they run:**
   - secrets: a gitleaks pre-commit hook;
   - tests and reviews: `/kit:verify`. A kit hook blocks `openspec archive` until the change has a passing report;
@@ -83,7 +87,7 @@ Plain skills cost little while idle: only their name and one line sit in context
 
 | Tool | Installed | When it loads or runs |
 |---|---|---|
-| **kit** (this plugin) | once per machine, for every session | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes; the other adds a "look up the docs" hint when a build or test fails on a library |
+| **kit** (this plugin) | once per machine, for every session | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions); the other adds a "look up the docs" hint when a build or test fails on a library |
 | **OpenSpec** | CLI once per machine; its `/opsx:…` skills per project (by `/kit:start`) | When you plan or build: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` |
 | **git, gh, jq** | once per machine (`/kit:setup`) | Only when a command calls them |
 | **gitleaks** | once per machine | On every `git commit`, in repos with the pre-commit hook enabled |

@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Check an OpenSpec change before it is archived - run the project's tests (by its type's test policy), list changed files without tests, run /security-review and /code-review on the change, and write a verify report; failing tests and high-severity security findings block the archive. Use when the user asks to verify, check or review a change before closing it, when all tasks of a change are done, or when an archive was blocked for a missing or failing verify report.
+description: Check an OpenSpec change before it is archived - run the project's tests (by its type's test policy), list changed files without tests, run /security-review and /code-review on the change, sync the change's specs and design with what was built (docs sync), and write a verify report; failing tests and high-severity security findings block the archive. Use when the user asks to verify, check or review a change before closing it, when all tasks of a change are done, or when an archive was blocked for a missing or failing verify report.
 ---
 
 # Kit verify
@@ -34,7 +34,28 @@ If it prints `error:`, show it and stop.
    ```
    **If `/security-review` can't run** (an environment limit, an error): tell the user why, review the change's diff for security issues yourself, record those findings the same way, and mark it `--how substitute --note "<why the built-in couldn't run>"`. Only if neither is possible: `--how skipped --note "<why>"`. Never leave it unrecorded; the report shows a missing review.
 4. **Code review:** run `/code-review` on this change's diff, record each finding the same way with `--source code` (code findings are advisory), then `reviewed --source code --how ran` (or `substitute` / `skipped` with a note, as above).
-5. **Show the report:** **HARD items first**, each with what to do; then the advisory list. Then:
+5. **Docs sync** (advisory; spec: docs-sync). It brings the change's specs and `design.md` up to date with what was built, before archive copies them into the living specs.
+   1. **Scan:** `verify.mjs docs-scan --dir . --change <name>`. Say when the docs were last updated and how many code commits followed. Then read:
+      - the receipt items (if there's no `apply.md`, say so and work from `git log` and the diff since the docs commit);
+      - the change's specs and `design.md`.
+   2. **Sort each item:**
+      - **Behavior** (the user can observe it) and not covered by a scenario → propose a scenario (`- **GIVEN**`/`WHEN`/`THEN`) under its requirement in the delta spec.
+      - **Decision with depth** (it trades something, shapes more than one behavior, or would surprise someone later) and not in `design.md` → propose it with its reason.
+      - **How the build ran** (push cadence, task dispatch, test ports, review batching) → left out. List these in one line; propose nothing.
+      - Small or preference choices get no "why". Don't propose them for `design.md`.
+   3. **Flag** an item when the built behavior changes what the user sees in a way the specs didn't plan, or could lose or hide data. Ask it first, as "this is what was built; is it what you want?":
+      - **Keep it** → document it as is.
+      - **Change it** → record it as open (`decisions.mjs add --kind confirm`, then `later`), and don't document it as final.
+   4. **Unplanned dependencies:** for each `deps.added` entry with `planned: false`, ask whether to keep it. A kept one gets its reason in `design.md`.
+   5. **Ask in one go** with the **AskUserQuestion** tool (up to 4 questions per call): the flags first, then the proposed updates. For each update, show the text and where it goes. **Write only on a yes.**
+      - If the requirement isn't in the delta yet, copy the **whole** requirement block from `openspec/specs/<capability>/spec.md` under `## MODIFIED Requirements`, then add the scenario.
+      - Run `openspec validate <name> --strict` after edits.
+   6. **Record** each item through `decisions.mjs` (`add` with kind `behavior`, `decision` or `unplanned-tool`, then `decide --answer "documented" --written <path>`, or `--answer "not documented"` on a no). Then store the summary:
+      ```bash
+      node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" docs-sync --dir . --change <name> --proposed N --written N --declined N --left-out N [--unplanned a,b]
+      ```
+      Re-run step 2 so the report shows open decisions. The docs sync never adds a HARD item.
+6. **Show the report:** **HARD items first**, each with what to do; then the advisory list (including the docs sync and any open decisions). Then:
    - Result `pass`: say the change can be archived (`/opsx:archive`).
    - Result `fail`: offer to fix the HARD items, then re-run step 2. A fixed finding is cleared by re-running the review and not recording it again; for a stale one, say so.
 

@@ -30,8 +30,9 @@ The people this is for, and the job they're trying to get done. Name a real segm
 
 ## Requirements
 
-What the product must do, as short statements a test could check. Group by flow or screen if that reads better.
+What the product must do, as user stories a test could check: **Given** a starting state, **when** the user does something, **then** what they see. Group them by flow or screen. Use a short plain statement when there's no real starting state or action (a limit, a rule).
 
+- Given a sticky on the board, when I drag it and let go, then it stays where I dropped it after a reload.
 -
 
 ## UX notes and assets

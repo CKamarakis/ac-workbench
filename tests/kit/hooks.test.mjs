@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { gate } from '../../plugins/kit/hooks/archive-gate.mjs';
+import { gate, reminder } from '../../plugins/kit/hooks/archive-gate.mjs';
+import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
 import { hint } from '../../plugins/kit/hooks/library-hint.mjs';
 import { runVerify, addFinding, addOverride } from '../../plugins/kit/scripts/verify.mjs';
 
@@ -90,4 +91,23 @@ test('failed command as PostToolUseFailure (real event shape, seen live): hint f
   const r = spawnSync(process.execPath, [path.join(hooks, 'library-hint.mjs')], { input: JSON.stringify(ev), env: { ...process.env, CLAUDE_PROJECT_DIR: d }, encoding: 'utf8' });
   assert.equal(JSON.parse(r.stdout).hookSpecificOutput.hookEventName, 'PostToolUseFailure');
   assert.equal(hint({ ...ev, error: 'Exit code 1\n\nAssertionError: expected 1 to be 2' }, d), null);
+});
+
+// build-readiness 5.4: reminder about open decisions on an allowed archive
+test('pass + 2 open decisions -> allowed, with a reminder; pass + 0 open -> no output; no verify -> still denied', () => {
+  const d = kitProject();
+  assert.match(gate(bash('openspec archive add-x'), d), /Run \/kit:verify first/);
+  assert.equal(reminder(bash('openspec archive add-x'), d), null, 'denied archives get no reminder');
+  runVerify({ dir: d, change: 'add-x', registry: reg, run: () => ({ status: 0, out: '' }) });
+  assert.equal(gate(bash('openspec archive add-x'), d), null);
+  assert.equal(reminder(bash('openspec archive add-x'), d), null);
+  for (const t of ['a', 'b']) addDecision({ dir: d, change: 'add-x', kind: 'confirm', text: t, from: 'x' });
+  later({ dir: d, change: 'add-x', id: 'D1' });
+  assert.equal(gate(bash('openspec archive add-x'), d), null, 'open decisions never block');
+  assert.match(reminder(bash('openspec archive add-x'), d), /2 decisions still open since \d{4}-\d\d-\d\d .*the archive is not blocked/);
+  assert.equal(reminder(bash('openspec list'), d), null);
+  const out = spawnSync(process.execPath, [path.join(hooks, 'archive-gate.mjs')], { input: JSON.stringify({ ...bash('openspec archive add-x'), cwd: d }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: d } });
+  const j = JSON.parse(out.stdout);
+  assert.equal(j.hookSpecificOutput.permissionDecision, undefined);
+  assert.match(j.hookSpecificOutput.additionalContext, /2 decisions still open/);
 });

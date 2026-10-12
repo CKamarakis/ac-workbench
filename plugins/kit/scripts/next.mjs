@@ -257,7 +257,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const s = suggest({ openspec, statusOf: name => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return null; // folder names reach a shell string: kebab-case only
     const st = openspecJson(`status --change "${name}" --json`, dir);
-    return st && { ...st, files: planningFromFiles(path.join(dir, 'openspec', 'changes', name)) };
+    const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
+    return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
   }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }) });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

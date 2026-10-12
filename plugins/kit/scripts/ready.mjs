@@ -28,11 +28,11 @@ export function vagueHits(rel, text, { spec = false } = {}) {
   String(text ?? '').split(/\r?\n/).forEach((raw, n) => {
     if (/^\s*```/.test(raw)) { fence = !fence; return; }
     if (fence) return;
-    if (/^### Requirement:/.test(raw)) { inReq = true; return; }
-    if (/^#/.test(raw)) { inReq = false; return; }
+    const heading = /^#/.test(raw);
+    if (heading) inReq = /^### Requirement:/.test(raw);
     const line = raw.replace(/`[^`]*`/g, '').replace(/"[^"]*"|“[^”]*”/g, ''); // mentions, not wording
     const words = VAGUE.filter(([, re]) => re.test(line)).map(([w]) => w);
-    if (spec && inReq && !/^\s*- \*\*/.test(raw) && line.includes('?')) words.push('?');
+    if (spec && inReq && !heading && !/^\s*- \*\*/.test(raw) && line.includes('?')) words.push('?');
     if (words.length) hits.push({ at: `${rel}:${n + 1}`, words, text: raw.trim().slice(0, 160) });
   });
   return hits;

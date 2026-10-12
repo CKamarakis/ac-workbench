@@ -81,6 +81,11 @@ test('unknown change and bad names are errors', () => {
   assert.throws(() => scan({ dir: project(), change: 'Bad Name' }), /kebab-case/);
 });
 
+test('a vague word in a requirement heading is flagged; a "?" in a heading is not', () => {
+  const hits = vagueHits('s.md', '### Requirement: Results load fast\n\n### Requirement: Which order?\nText.\n', { spec: true });
+  assert.deepEqual(hits.map(h => [h.at, h.words]), [['s.md:1', ['fast']]]);
+});
+
 // verify C2: applyRequires is often just ["tasks"]; that alone must not pass a change without specs
 test('tasks done per OpenSpec but no specs -> planning not complete, next artifact specs', () => {
   const d = project();

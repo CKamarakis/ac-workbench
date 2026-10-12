@@ -130,12 +130,14 @@ export function docsScan({ dir, change }) {
   let receipt = null;
   try { receipt = receiptItems(fs.readFileSync(path.join(cdir, 'apply.md'), 'utf8')); } catch { /* no receipt */ }
 
-  const base = baseCommit(dir, change);
-  const before = (base && depsAt(git(dir, ['show', `${base}:package.json`]) ?? '')) ?? {};
+  // Working on main makes the merge-base HEAD itself; then compare with the commit that first added the change.
+  let base = baseCommit(dir, change);
+  if (base && base === git(dir, ['rev-parse', 'HEAD'])) base = (git(dir, ['log', '--reverse', '--format=%H', '--', `openspec/changes/${change}`]) ?? '').split('\n')[0] || null;
+  const before = base ? (depsAt(git(dir, ['show', `${base}:package.json`]) ?? '') ?? {}) : null;
   let now = null;
   try { now = depsAt(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')); } catch { /* no package.json */ }
   let deps = null;
-  if (now) {
+  if (now && before) {
     const plan = PLANNING.flatMap(p => {
       const f = path.join(cdir, p);
       try { return fs.statSync(f).isDirectory() ? fs.readdirSync(f, { recursive: true }).filter(x => String(x).endsWith('.md')).map(x => fs.readFileSync(path.join(f, String(x)), 'utf8')) : [fs.readFileSync(f, 'utf8')]; } catch { return []; }
@@ -373,7 +375,7 @@ function docsScanText(s) {
     `  docs last updated: ${s.docsUpdated ? `${s.docsUpdated.date} (${s.docsUpdated.commit})` : 'never committed'}; code commits since: ${s.codeCommitsSince ?? 'unknown'}`,
     `  apply receipt:     ${s.receipt ? `${s.receipt.length} items` : 'none'}`,
     ...(s.receipt ?? []).map((x, i) => `    ${i + 1}. ${x}`),
-    `  dependencies:      ${s.deps ? `added ${s.deps.added.map(d => `${d.name}${d.planned ? '' : ' (unplanned)'}`).join(', ') || 'none'}; removed ${s.deps.removed.join(', ') || 'none'}` : 'no package.json'}`];
+    `  dependencies:      ${s.deps ? `added ${s.deps.added.map(d => `${d.name}${d.planned ? '' : ' (unplanned)'}`).join(', ') || 'none'}; removed ${s.deps.removed.join(', ') || 'none'}` : 'not checked (no package.json, or no base commit to compare with)'}`];
   return L.join('\n');
 }
 

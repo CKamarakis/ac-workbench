@@ -258,6 +258,14 @@ test('docs-sync section appears with its counts; open decisions are advisory and
   assert.throws(() => setDocsSync({ dir: d, change: 'add-x', proposed: -1 }), /whole numbers/);
 });
 
+test('docs-scan: no base commit to compare with -> deps unknown (null), not "everything added"', () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-verify-nobase-'));
+  w(d, 'package.json', JSON.stringify({ dependencies: { react: '^19' } }));
+  g(d, 'init', '-q', '-b', 'dev'); g(d, 'add', '.'); g(d, 'commit', '-qm', 'base');
+  w(d, 'openspec/changes/add-x/proposal.md', '# P\n');
+  assert.equal(docsScan({ dir: d, change: 'add-x' }).deps, null);
+});
+
 // verify C4, C5
 test('namedIn: whole package names only', () => {
   assert.equal(namedIn('use playwright for the speed test', 'Playwright'), true);

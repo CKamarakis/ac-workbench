@@ -15,7 +15,7 @@
 
 ## 3. Page (`docs.mjs build`)
 
-- [ ] 3.1 Design the page with Impeccable (design D4): run `/impeccable init` if it asks, then `/impeccable shape` naming `knowledge/docs/index.html` as the only target and the three-panel layout, tree, scenario rows, "undecided" badge and history view as the scope. Keep its output as the HTML/CSS template inside `docs.mjs`. Note its token use in `evals/trials/kit-docs.md`
+- [x] 3.1 Design the page with Impeccable (design D4): run `/impeccable init` if it asks, then `/impeccable shape` naming `knowledge/docs/index.html` as the only target and the three-panel layout, tree, scenario rows, "undecided" badge and history view as the scope. Keep its output as the HTML/CSS template inside `docs.mjs`. Note its token use in `evals/trials/kit-docs.md`
 - [ ] 3.2 `build`: one self-contained file, no network requests; tree with the sort control (name / last updated / created, ascending or descending, default last updated newest first), how it works, requirements with numbered and separated user stories, "why" entries and cards per requirement, change that added or last changed it, the PRD link, history view. Search deferred. Verify with tests: same sources → byte-identical output; a `<script>` in spec text is escaped; no `http` URLs in the output
 - [ ] 3.3 Open decisions on the page via the `decisions.mjs` reader; mapped by `from` path to a sub-feature, otherwise an "Undecided" list per change. Verify the "Undecided on a sub-feature" scenario
 - [ ] 3.4 Missing sources degrade (no specs, unparsable spec, unreadable decision record, no `package.json`). Verify each with a test; the build exits 0

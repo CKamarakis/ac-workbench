@@ -1,0 +1,244 @@
+{
+  "title": "Toughbubble",
+  "builtFrom": "2026-10-12-b",
+  "empty": false,
+  "warnings": [],
+  "tree": [
+    {
+      "name": "Account",
+      "path": "account",
+      "hasSpec": true,
+      "created": null,
+      "updated": null,
+      "undecided": 0,
+      "children": []
+    },
+    {
+      "name": "Storms",
+      "path": "storms",
+      "hasSpec": false,
+      "created": "2026-10-07",
+      "updated": "2026-10-12",
+      "undecided": 1,
+      "children": [
+        {
+          "name": "Stickies",
+          "path": "storms/stickies",
+          "hasSpec": true,
+          "created": "2026-10-07",
+          "updated": "2026-10-10",
+          "undecided": 0,
+          "children": []
+        },
+        {
+          "name": "Saving",
+          "path": "storms/saving",
+          "hasSpec": true,
+          "created": "2026-10-12",
+          "updated": "2026-10-12",
+          "undecided": 1,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "pages": {
+    "storms/stickies": {
+      "title": "Stickies",
+      "crumb": [
+        "Storms",
+        "Stickies"
+      ],
+      "purpose": "Sticky notes you place, move and stack on a board.",
+      "prd": {
+        "title": "Storms canvas",
+        "status": "Shipped",
+        "path": "knowledge/prds/storms-canvas.md"
+      },
+      "how": "Drawn on a canvas; 200×200 by default; “bring to front” changes only one sticky.",
+      "requirements": [
+        {
+          "name": "Bring a sticky to the front",
+          "text": "A sticky the user picks SHALL be drawn above all others.",
+          "scenarios": [
+            {
+              "name": "Pick a covered sticky",
+              "rows": [
+                {
+                  "kw": "GIVEN",
+                  "text": "two stickies overlap"
+                },
+                {
+                  "kw": "WHEN",
+                  "text": "the user clicks the one underneath"
+                },
+                {
+                  "kw": "THEN",
+                  "text": "it comes to the front, and nothing else moves"
+                }
+              ]
+            },
+            {
+              "name": "After reload",
+              "rows": [
+                {
+                  "kw": "GIVEN",
+                  "text": "a sticky was brought to the front"
+                },
+                {
+                  "kw": "WHEN",
+                  "text": "the board reloads"
+                },
+                {
+                  "kw": "THEN",
+                  "text": "it is still on top"
+                },
+                {
+                  "kw": "AND",
+                  "text": "no other sticky changed"
+                }
+              ]
+            }
+          ],
+          "why": [
+            {
+              "text": "One sort key per sticky, so bringing one to the front saves one sticky, not the whole board. See [[storms-canvas]].",
+              "cards": [
+                "storms-canvas"
+              ]
+            }
+          ],
+          "change": {
+            "folder": "2026-10-10-storms-canvas",
+            "date": "2026-10-10",
+            "change": "storms-canvas"
+          }
+        }
+      ],
+      "orphanWhy": [
+        {
+          "requirement": "Gone requirement",
+          "text": "because"
+        }
+      ],
+      "history": [
+        {
+          "folder": "2026-10-10-storms-canvas",
+          "date": "2026-10-10",
+          "change": "storms-canvas",
+          "why": "Boards need to feel instant with thousands of items."
+        }
+      ],
+      "undecided": [],
+      "warnings": []
+    },
+    "storms/saving": {
+      "title": "Saving",
+      "crumb": [
+        "Storms",
+        "Saving"
+      ],
+      "purpose": "",
+      "prd": null,
+      "how": null,
+      "requirements": [],
+      "orphanWhy": [],
+      "history": [],
+      "undecided": [
+        {
+          "change": "storms-arrange",
+          "id": "D2",
+          "text": "Should a corrupt board load as empty?",
+          "date": "2026-10-12",
+          "status": "open"
+        }
+      ],
+      "warnings": [
+        "spec could not be read"
+      ]
+    },
+    "account": {
+      "title": "Account",
+      "crumb": [
+        "Account"
+      ],
+      "purpose": "",
+      "prd": null,
+      "how": null,
+      "requirements": [],
+      "orphanWhy": [],
+      "history": [],
+      "undecided": [],
+      "warnings": []
+    }
+  },
+  "cards": [
+    {
+      "slug": "storms-canvas",
+      "product": "storms",
+      "title": "Storms draws on a canvas",
+      "status": "current",
+      "replacedBy": null,
+      "sections": {
+        "In short": "Items are drawn on one canvas.",
+        "Why (evidence)": "Smooth to 2,000 items at 4× throttle; HTML slows at 1,000.",
+        "Limits you": "Screen readers need a text overlay."
+      }
+    },
+    {
+      "slug": "html-board",
+      "product": "storms",
+      "title": "Storms used HTML elements",
+      "status": "replaced",
+      "replacedBy": "storms-canvas",
+      "sections": {
+        "In short": "Each item was a DOM node."
+      }
+    }
+  ],
+  "tools": [
+    {
+      "group": "Rich text",
+      "tools": [
+        {
+          "name": "TipTap",
+          "packages": [
+            "@tiptap/react",
+            "@tiptap/pm"
+          ],
+          "purpose": "rich text in stickies",
+          "usedBy": "storms/stickies",
+          "addedBy": "storms-items",
+          "dev": false
+        }
+      ]
+    },
+    {
+      "group": "Testing",
+      "tools": [
+        {
+          "name": "Vitest",
+          "packages": [
+            "vitest"
+          ],
+          "purpose": "unit tests",
+          "usedBy": "",
+          "addedBy": "",
+          "dev": true
+        }
+      ]
+    }
+  ],
+  "toolsNote": null,
+  "undecidedByChange": {
+    "storms-arrange": [
+      {
+        "change": "storms-arrange",
+        "id": "D5",
+        "text": "Keep full undo history on each save?",
+        "date": "2026-10-12",
+        "status": "later"
+      }
+    ]
+  }
+}

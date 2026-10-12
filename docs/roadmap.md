@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-12 (build-readiness done and archived; M6 usage review next, kit-docs after M7 has been used once)
+Last updated: 2026-10-12 (M6 usage review done; next M8 kit-docs, then a follow-up change, then M5)
 
 ## North star: the workflow this kit exists for
 
@@ -46,11 +46,11 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
 | M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **done** 2026-10-12, archived (kit 0.6.4); trial done ([`build-readiness-live.md`](../evals/trials/build-readiness-live.md)), two fixes in 0.6.1, PRD open questions now-or-later in 0.6.2 (6.2), verify fixes in 0.6.3 and 0.6.4 (7 low review findings → M6) |
 | M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory, backfill | See that change once proposed | planned, not proposed; after M7 has been used once |
-| M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
+| M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | **done** 2026-10-12: [`usage-review-1.md`](../evals/trials/usage-review-1.md), Context7 A/B in [`context7-ab.md`](../evals/trials/context7-ab.md) |
 
 ## Current position and next actions
 
-1. **Now:** M1–M4 are done (kit 0.5.0). **Use the kit on a real project** (Toughbubble: `/kit:start`, then real work such as the lightbox), to feed the M6 usage review. Then M5 (cockpit, feedback, harness review).
+1. **Now:** M1–M4, M6 and M7 are done (kit 0.6.4). **Next: M8** (`kit-docs`, `/opsx:propose` on a new branch), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
 2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/archive/2026-10-07-prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archived 2026-10-07 with the other two.
    - Still open from the trials (`evals/trials/prd-pipeline-live.md`):
      - **parked** (user): keeping loose notes manageable, decided after real use;
@@ -97,3 +97,4 @@ Open decisions:
 | 2026-10-12 | **Living docs and build-readiness proposed now, ahead of M6**, split in two: `build-readiness` (M7: readiness check, decision record, docs sync, Given/When/Then) and `kit-docs` (M8: docs page, foundations, tools inventory, backfill). Flow: plain OpenSpec. `/kit:judge` said SuperSpec on two false positives ("permissions", "backfill"); the user chose OpenSpec | The user's choice after the explore. The Storms dry run showed the docs stopping before 29 code commits. On-plan alternative: wait for the M6 review | user | Supersedes the row above. M7 and M8 added; M5 and M6 unchanged |
 | 2026-10-12 | **Proposed:** `/kit:prd` shows its open questions apart from the end report and asks "go through them now?". Yes → one question per item with options. No → they stay in the PRD's Open questions, and `/kit:next` reminds the user later | 6.1 live trial: the end report buries "answer the 4 open questions before Ready" in a long summary nobody reads; now may not be the time to answer. On-plan alternative: raise it at M6 | user | Folded into `build-readiness` as task 6.2 (kit 0.6.2) |
 | 2026-10-12 | **Proposed, not scheduled:** a "what's waiting" list. `/kit:next` stays one step plus one summary line; `/kit:next --all` lists what was put off (PRD questions, decisions marked Later, parked notes, roadmap next actions) with order hints, and the user picks. A visual board of it fits the M5 cockpit | With many open problems, ride-along reminders become a wall, and it's hard to track what the user said they'd do. On-plan alternative: keep the per-line reminders from 6.2 until M6 | user (proposal) | Decide at M6: part of M5 cockpit or its own change. Note: `knowledge/notes/2026-10-12-next-on-roadmap-and-pending-tasks.md` |
+| 2026-10-12 | **M6 done; order after it: M8, then a follow-up change, then M5.** M8 moves ahead of M5; the M6 findings become one small change after M8 | The user wants the docs page next; M5's cockpit overlaps with M8's page, so M8 first avoids two overview pages. On-plan alternative: M5 after M6 | user | Follow-up change: routing-only re-sync, "what's waiting" list and `/kit:next` order, Context7 hook fix, 7 low review findings. Review: `evals/trials/usage-review-1.md` |

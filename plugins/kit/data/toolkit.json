@@ -202,6 +202,12 @@
           "status": "trial",
           "rationale": "A/B trial - equal result, about 4x the time and 5x the cost on a small, tightly specified change; re-test on a big or risky one",
           "evidence": "evals/registry/runs/2026-10-01-superspec.json"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "trial",
+          "rationale": "M6 review (user) - first real big build (Toughbubble storms-canvas) used SuperSpec; still in user testing, no comparison run. Re-judge once it is archived",
+          "evidence": "evals/trials/usage-review-1.md"
         }
       ]
     },
@@ -579,6 +585,12 @@
           "status": "trial",
           "rationale": "Used through npx with no setup or sign-in (lookups work logged out); the routing block tells the agent when to look up docs",
           "evidence": "evals/trials/prd-pipeline-live.md"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "trial",
+          "rationale": "M6 A/B (user decision - keep trial, fix the hook) - the rule is followed in a clean context (4/4) but made no measurable difference on typed, installed packages; the library-error hook never fired (chained commands exit 0; PowerShell not matched). Never used in 16 real sessions",
+          "evidence": "evals/trials/context7-ab.md"
         }
       ]
     },
@@ -798,6 +810,12 @@
           "status": "later",
           "rationale": "Its own README says it pays off once there are many skills; revisit at the usage review",
           "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "later",
+          "rationale": "M6 review - still 9 kit skills and no feedback channel yet (/kit:feedback is M5); corrections so far were caught in trials and code reviews. Revisit with M5",
+          "evidence": "evals/trials/usage-review-1.md"
         }
       ]
     },

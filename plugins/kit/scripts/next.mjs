@@ -76,6 +76,14 @@ export function prdSuggest({ knowledge, map, activeCount = 0, changedSince = () 
   return { suggestion: null, warnings };
 }
 
+/** Reminder for Draft or Review PRDs with open questions put off for later; rides along on any suggestion, never a gate. */
+export function questionsLine(knowledge) {
+  const prds = (knowledge?.list?.prds ?? []).filter(p => p.valid && ['Draft', 'Review'].includes(p.status) && p.openQuestions > 0);
+  if (!prds.length) return null;
+  const [p, ...rest] = prds;
+  return `PRD "${p.slug}" has ${p.openQuestions} open question(s) to answer before Ready (/kit:prd)${rest.length ? `; ${rest.length} more PRD(s) with open questions` : ''}`;
+}
+
 /**
  * Pure decision. Input:
  *   openspec: { root, changes: [{ name, completedTasks, totalTasks, lastModified, status }] } (openspec list --json)
@@ -90,7 +98,8 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   const active = (openspec.changes ?? []).filter(c => c.status !== 'archived')
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
   const { suggestion, warnings } = prdSuggest({ knowledge, map, activeCount: active.length, changedSince });
-  const withWarnings = s => (warnings.length ? { ...s, warnings } : s);
+  const questions = questionsLine(knowledge);
+  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(warnings.length ? { warnings } : {}) });
   if (suggestion) return withWarnings(suggestion);
   return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
 }
@@ -146,6 +155,7 @@ export function format(s) {
   if (s.prd) lines.push(`  prd:   ${s.prd}`);
   if (s.then) lines.push(`  then:  ${s.then}`);
   if (s.open) lines.push(`  open:  ${s.open}`);
+  if (s.questions) lines.push(`  later: ${s.questions}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherActive?.length) lines.push(`  other active changes: ${s.otherActive.join(', ')}`);

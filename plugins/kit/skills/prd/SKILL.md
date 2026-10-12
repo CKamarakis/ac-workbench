@@ -24,7 +24,12 @@ If it prints `error:`, show it and stop. Don't do the step by hand.
    - **Anything not in the picked notes or the user's words is not a fact.** Mark it "Assumption:" or list it under Open questions. Never invent users, numbers or quotes.
    - Keep it short and plain: one or two pages, every line useful for deciding or building.
    - **Requirements as stories:** "Given <starting state>, when <the user does X>, then <what they see>", grouped by flow or screen. Replace the template's example line. Keep a short plain statement where there's no meaningful starting state or action (a limit, a rule). The proposal step turns these stories into spec scenarios.
-6. **Show the user** the result and the path.
+6. **Show the user** the result and the path, in a few lines. Leave the open questions out of this report; they get their own step.
+7. **Open questions, now or later.** If the PRD's Open questions section has items, say how many there are and that they must be answered before Ready. Then ask with **AskUserQuestion**: go through them now, or later?
+   - **Now:** ask the questions in batches of up to 4. Give each 2–3 concrete options, with your recommendation first, plus a **Later** option for that one question. Write each answer into the section it belongs to (per-section update, below) and remove it from Open questions. Items answered Later stay there.
+   - **Later:** change nothing. Say that the questions stay in the PRD's Open questions section, and that `/kit:next` will remind the user until they're answered.
+
+Run step 7 again whenever an update leaves open questions, and before a PRD is marked Ready.
 
 ## Update a PRD per section
 
@@ -44,7 +49,7 @@ Run this when the PRD exists and the user wants changes, or new notes should fee
 ## Status and handoff
 
 - **The status changes only on the user's yes.** Use `set-field --file prds/<slug>.md --key status --value <Status>`.
-- **Before Ready:** run `prd-check --file prds/<slug>.md`, and fix what it reports with the user.
+- **Before Ready:** run `prd-check --file prds/<slug>.md`, and fix what it reports with the user. If open questions remain, offer step 7 first.
 - **Ready → planning:** tell the user the next step is `/opsx:propose`. The project's routing rules make the proposal read the Ready PRD and record a line `PRD: <knowledge>/prds/<slug>.md @ <commit>`. The commit is `git log -1 --format=%h -- <file>`, or `uncommitted` if the file has uncommitted changes.
 - **After the proposal exists:** offer to set `change` to the change name and the status to `Building`, both on a yes.
 - **After `/opsx:archive`:** offer `Shipped`, on a yes.

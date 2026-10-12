@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   knowledgeDir, parseFrontmatter, writeFrontmatter, slugify, listKnowledge, newNote, citing, move,
-  sectionGet, sectionSet, readPrd,
+  sectionGet, sectionSet, readPrd, openQuestions,
 } from '../../plugins/kit/scripts/knowledge.mjs';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-knowledge-'));
@@ -307,4 +307,16 @@ test('2.3 import refuses other types and a missing title', () => {
   assert.throws(() => importNote(r, { file: path.join(r, 'notes/a.pdf'), title: 'A' }), /only \.txt and \.md/);
   assert.throws(() => importNote(r, { file: path.join(r, 'notes/b.txt') }), /needs a title/);
   assert.ok(fs.existsSync(path.join(r, 'notes/b.txt')));
+});
+
+// build-readiness 6.2
+test('openQuestions lists the section items; None and N/A do not count; readPrd carries the count', () => {
+  const body = '## Open questions\n\n- Is a shortcut wanted?\n* Where does the icon go?\n\n## Risks\n\n- not a question\n';
+  assert.deepEqual(openQuestions(body), ['Is a shortcut wanted?', 'Where does the icon go?']);
+  assert.deepEqual(openQuestions('## Open questions\n\n- None.\n'), []);
+  assert.deepEqual(openQuestions('## Problem\n\nx\n'), []);
+  const r = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-oq-'));
+  fs.mkdirSync(path.join(r, 'prds'));
+  fs.writeFileSync(path.join(r, 'prds/side.md'), '---\ntitle: Side\nstatus: Draft\n---\n\n' + body);
+  assert.equal(readPrd(r, path.join(r, 'prds/side.md')).openQuestions, 2);
 });

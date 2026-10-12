@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openQuestions } from './knowledge.mjs';
 
 export const CHECKLIST = [
   { id: 'payments', label: 'touches payments, money or billing', strong: true,
@@ -41,8 +42,7 @@ const has = (text, w) => text.includes(` ${w.toLowerCase()} `);
 /** The "Open questions" section's items, plus unknown/TBD markers. */
 function vagueness(raw) {
   const reasons = [];
-  const m = /^##\s+Open questions\s*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(raw);
-  const items = m ? m[1].split('\n').filter(l => /^\s*[-*]\s*\S/.test(l) && !/^\s*[-*]\s*(none|n\/a)\.?\s*$/i.test(l)) : [];
+  const items = openQuestions(raw);
   if (items.length) reasons.push(`${items.length} open question(s)`);
   const marks = raw.match(/\b(TBD|unknown)\b/gi) ?? [];
   if (marks.length) reasons.push(`"${[...new Set(marks.map(x => x.toLowerCase()))].join('", "')}" in the text`);

@@ -74,7 +74,9 @@
 
 ## 6. PRD template
 
-- [ ] 6.1 `templates/prd.md`: the Requirements section asks for Given/When/Then stories grouped by flow or screen, with one example. Update `skills/prd/SKILL.md` so drafts use stories, and keep plain statements where there's no starting state. Verify with `tests/kit/templates.test.mjs` (the template contains the stories guidance) and a `evals/prd` case (a draft from a note produces at least one Given/When/Then story)
+- [x] 6.1 `templates/prd.md`: the Requirements section asks for Given/When/Then stories grouped by flow or screen, with one example. Update `skills/prd/SKILL.md` so drafts use stories, and keep plain statements where there's no starting state. Verify with `tests/kit/templates.test.mjs` (the template contains the stories guidance) and a `evals/prd` case (a draft from a note produces at least one Given/When/Then story)
+  - Live 2026-10-12 on the Toughbubble copy (kit 0.6.1, sidebar note): stories grouped by flow, rules without a starting state kept plain, 4 open questions left open
+- [x] 6.2 Open questions now or later (added by the user 2026-10-12, from the 6.1 trial; kit 0.6.2): `/kit:prd` keeps open questions out of its end report and asks "now or later?" (now: options with a recommendation and Later; later: nothing written). `knowledge.mjs` counts a PRD's open questions (shared with `judge.mjs`), and `/kit:next` adds a `later:` reminder for Draft or Review PRDs that have them. Verify with `tests/kit/knowledge.test.mjs`, `tests/kit/next.test.mjs` and the `evals/prd` case `open-questions-now-or-later`
 
 ## 7. Integration trial and records
 

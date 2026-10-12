@@ -258,3 +258,15 @@ test('build-readiness 5.3: applyRequires done = planning complete, even with an 
   const s = suggest({ openspec: { root: {}, changes: [change('add-x', 2, 8)] }, statusOf: st, map });
   assert.equal(s.phase, 'build');
 });
+
+// build-readiness 6.2: PRD open questions put off for later ride along as a reminder
+import { questionsLine } from '../../plugins/kit/scripts/next.mjs';
+test('6.2: a Draft PRD with open questions adds a reminder to any suggestion; Ready or none -> no line', () => {
+  const k = K({ prds: [P('sidebar', 'Draft', { openQuestions: 4 }), P('old', 'Review', { openQuestions: 1 }), P('done', 'Ready', { openQuestions: 2 })] });
+  assert.equal(questionsLine(k), 'PRD "sidebar" has 4 open question(s) to answer before Ready (/kit:prd); 1 more PRD(s) with open questions');
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: k });
+  assert.equal(s.questions, questionsLine(k));
+  assert.match(format(s), /\n  later: PRD "sidebar" has 4 open question/);
+  assert.equal(questionsLine(K({ prds: [P('a', 'Draft', { openQuestions: 0 }), P('b', 'Ready', { openQuestions: 3 })] })), null);
+  assert.equal(suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K() }).questions, undefined);
+});

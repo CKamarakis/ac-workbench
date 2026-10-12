@@ -174,11 +174,18 @@ function readNote(root, file) {
   };
 }
 
-/** Validates one PRD file. Returns { path, slug, title, status, sources, change, valid, errors }. */
+/** The items of a PRD's "Open questions" section ("None" and "N/A" don't count). */
+export function openQuestions(text) {
+  const m = /^##\s+Open questions\s*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(String(text ?? ''));
+  return m ? m[1].split('\n').filter(l => /^\s*[-*]\s*\S/.test(l) && !/^\s*[-*]\s*(none|n\/a)\.?\s*$/i.test(l)).map(l => l.replace(/^\s*[-*]\s*/, '').trim()) : [];
+}
+
+/** Validates one PRD file. Returns { path, slug, title, status, sources, change, openQuestions, valid, errors }. */
 export function readPrd(root, file) {
   const rel = posix(path.relative(root, file));
   const slug = path.basename(file, '.md');
-  const fm = parseFrontmatter(read(file));
+  const raw = read(file);
+  const fm = parseFrontmatter(raw);
   if (!fm.ok) return { path: rel, slug, valid: false, errors: [fm.error] };
   const d = fm.data;
   const errors = [];
@@ -188,7 +195,7 @@ export function readPrd(root, file) {
   if (!STATUSES.includes(d.status)) errors.push(`invalid status "${d.status ?? ''}" (expected one of ${STATUSES.join(', ')})`);
   for (const s of sources) if (!fs.existsSync(path.resolve(root, s))) errors.push(`source not found: ${s}`);
   if (['Building', 'Shipped'].includes(d.status) && !d.change) errors.push(`status ${d.status} needs a "change"`);
-  return { path: rel, slug, title: d.title ?? slug, status: d.status ?? null, sources, change: d.change || null, valid: !errors.length, errors };
+  return { path: rel, slug, title: d.title ?? slug, status: d.status ?? null, sources, change: d.change || null, openQuestions: openQuestions(raw).length, valid: !errors.length, errors };
 }
 
 /** Notes (recursive, never archive/), PRDs newest-updated first, and .txt files not imported yet. */

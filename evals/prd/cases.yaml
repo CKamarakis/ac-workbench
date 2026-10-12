@@ -84,6 +84,26 @@ cases:
           - name: plain-where-fitting
             description: Rules without a starting state (if any) stay short plain statements, not forced stories
 
+  - id: open-questions-now-or-later
+    description: 'A draft with open questions keeps them out of the end report and asks "now or later?"; Later leaves them in the PRD'
+    setup:
+      files:
+        knowledge/notes/2026-10-12-sidebar.md: "---\ntitle: Sidebar\ndate: 2026-10-12\n---\nHide the sidebar for more room. Open question: how this works with the file tree.\n"
+    input:
+      prompt: "/kit:prd hide the sidebar"
+    checks:
+      - kind: content-match
+        path: '{{kit}}/skills/prd/SKILL.md'
+        pattern: 'Open questions, now or later'
+      - kind: rubric
+        criteria:
+          - name: separate-step
+            description: The end report doesn't list the open questions; a separate question asks whether to go through them now or later
+          - name: options-when-now
+            description: On "now", each question comes with concrete options, a recommendation first, and a Later option
+          - name: later-keeps-them
+            description: On "later", nothing is written, the questions stay under Open questions, and the reply says /kit:next will remind
+
   - id: shortlist-and-gaps
     description: With notes on checkout and onboarding, "gift cards" shortlists checkout notes with reasons and marks gaps
     input:

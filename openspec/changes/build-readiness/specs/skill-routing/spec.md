@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Next-step suggestion
-The next-step skill SHALL inspect the project's current state (active OpenSpec change and its artifact and task status) and SHALL suggest the next step with the owning skill from the lane map, with a one-line reason. When the active change has open decisions in its decision record, the suggestion SHALL add how many are open and the date of the oldest.
+The next-step skill SHALL inspect the project's current state (active OpenSpec change and its artifact and task status) and SHALL suggest the next step with the owning skill from the lane map, with a one-line reason. When the active change has open decisions in its decision record, the suggestion SHALL add how many are open and the date of the oldest. When a PRD in `Draft` or `Review` has items under Open questions, the suggestion SHALL add a one-line reminder naming the PRD and the count. Both are reminders, never the next step itself.
 
 #### Scenario: Planning incomplete
 - **WHEN** the active change has a proposal but no specs
@@ -20,6 +20,11 @@ The next-step skill SHALL inspect the project's current state (active OpenSpec c
 - **GIVEN** the active change has one decision marked `later` on 2026-10-12
 - **WHEN** the user asks what's next
 - **THEN** the suggestion adds "1 decision still open since 2026-10-12"
+
+#### Scenario: PRD questions put off for later
+- **GIVEN** the Draft PRD `sidebar` has 4 open questions
+- **WHEN** the user asks what's next
+- **THEN** the suggestion is unchanged, and it adds "PRD "sidebar" has 4 open question(s) to answer before Ready"
 
 #### Scenario: No active change
 - **WHEN** the project has no active change

@@ -51,6 +51,13 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 ## Current position and next actions
 
 1. **Now:** M1–M4, M6 and M7 are done (kit 0.6.4). **Next: M8** (`kit-docs`, `/opsx:propose` on a new branch), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
+   - **M8 scope, decided by the user 2026-10-12 before `/opsx:propose`** (on branch `kit-docs`):
+     - **Flow: SuperSpec** (the user's choice; `/kit:judge` matched "backfill"). Schema in `openspec/schemas/superspec/`; Superpowers on in `.claude/settings.local.json` only. Restart the session, then `/opsx:propose kit-docs --schema superspec`.
+     - **Tree levels:** nested spec folders (`specs/storms/stickies/spec.md`) give product → sub-feature.
+     - **Backfill:** not in M8; its own change later.
+     - **Foundation cards:** `knowledge/foundations/`; feature history comes from the archived changes.
+     - **Cockpit (M5):** stays a separate page.
+     - Already confirmed in the explore (note `2026-10-12-living-docs-and-build-readiness-…`, "Explore results"): three-panel layout (tree / behavior / why), user-centric audience, Given/When/Then behaviors, "why" only where a decision has depth, "how it works, roughly" per sub-feature, tools inventory, open decisions shown as undecided.
 2. **Done 2026-10-07:** [`prd-pipeline-followups`](../openspec/changes/archive/2026-10-07-prd-pipeline-followups/) (kit 0.3.0). PRDs newest first; `.txt` import; `/kit:start` asks one question with a three-part summary; context7 through `npx` (no sign-in); a README. Archived 2026-10-07 with the other two.
    - Still open from the trials (`evals/trials/prd-pipeline-live.md`):
      - **parked** (user): keeping loose notes manageable, decided after real use;

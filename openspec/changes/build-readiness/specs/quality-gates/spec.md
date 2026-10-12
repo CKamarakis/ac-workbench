@@ -12,6 +12,8 @@ The verify step SHALL run for one OpenSpec change and SHALL produce a report at 
 
 The test commands come from the project type's test policy (see the toolkit-registry requirement). The security and code reviews are run by the agent in the session, and their findings are recorded through the verify script, never typed into the report by hand. The docs-sync section and open decisions SHALL be ADVISORY.
 
+If the change already has a `verify.md` the kit didn't write, verify SHALL keep it as `verify-earlier.md` instead of overwriting it, and SHALL list it as an ADVISORY item.
+
 #### Scenario: All green
 - **WHEN** the policy's tests pass and the reviews record no high-severity finding
 - **THEN** `verify.md` has result `pass`, and lists any advisory items
@@ -24,6 +26,11 @@ The test commands come from the project type's test policy (see the toolkit-regi
 - **GIVEN** the tests pass, and the docs sync leaves one flagged item open
 - **WHEN** verify finishes
 - **THEN** the result is `pass`, and the advisory list shows the docs-sync summary and "1 decision still open"
+
+#### Scenario: Earlier report from another tool
+- **GIVEN** the change has a `verify.md` written by SuperSpec
+- **WHEN** verify runs
+- **THEN** that file is renamed to `verify-earlier.md` unchanged, and the report lists it as an advisory item to read
 
 ### Requirement: Archive gate
 In a kit project (one with `.claude/kit.json`), archiving a change with `openspec archive` SHALL be blocked when the change has no `verify.md`, or its result is `fail`, and the block SHALL tell the agent why and what to run. A result of `pass` or `overridden` SHALL let the archive go ahead. When the archive goes ahead and the change has open decisions, the gate SHALL tell the agent how many are open and since when, so it can tell the user, and SHALL NOT block for them. Outside kit projects, the gate SHALL do nothing.

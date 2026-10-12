@@ -22,7 +22,7 @@ If it prints `error:`, show it and stop.
 ## Steps
 
 1. **Pick the change.** The one named by the user, or the active change whose tasks are all done. Ask if it's unclear.
-2. **Run the tests and checks:** `verify.mjs run --dir . --change <name>`. It runs the policy's `npm run <script>` commands (which can take a while) and writes the report.
+2. **Run the tests and checks:** `verify.mjs run --dir . --change <name>`. It runs the policy's `npm run <script>` commands (which can take a while) and writes the report. If the change already had a `verify.md` the kit didn't write (e.g. SuperSpec's), the script keeps it as `verify-earlier.md` and lists it (`E:report`): read it and tell the user about anything still open in it, such as unfinished tasks or sign-offs.
 3. **Security review:** run `/security-review` on this change's files. For each finding, record it:
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" finding --dir . --change <name> --source security --severity high|medium|low --text "<one line: what and where>"
@@ -38,7 +38,7 @@ If it prints `error:`, show it and stop.
    1. **Scan:** `verify.mjs docs-scan --dir . --change <name>`. Say when the docs were last updated and how many code commits followed. Then read:
       - the receipt items (if there's no `apply.md`, say so and work from `git log` and the diff since the docs commit);
       - the change's specs and `design.md`.
-   2. **Sort each item:**
+   2. **Sort each item.** Every receipt item gets exactly one place: proposed, or left out. Items under "Visible changes" are behaviors; never leave them out.
       - **Behavior** (the user can observe it) and not covered by a scenario → propose a scenario (`- **GIVEN**`/`WHEN`/`THEN`) under its requirement in the delta spec.
       - **Decision with depth** (it trades something, shapes more than one behavior, or would surprise someone later) and not in `design.md` → propose it with its reason.
       - **How the build ran** (push cadence, task dispatch, test ports, review batching) → left out. List these in one line; propose nothing.
@@ -54,7 +54,7 @@ If it prints `error:`, show it and stop.
       ```bash
       node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" docs-sync --dir . --change <name> --proposed N --written N --declined N --left-out N [--unplanned a,b]
       ```
-      Re-run step 2 so the report shows open decisions. The docs sync never adds a HARD item.
+      Count per receipt item: proposed + left out must cover every receipt item, or the script stops and says how many are missing. Re-run step 2 so the report shows open decisions. The docs sync never adds a HARD item.
 6. **Show the report:** **HARD items first**, each with what to do; then the advisory list (including the docs sync and any open decisions). Then:
    - Result `pass`: say the change can be archived (`/opsx:archive`).
    - Result `fail`: offer to fix the HARD items, then re-run step 2. A fixed finding is cleared by re-running the review and not recording it again; for a stale one, say so.

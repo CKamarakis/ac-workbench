@@ -33,6 +33,8 @@ The docs sync SHALL sort each item it finds into one of:
 
 A small or preference decision SHALL NOT be proposed for `design.md` just to give it a reason.
 
+Every apply-receipt item SHALL end up either proposed or left out. An item under the receipt's "Visible changes" SHALL be treated as a behavior, never left out. The verify script SHALL refuse a docs-sync summary whose proposed and left-out counts don't cover every receipt item.
+
 #### Scenario: Behavior found in the receipt
 - **GIVEN** the apply receipt says "Fit on a single sticky zooms close to 350%" and no scenario covers fitting one item
 - **WHEN** the docs sync runs
@@ -42,6 +44,11 @@ A small or preference decision SHALL NOT be proposed for `design.md` just to giv
 - **GIVEN** the apply receipt says "the speed test runs its own dev server on port 3101"
 - **WHEN** the docs sync runs
 - **THEN** the item is listed as left out (how the build ran), and nothing is proposed
+
+#### Scenario: Receipt item not sorted
+- **GIVEN** the apply receipt has 20 items
+- **WHEN** the agent records a docs sync with 10 proposed and 6 left out
+- **THEN** the script stops and says that 4 receipt items aren't sorted, and nothing is recorded
 
 ### Requirement: Flag built behavior that may be unwanted
 The docs sync SHALL flag an item when the built behavior changes what the user sees in a way the specs did not plan, or when it could lose or hide the user's data. A flagged item SHALL be asked as "this is what was built; is it what you want?", with options to keep it (then documented as is) or to change it (then recorded as an open decision and not documented as final).

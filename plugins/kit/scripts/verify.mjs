@@ -155,6 +155,10 @@ export function setDocsSync({ dir, change, proposed = 0, written = 0, declined =
   const state = readState(file);
   if (!state) throw new Error('no report yet: run "verify.mjs run" first');
   const s = docsScan({ dir, change });
+  const sorted = n(proposed) + n(leftOut);
+  if (s.receipt && sorted < s.receipt.length) {
+    throw new Error(`the apply receipt has ${s.receipt.length} items but proposed + left out = ${sorted}: sort every item (a visible change is a behavior, never left out), then re-run`);
+  }
   state.docsSync = {
     date: today(), docsUpdated: s.docsUpdated, codeCommitsSince: s.codeCommitsSince, receipt: s.receipt != null,
     proposed: n(proposed), written: n(written), declined: n(declined), leftOut: n(leftOut),
@@ -227,8 +231,19 @@ const save = (file, state) => { fs.writeFileSync(file, render(state)); return st
 
 // ---------- commands ----------
 
+/** A verify.md the kit didn't write (e.g. SuperSpec's) is renamed, never overwritten. Returns its new path or null. */
+function keepForeignReport(file) {
+  if (!fs.existsSync(file) || readState(file)) return null;
+  let n = 1, to;
+  do to = file.replace(/verify\.md$/, n === 1 ? 'verify-earlier.md' : `verify-earlier-${n}.md`), n++;
+  while (fs.existsSync(to));
+  fs.renameSync(file, to);
+  return to;
+}
+
 export function runVerify({ dir, change, registry = loadRegistry(), run = defaultRun }) {
   const file = reportPath(dir, change);
+  const kept = keepForeignReport(file);
   const prev = readState(file);
   const type = projectType(dir);
   const policy = policyFor(registry, type);
@@ -250,10 +265,12 @@ export function runVerify({ dir, change, registry = loadRegistry(), run = defaul
   (policy.advisory ?? []).forEach((a, n) => items.push({ id: `P${n + 1}`, level: 'ADVISORY', what: `policy check: ${a}`, source: 'policy' }));
   const open = openLine(decisionStatus({ dir, change }));
   if (open) items.push({ id: 'O:decisions', level: 'ADVISORY', what: open, detail: `openspec/changes/${change}/decisions.md`, source: 'decisions' });
+  const earlier = kept ? posix(path.relative(dir, kept)) : prev?.earlier;
+  if (earlier) items.push({ id: 'E:report', level: 'ADVISORY', what: 'an earlier verify report (not the kit\'s) was kept; read it for open items', detail: earlier, source: 'earlier' });
   const findings = (prev?.items ?? []).filter(i => i.source === 'security' || i.source === 'code' || i.source === 'browser');
   const all = [...items, ...findings];
   const overrides = (prev?.overrides ?? []).filter(o => all.some(i => i.id === o.item));
-  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(prev?.browser ? { browser: prev.browser } : {}), ...(prev?.docsSync ? { docsSync: prev.docsSync } : {}) });
+  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(earlier ? { earlier } : {}), ...(prev?.browser ? { browser: prev.browser } : {}), ...(prev?.docsSync ? { docsSync: prev.docsSync } : {}) });
 }
 
 export function setReview({ dir, change, source, how, note }) {

@@ -257,3 +257,28 @@ test('docs-sync section appears with its counts; open decisions are advisory and
   assert.equal(s.items.find(i => i.id === 'O:decisions').level, 'ADVISORY');
   assert.throws(() => setDocsSync({ dir: d, change: 'add-x', proposed: -1 }), /whole numbers/);
 });
+
+// 7.1 trial follow-ups
+test('docs-sync: proposed + left out must cover every receipt item', () => {
+  const d = docsProject();
+  w(d, 'openspec/changes/add-x/apply.md', '# Apply\n\n## Rulings made during apply\n\n1. Port 3101.\n2. Deletes first.\n\n## Visible changes worth knowing\n\n- Fit zooms to 350%.\n');
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  assert.throws(() => setDocsSync({ dir: d, change: 'add-x', proposed: 1, written: 1, leftOut: 1 }), /receipt has 3 items but proposed \+ left out = 2/);
+  assert.equal(setDocsSync({ dir: d, change: 'add-x', proposed: 2, written: 2, leftOut: 1 }).docsSync.proposed, 2);
+});
+
+test('a verify.md the kit did not write is kept as verify-earlier.md and listed (advisory), never overwritten', () => {
+  const d = project();
+  const dir = path.join(d, 'openspec/changes/add-x');
+  w(d, 'openspec/changes/add-x/verify.md', '# Verification Report\n\nTask 10.4 open.\n');
+  const s = runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  assert.equal(fs.readFileSync(path.join(dir, 'verify-earlier.md'), 'utf8'), '# Verification Report\n\nTask 10.4 open.\n');
+  const e = s.items.find(i => i.id === 'E:report');
+  assert.equal(e.level, 'ADVISORY');
+  assert.equal(e.detail, 'openspec/changes/add-x/verify-earlier.md');
+  assert.equal(verifyStatus({ dir: d, change: 'add-x' }).status, 'pass');
+  // a re-run keeps the pointer and renames nothing else
+  const again = runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  assert.equal(again.items.find(i => i.id === 'E:report').detail, 'openspec/changes/add-x/verify-earlier.md');
+  assert.equal(fs.existsSync(path.join(dir, 'verify-earlier-2.md')), false);
+});

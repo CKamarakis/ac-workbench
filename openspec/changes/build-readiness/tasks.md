@@ -77,8 +77,10 @@
 
 ## 7. Integration trial and records
 
-- [ ] 7.1 Trial on `Projects/temp/Toughbubble`. Re-sync its routing with `/kit:start`, then:
+- [x] 7.1 Trial on `Projects/temp/Toughbubble`. Re-sync its routing with `/kit:start`, then:
   - run `/kit:verify` on `storms-canvas` and check that the docs sync finds what the manual dry run found (`docsUpdated` 2026-10-10, 29 code commits; the 4 behaviors; the 4 decisions; `fake-indexeddb` unplanned; 2 flags; 10 rulings left out);
   - run `/kit:ready` on a fresh small change in the copy;
   - record the findings and the token use in `evals/trials/build-readiness-live.md`
+  - Done 2026-10-12: docs sync found 9 of 10 dry-run items and asked both flags; `/kit:ready` asked 3 real gaps. The re-sync was cancelled (it bundles a tool install with the routing) and isn't re-run: the routing block is covered by `tests/kit/lanes.test.mjs` and the trial showed the 0.6.0 diff. Evidence for 3.3: the live gaps; the planted PRD/spec difference and overlapping dependency aren't covered live. 6.1 isn't covered (no `/kit:prd` run)
+- [x] 7.3 Trial fixes (kit 0.6.1): the docs-sync summary must cover every receipt item (the live run dropped 4 of 20, including a visible change); `/kit:verify` keeps a `verify.md` it didn't write as `verify-earlier.md` instead of overwriting it. Verify with `tests/kit/verify.test.mjs`
 - [x] 7.2 Update the README (new `/kit:ready`, docs sync in verify), `docs/project-context.md` (a build-readiness section) and `docs/roadmap.md` (status). Verify that `npm test` and `npm run evals` pass

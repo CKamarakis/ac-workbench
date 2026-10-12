@@ -38,7 +38,7 @@
 
 ## 6. Trials and close
 
-- [ ] 6.1 Trial on this repo: `/kit:docs`, confirm drafts, build; open the page and check tree, scenarios, history and search. Evidence in `evals/trials/kit-docs.md`
-- [ ] 6.2 Trial on the Toughbubble copy (`Projects/temp/Toughbubble`, never the real repo): nested Storms specs (regroup in the copy), the canvas foundation card, the tools inventory from its `package.json`, an open decision shown as undecided. Evidence in the same file
-- [ ] 6.3 `npm test`, `npm run evals`, `npm run registry:check` all pass
-- [ ] 6.4 Roadmap: M8 status and exit criteria; north-star row 13
+- [x] 6.1 Trial on this repo: `/kit:docs`, confirm drafts, build; open the page and check tree, scenarios, history and search. Evidence in `evals/trials/kit-docs.md`
+- [x] 6.2 ~~Trial on the Toughbubble copy (`Projects/temp/Toughbubble`, never the real repo): nested Storms specs (regroup in the copy), the canvas foundation card, the tools inventory from its `package.json`, an open decision shown as undecided. Evidence in the same file~~ **Dropped by the user (2026-10-12).**
+- [x] 6.3 `npm test`, `npm run evals`, `npm run registry:check` all pass
+- [x] 6.4 Roadmap: M8 status and exit criteria; north-star row 13

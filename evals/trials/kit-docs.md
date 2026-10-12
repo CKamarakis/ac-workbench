@@ -33,3 +33,18 @@ Method: dual-agent (A design review, B detector + technical audit), isolated; no
 - **Detector:** fixture page clean; this repo's page 1 `aphoristic-cadence` hit from spec text (false positive: content, not template).
 - **Findings:** P1 requirement text shows raw Markdown; P1 undecided items fall below everything on narrow screens; P1 blank page without JS; P2 card links from a product card don't scroll (slug mismatch, a bug); P2 why far from its requirement; P2 PRD shown as text, not a link; P2 no `<main>`/skip link, no focus move on navigation; P2 control borders 1.17:1; P2 tap targets < 44 px and cramped grids at 390 px; P2 replaced cards via opacity drop to 3.5:1; P2 malformed hash throws; P3 duplicate "Changed by", Name sort keeps "Z–A", badge reads as a bare number, title acronyms ("Prd authoring"), story row corners.
 - **User's pick (one batch):** readable text only, plus open/close per product in the left list; "enough" — no further polishing. Fixed: basic Markdown in requirement text (escaped first), acronyms in titles, card-link anchor bug, collapsible products. Other findings stay as recorded above (not fixed, by the user's choice). Remaining detector hit: `aphoristic-cadence` from spec text (false positive).
+
+## 6.1 This repo, full /kit:docs run (2026-10-12)
+
+- Scan: 11 specs, 11 notes missing, `yaml` not in the inventory, 0 cards.
+- 15 drafts (11 capability notes, `tools.md`, 3 app-wide cards: tools-per-project, markdown-in-the-repo, zero-dependency-scripts), every reason sourced from the archived designs or the roadmap drift log. Asked in 4 batches; the user said yes to all 15.
+- Scan after: nothing missing or stale, inventory complete, 3 cards. Build: 11 specs, 72 requirements, 3 cards, 1 tool, 0 undecided; all 15 "why" entries matched a requirement (no orphans); 5 card links.
+- Checks: `npm test` 288/288; `npm run evals` 0 failures (pending judgment cases only); `npm run registry:check` exit 0.
+
+## 6.2 Toughbubble copy: skipped (user, 2026-10-12)
+
+The user dropped the Toughbubble trial from M8 ("I do not want to build another Toughbubble here"). The nested-path archive merge was still checked (1.1); nested trees are covered by unit tests.
+
+## Opt-in (user, 2026-10-12)
+
+The living docs are optional per project: nothing docs-related happens until `/kit:docs` creates `knowledge/docs/`; `/kit:start` mentions it under Later as optional and usable mid-project. Spec: living-docs "Living docs are optional".

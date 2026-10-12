@@ -146,6 +146,7 @@ cases:
     description: A decision with depth that shapes several sub-features is also proposed as a foundation card (kit-docs, docs-sync "Foundation card proposals")
     checks:
       - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*also\*\* propose a foundation card' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Only in a project that uses the living docs' }
       - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'status: replaced` with `replaced_by`, never deleting it' }
 
   - id: no-card-for-single-feature

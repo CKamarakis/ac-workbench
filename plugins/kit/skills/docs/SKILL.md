@@ -5,6 +5,8 @@ description: Build or refresh this project's docs page (knowledge/docs/index.htm
 
 # Kit docs
 
+Optional, per project: worth it once a project grows beyond a day or two. It can start at any point; on a project already under way it drafts from the existing specs and archived changes.
+
 One page per project: products › sub-features, their behaviors as Given/When/Then user stories, the "why" where a decision has depth, foundation cards, a tools inventory, history, and open decisions shown as undecided. The page is rebuilt from sources by a script, at no token cost; this skill only drafts the curated notes the specs don't hold.
 
 Script, run from the project folder. If it prints `error:`, show it and stop.

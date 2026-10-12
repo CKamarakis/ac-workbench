@@ -82,9 +82,14 @@ The agent writes small Markdown notes once; `docs.mjs build` renders everything.
 - Note dates come from git (`git log -1`), falling back to the file's mtime when it isn't committed yet.
 - A sub-feature's history comes from the archived change folders: each holds the proposal's "why" and the specs it touched, a link raw `git log` lacks. No new history files.
 
+### D10: Optional per project (user, 2026-10-12)
+- A small project (a day or two of work) may never need the docs. Nothing docs-related happens until `/kit:docs` creates `knowledge/docs/`: the archive reminder, the `/kit:next` reminder and the docs sync's card proposals all check for that folder; `/kit:ready` reads `tools.md` only when it exists.
+- `/kit:start` mentions `/kit:docs` under Later as optional and usable mid-project; it creates no docs folders.
+- Mid-project adoption: `/kit:docs` drafts from the existing specs and archived changes. A full backfill from code stays its own later change.
+
 ### D7: Release and evidence
 - Kit 0.7.0. Unit tests for `docs.mjs` on fixtures (flat and nested specs, G/W/T split, stale notes, undecided mapping, missing sources, escaping). Eval cases in `evals/docs/`.
-- Trials: this repo and the Toughbubble copy; evidence in `evals/trials/kit-docs.md`.
+- Trial: this repo (full `/kit:docs` run). The Toughbubble copy trial was dropped by the user (2026-10-12). Evidence in `evals/trials/kit-docs.md`.
 
 ## Risks / Trade-offs
 

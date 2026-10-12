@@ -1,5 +1,18 @@
 ## ADDED Requirements
 
+### Requirement: Living docs are optional
+The living docs SHALL be opt-in per project. A project uses them once `/kit:docs` has created `knowledge/docs/`. Until then no kit step SHALL create docs files, propose foundation cards, or remind about the docs page. `/kit:docs` SHALL work on a project that is already under way, drafting notes from its existing specs and archived changes.
+
+#### Scenario: Small project never opts in
+- **GIVEN** a project set up with `/kit:start` where `/kit:docs` was never run
+- **WHEN** a change is verified and archived
+- **THEN** no docs file is created, no card is proposed, and no docs reminder is shown
+
+#### Scenario: Adopted mid-project
+- **GIVEN** a project with 5 archived changes and no `knowledge/docs/`
+- **WHEN** the user runs `/kit:docs`
+- **THEN** it drafts notes for the existing specs and builds the page
+
 ### Requirement: Curated docs notes
 A project's living docs SHALL keep the content that specs don't hold in committed Markdown files:
 - a **capability note** at `knowledge/docs/<capability-path>.md` with an optional `## How it works, roughly` section and a `## Why` section, a list of entries each starting with the name of the requirement it explains;

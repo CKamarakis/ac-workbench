@@ -44,7 +44,8 @@ export function render(state) {
     '| Id | Kind | Question or finding | From | Options | Status | Answer | Written to | Dates |',
     '|---|---|---|---|---|---|---|---|---|',
     ...state.items.map(i => `| ${i.id} | ${i.kind} | ${esc(i.text)} | ${esc(i.from)} | ${esc(opts(i))} | ${i.status} | ${esc(i.answer ?? '')} | ${esc(i.written ?? '')} | ${dates(i)} |`),
-    '', `<!-- kit-decisions-data ${JSON.stringify(state)} -->`, '',
+    // "-->" inside the JSON would end the comment early; > parses back to ">".
+    '', `<!-- kit-decisions-data ${JSON.stringify(state).replace(/-->/g, '--\\u003e')} -->`, '',
   ];
   return L.join('\n');
 }
@@ -55,7 +56,10 @@ function oldestOf(items) {
 
 function load(dir, change) {
   const file = fileOf(dir, change);
-  return { file, state: readDecisions(file) ?? { change, next: 1, items: [], readyAt: null } };
+  const state = readDecisions(file);
+  // An unreadable record (merge conflict, hand edit) must never be replaced by an empty one.
+  if (!state && fs.existsSync(file)) throw new Error(`openspec/changes/${change}/decisions.md exists but its data can't be read (merge conflict or hand edit?): fix it from git, then re-run`);
+  return { file, state: state ?? { change, next: 1, items: [], readyAt: null } };
 }
 const save = (file, state) => { fs.writeFileSync(file, render(state)); return state; };
 const find = (state, id) => {

@@ -108,3 +108,15 @@ test('ready-done with zero items still sets readyAt', () => {
   assert.match(st.readyAt.date, /^\d{4}-\d\d-\d\d$/);
   assert.match(fs.readFileSync(file(d), 'utf8'), /readiness check: \d{4}-\d\d-\d\d at \S+ \(0 items\)/);
 });
+
+// verify C3: an unreadable record is never replaced by an empty one
+test('a decisions.md with broken data stops the next write; "-->" in a text round-trips', () => {
+  const d = project();
+  addDecision({ dir: d, ...base, kind: 'gap', text: 'Arrow --> and } --> inside', from: 'spec' });
+  assert.equal(listDecisions({ dir: d, ...base })[0].text, 'Arrow --> and } --> inside');
+  addDecision({ dir: d, ...base, kind: 'gap', text: 'Second', from: 'spec' });
+  const broken = fs.readFileSync(file(d), 'utf8').replace('"next":3', '<<<<<<< HEAD');
+  fs.writeFileSync(file(d), broken);
+  assert.throws(() => addDecision({ dir: d, ...base, kind: 'gap', text: 'Third', from: 'spec' }), /can't be read/);
+  assert.equal(fs.readFileSync(file(d), 'utf8'), broken);
+});

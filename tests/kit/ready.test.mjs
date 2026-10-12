@@ -80,3 +80,14 @@ test('unknown change and bad names are errors', () => {
   assert.throws(() => scan({ dir: project(), change: 'nope' }), /change not found/);
   assert.throws(() => scan({ dir: project(), change: 'Bad Name' }), /kebab-case/);
 });
+
+// verify C2: applyRequires is often just ["tasks"]; that alone must not pass a change without specs
+test('tasks done per OpenSpec but no specs -> planning not complete, next artifact specs', () => {
+  const d = project();
+  fs.rmSync(path.join(d, 'openspec/changes/add-x/specs'), { recursive: true });
+  const statusOf = () => ({ applyRequires: ['tasks'], artifacts: [{ id: 'proposal', status: 'done' }, { id: 'specs', status: 'done' }, { id: 'tasks', status: 'done' }] });
+  const s = scan({ dir: d, change: 'add-x', statusOf });
+  assert.equal(s.planningComplete, false);
+  assert.equal(s.nextArtifact, 'specs');
+  assert.equal(scan({ dir: project(), change: 'add-x', statusOf }).planningComplete, true);
+});

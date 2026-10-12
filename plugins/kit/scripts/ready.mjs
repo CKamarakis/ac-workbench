@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prdLink, openspecJson } from './next.mjs';
+import { prdLink, openspecJson, specFiles, planningFromFiles, planningState } from './next.mjs';
 
 // Design "Open Questions": start list, tuned from the trials.
 export const VAGUE = [
@@ -20,20 +20,6 @@ export const VAGUE = [
 const posix = p => p.split(path.sep).join('/');
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return null; } };
 
-function specFiles(dir) {
-  const out = [];
-  const walk = d => {
-    let es = [];
-    try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
-    for (const e of es) {
-      const p = path.join(d, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.name === 'spec.md') out.push(p);
-    }
-  };
-  walk(dir);
-  return out.sort();
-}
 
 /** Vague-word hits, skipping code fences and inline code. A "?" counts only on a requirement line of a spec. */
 export function vagueHits(rel, text, { spec = false } = {}) {
@@ -75,14 +61,7 @@ export function dependencies(dir) {
   } catch { return null; }
 }
 
-/** Planning state from the files (used when the OpenSpec CLI isn't available, and in tests). */
-export function planningFromFiles(cdir) {
-  const has = f => fs.existsSync(path.join(cdir, f));
-  const skipSpecs = /skip_specs:\s*true/.test(read(path.join(cdir, '.openspec.yaml')) ?? '');
-  const order = [['proposal', has('proposal.md')], ['specs', skipSpecs || specFiles(path.join(cdir, 'specs')).length > 0], ['tasks', has('tasks.md')]];
-  const missing = order.find(([, ok]) => !ok);
-  return { complete: !missing, nextArtifact: missing ? missing[0] : null };
-}
+export { planningFromFiles };
 
 export function scan({ dir, change, statusOf = null }) {
   if (!change || !/^[a-z0-9][a-z0-9-]*$/.test(change)) throw new Error('--change <name> is required (kebab-case)');
@@ -90,15 +69,9 @@ export function scan({ dir, change, statusOf = null }) {
   if (!fs.existsSync(cdir)) throw new Error(`change not found: openspec/changes/${change}`);
   const rel = f => posix(path.relative(dir, f));
 
-  let planning = planningFromFiles(cdir);
+  const fromFiles = planningFromFiles(cdir);
   const st = statusOf?.(change);
-  if (st?.artifacts) {
-    // Ready to apply = OpenSpec's own applyRequires are done; an optional design.md left unwritten doesn't count.
-    const done = id => st.artifacts.some(a => a.id === id && (a.status === 'done' || a.status === 'skipped'));
-    const complete = st.applyRequires?.length ? st.applyRequires.every(done)
-      : (st.isPlanningComplete ?? st.artifacts.every(a => a.status === 'done' || a.status === 'skipped'));
-    planning = { complete, nextArtifact: complete ? null : (st.artifacts.find(a => a.status === 'ready')?.id ?? planning.nextArtifact) };
-  }
+  const planning = st?.artifacts ? planningState(st, fromFiles) : fromFiles;
 
   const files = ['proposal.md', 'design.md', 'tasks.md'].map(f => path.join(cdir, f)).filter(f => fs.existsSync(f));
   const specs = specFiles(path.join(cdir, 'specs'));

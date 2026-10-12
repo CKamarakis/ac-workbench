@@ -186,7 +186,7 @@ test('browser check: pass, issues (advisory, ordered), shots, replaced on re-run
 });
 
 // build-readiness 4.1: docs-scan
-import { docsScan, receiptItems, setDocsSync } from '../../plugins/kit/scripts/verify.mjs';
+import { docsScan, receiptItems, setDocsSync, namedIn } from '../../plugins/kit/scripts/verify.mjs';
 import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
 
 function docsProject() {
@@ -256,6 +256,26 @@ test('docs-sync section appears with its counts; open decisions are advisory and
   assert.equal(verifyStatus({ dir: d, change: 'add-x' }).status, 'pass');
   assert.equal(s.items.find(i => i.id === 'O:decisions').level, 'ADVISORY');
   assert.throws(() => setDocsSync({ dir: d, change: 'add-x', proposed: -1 }), /whole numbers/);
+});
+
+// verify C4, C5
+test('namedIn: whole package names only', () => {
+  assert.equal(namedIn('use playwright for the speed test', 'Playwright'), true);
+  assert.equal(namedIn('render the items', 'ms'), false);
+  assert.equal(namedIn('a quick reaction', 'react'), false);
+  assert.equal(namedIn('add `@dnd-kit/core` for drag', '@dnd-kit/core'), true);
+  assert.equal(namedIn('uses @dnd-kit/core-utils', '@dnd-kit/core'), false);
+});
+
+test('a kit report with broken data stops run instead of being renamed; "-->" in a finding round-trips', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'parser stops at } --> in text' });
+  assert.equal(readState(path.join(d, 'openspec/changes/add-x/verify.md')).items.at(-1).detail, 'parser stops at } --> in text');
+  const f = path.join(d, 'openspec/changes/add-x/verify.md');
+  fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('"change":', '<<<<<<< HEAD'));
+  assert.throws(() => runVerify({ dir: d, change: 'add-x', registry, run: runner({}) }), /kit report but its data can't be read/);
+  assert.equal(fs.existsSync(path.join(d, 'openspec/changes/add-x/verify-earlier.md')), false);
 });
 
 // 7.1 trial follow-ups

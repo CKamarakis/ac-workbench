@@ -119,17 +119,15 @@ function openspecStep({ active, statusOf, map, verifyOf, decisionsOf }) {
   const st = statusOf(change.name) ?? {};
   const arts = st.artifacts ?? [];
   const extra = { change: change.name, ...(others.length ? { otherActive: others } : {}) };
-  const doneId = id => arts.some(a => a.id === id && (a.status === 'done' || a.status === 'skipped'));
-  // Ready to apply = OpenSpec's applyRequires are done (an optional design.md left unwritten doesn't hold it back).
-  const planningDone = st.applyRequires?.length ? st.applyRequires.every(doneId)
-    : (st.isPlanningComplete ?? st.isComplete ?? (arts.length > 0 && arts.every(a => a.status === 'done' || a.status === 'skipped')));
+  // st.files: the files check, added by the CLI (planningFromFiles); absent in pure calls.
+  const planning = planningState(st, st.files ?? null);
 
-  if (!planningDone) {
-    const next = arts.find(a => a.status === 'ready');
+  if (!planning.complete) {
+    const next = planning.nextArtifact;
     const done = arts.filter(a => a.status === 'done').length;
     // Nothing written yet -> the artifacts owner starts it; otherwise the plan owner continues it.
     const phase = done === 0 ? 'artifacts' : 'plan';
-    return step(map, phase, `Change "${change.name}" is still being planned${next ? `: next artifact is "${next.id}"` : ''}.`, { ...extra, nextArtifact: next?.id ?? null });
+    return step(map, phase, `Change "${change.name}" is still being planned${next ? `: next artifact is "${next}"` : ''}.`, { ...extra, nextArtifact: next });
   }
   const total = change.totalTasks ?? 0, completed = change.completedTasks ?? 0;
   if (total === 0 || completed < total) {
@@ -199,6 +197,47 @@ export function gitChangedSince(dir) {
   };
 }
 
+/** Every `spec.md` under a change's specs folder, sorted. */
+export function specFiles(dir) {
+  const out = [];
+  const walk = d => {
+    let es = [];
+    try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of es) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name === 'spec.md') out.push(p);
+    }
+  };
+  walk(dir);
+  return out.sort();
+}
+
+/** Planning state from the files: proposal, specs (or skip_specs), tasks. Also the fallback without the OpenSpec CLI. */
+export function planningFromFiles(cdir) {
+  const has = f => fs.existsSync(path.join(cdir, f));
+  let meta = '';
+  try { meta = fs.readFileSync(path.join(cdir, '.openspec.yaml'), 'utf8'); } catch { /* none */ }
+  const order = [['proposal', has('proposal.md')], ['specs', /skip_specs:\s*true/.test(meta) || specFiles(path.join(cdir, 'specs')).length > 0], ['tasks', has('tasks.md')]];
+  const missing = order.find(([, ok]) => !ok);
+  return { complete: !missing, nextArtifact: missing ? missing[0] : null };
+}
+
+/**
+ * Ready to apply: OpenSpec's applyRequires are done (an optional design.md left unwritten doesn't hold it back)
+ * AND the files check passes. applyRequires is often just ["tasks"], so it alone would pass a change with no specs.
+ */
+export function planningState(st, files = null) {
+  const arts = st?.artifacts ?? [];
+  const ok = a => a.status === 'done' || a.status === 'skipped';
+  const done = id => arts.some(a => a.id === id && ok(a));
+  const byOpenSpec = st?.applyRequires?.length ? st.applyRequires.every(done)
+    : (st?.isPlanningComplete ?? st?.isComplete ?? (arts.length > 0 && arts.every(ok)));
+  const complete = byOpenSpec && (files?.complete ?? true);
+  const next = files && !files.complete ? files.nextArtifact : arts.find(a => a.status === 'ready')?.id ?? null;
+  return { complete, nextArtifact: complete ? null : next };
+}
+
 export function openspecJson(args, cwd) {
   const os = locate('openspec');
   if (!os) return null;
@@ -215,6 +254,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const ri = args.indexOf('--registry');
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
-  const s = suggest({ openspec, statusOf: name => openspecJson(`status --change "${name}" --json`, dir), map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }) });
+  const s = suggest({ openspec, statusOf: name => {
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return null; // folder names reach a shell string: kebab-case only
+    const st = openspecJson(`status --change "${name}" --json`, dir);
+    return st && { ...st, files: planningFromFiles(path.join(dir, 'openspec', 'changes', name)) };
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }) });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

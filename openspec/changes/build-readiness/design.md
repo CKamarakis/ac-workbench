@@ -113,6 +113,15 @@ ready.mjs scan --json ---> agent reads PRD + artifacts + scan
   - judgment cases with a rubric: finds a planted missing error case; finds a planted PRD/spec difference; recommends reusing a planted overlapping dependency.
 - `evals/verify/cases.yaml` gains docs-sync cases: it sorts a planted process ruling as left out, and flags a planted "corrupt data shows empty".
 
+### D9: Trial follow-ups (kit 0.6.1, 0.6.2)
+
+From the live trial on the Toughbubble copy (`evals/trials/build-readiness-live.md`):
+- **Docs-sync counts must cover the receipt.** `verify.mjs docs-sync` refuses (an error, not a warning) when proposed + left out is less than the number of apply-receipt items. Why: the live run dropped 4 of 20 items without saying so, including a visible change that this change's own spec names. The docs sync stays advisory for the archive; only its summary is strict.
+- **A foreign `verify.md` is renamed, not overwritten.** `verify.mjs run` moves a `verify.md` it can't read as its own (e.g. SuperSpec's) to `verify-earlier.md` without asking, and lists it as advisory. Why: nothing is lost, and verify doesn't stop for a question. The trial lost a SuperSpec report's open task 10.4 this way.
+- **PRD open questions stay in the PRD.** "Later" writes nothing; `/kit:next` counts the Open questions section of Draft and Review PRDs and adds one `later:` line, never the next step. Why: no second store to keep in sync. A fuller "what's waiting" list is a separate proposal (note `2026-10-12-next-on-roadmap-and-pending-tasks.md`).
+- **Planning complete = OpenSpec's applyRequires AND the files check** (kit 0.6.3, verify finding). applyRequires is often only `["tasks"]`, so alone it passed a change with no specs. Following the `requires` chain instead would demand `design.md`, which the schema makes optional only in prose. `planningState` in `next.mjs` is the one rule for `/kit:next` and `/kit:ready`.
+- **Records that can't be read stop the scripts** (kit 0.6.3). A `decisions.md` or kit `verify.md` whose data comment won't parse makes the next write fail with a message, instead of starting empty or renaming it as foreign. `-->` in the JSON is written as `-->`, so text can't end the comment early.
+
 ## Risks / Trade-offs
 
 - [The readiness check asks too much and becomes noise] → items are ordered by impact, there's a "later for the rest" option, and small or preference choices are excluded by the same rule as the docs sync. Tune it after the Toughbubble trial.

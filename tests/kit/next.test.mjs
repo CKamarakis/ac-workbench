@@ -259,6 +259,16 @@ test('build-readiness 5.3: applyRequires done = planning complete, even with an 
   assert.equal(s.phase, 'build');
 });
 
+// verify C1: OpenSpec's applyRequires plus the files check
+test('applyRequires done but the files check says specs are missing -> still planning, next artifact specs', () => {
+  const statusOf = () => ({ applyRequires: ['tasks'], artifacts: [{ id: 'proposal', status: 'done' }, { id: 'tasks', status: 'done' }], files: { complete: false, nextArtifact: 'specs' } });
+  const s = suggest({ openspec: { root: {}, changes: [change('add-x', 0, 8)] }, statusOf, map: mapReady });
+  assert.equal(s.phase, 'plan');
+  assert.equal(s.nextArtifact, 'specs');
+  const ok = () => ({ applyRequires: ['tasks'], artifacts: [{ id: 'tasks', status: 'done' }, { id: 'design', status: 'ready' }], files: { complete: true, nextArtifact: null } });
+  assert.equal(suggest({ openspec: { root: {}, changes: [change('add-x', 0, 8)] }, statusOf: ok, map: mapReady }).phase, 'ready');
+});
+
 // build-readiness 6.2: PRD open questions put off for later ride along as a reminder
 import { questionsLine } from '../../plugins/kit/scripts/next.mjs';
 test('6.2: a Draft PRD with open questions adds a reminder to any suggestion; Ready or none -> no line', () => {

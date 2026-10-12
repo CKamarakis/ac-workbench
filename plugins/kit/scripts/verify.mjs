@@ -110,6 +110,12 @@ export function receiptItems(text) {
   return items;
 }
 
+/** A package name as a whole word in lowercased text: "ms" isn't named by "items", nor "react" by "reaction". */
+export function namedIn(text, name) {
+  const n = name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![a-z0-9@/._-])${n}(?![a-z0-9/_-])`).test(text);
+}
+
 function depsAt(text) {
   try { const p = JSON.parse(text); return { ...(p.dependencies ?? {}), ...(p.devDependencies ?? {}) }; } catch { return null; }
 }
@@ -136,7 +142,7 @@ export function docsScan({ dir, change }) {
     }).join('\n').toLowerCase();
     const added = Object.keys(now).filter(k => !(k in before)).sort();
     deps = {
-      added: added.map(name => ({ name, planned: plan.includes(name.toLowerCase()) })),
+      added: added.map(name => ({ name, planned: namedIn(plan, name) })),
       removed: Object.keys(before).filter(k => !(k in now)).sort(),
     };
   }
@@ -221,7 +227,7 @@ export function render(state) {
     '## HARD (blocks archive)', '', ...(hard.length ? ['| Id | Item | Detail |', '|---|---|---|', ...hard.map(row)] : ['None.']), '',
     '## ADVISORY (your call)', '', ...(adv.length ? ['| Id | Item | Detail |', '|---|---|---|', ...adv.map(row)] : ['None.']), '',
     '## Overrides', '', ...(state.overrides.length ? ['| Item | Reason | Date |', '|---|---|---|', ...state.overrides.map(o => `| ${o.item} | ${esc(o.reason)} | ${o.date} |`)] : ['None.']), '',
-    `<!-- kit-verify-data ${JSON.stringify(state)} -->`, '',
+    `<!-- kit-verify-data ${JSON.stringify(state).replace(/-->/g, '--\\u003e')} -->`, '',
   ];
   return L.join('\n');
 }
@@ -234,6 +240,8 @@ const save = (file, state) => { fs.writeFileSync(file, render(state)); return st
 /** A verify.md the kit didn't write (e.g. SuperSpec's) is renamed, never overwritten. Returns its new path or null. */
 function keepForeignReport(file) {
   if (!fs.existsSync(file) || readState(file)) return null;
+  // The kit's own report with broken data (merge conflict, hand edit) isn't foreign: stop rather than drop its overrides.
+  if (fs.readFileSync(file, 'utf8').includes('<!-- kit-verify-data')) throw new Error(`${posix(file)} is a kit report but its data can't be read (merge conflict or hand edit?): fix it from git, then re-run`);
   let n = 1, to;
   do to = file.replace(/verify\.md$/, n === 1 ? 'verify-earlier.md' : `verify-earlier-${n}.md`), n++;
   while (fs.existsSync(to));

@@ -14,3 +14,6 @@ evals/**/sandbox/
 # Impeccable (tool; reinstall per clone: npx -y impeccable install --providers=claude --scope=project)
 .claude/skills/impeccable/
 .claude/agents/impeccable-*.md
+
+# Impeccable decision-page scratch (session-local)
+.impeccable/questions/

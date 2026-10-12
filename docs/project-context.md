@@ -160,7 +160,7 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 
 ## Build readiness (M7, built 2026-10-12)
 
-Change [`build-readiness`](../openspec/changes/build-readiness/), kit 0.6.0. Why: the first real build (Toughbubble's Storms) surfaced decisions during apply, and its docs stopped being updated before 29+ code commits.
+Change [`build-readiness`](../openspec/changes/archive/2026-10-12-build-readiness/), kit 0.6.0. Why: the first real build (Toughbubble's Storms) surfaced decisions during apply, and its docs stopped being updated before 29+ code commits.
 
 - **`/kit:ready`** (new phase `ready`, between `plan` and `build`): lists gaps, differences (PRD vs specs vs design), points to confirm and new tools (checked against `package.json`), and asks them in one batch, with "Later". Answers go into the delta specs (Given/When/Then) or `design.md`. **It warns and never blocks.**
 - **Decision record:** `<change>/decisions.md`, written only by `decisions.mjs`. Open items, including "Later", come back in `/kit:next`, `/kit:verify` and at archive (a hook reminder through `additionalContext`, tested live: `evals/trials/build-readiness-hooks.md`).

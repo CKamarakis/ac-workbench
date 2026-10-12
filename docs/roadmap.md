@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-12 (build-readiness proposed ahead of M6; kit-docs planned after it)
+Last updated: 2026-10-12 (build-readiness done and archived; M6 usage review next, kit-docs after M7 has been used once)
 
 ## North star: the workflow this kit exists for
 
@@ -44,7 +44,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M3 | `quality-gates` | owners for review and security, a right-sized test policy per project type, a coverage check in verify | A project's verify step fails on missing tests or a security finding, at a level set per project | **done**, archived 2026-10-07 (kit 0.4.0; live trial on the Toughbubble copy passed) |
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | **done**, archived 2026-10-08 (`design-trial`, kit 0.5.0; evidence `evals/trials/design-trial.md`) |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
-| M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **built** 2026-10-12 (kit 0.6.4); trial done ([`build-readiness-live.md`](../evals/trials/build-readiness-live.md)), two fixes in 0.6.1, PRD open questions now-or-later in 0.6.2 (6.2), verify fixes in 0.6.3 and 0.6.4 (7 low review findings → M6); all tasks done |
+| M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **done** 2026-10-12, archived (kit 0.6.4); trial done ([`build-readiness-live.md`](../evals/trials/build-readiness-live.md)), two fixes in 0.6.1, PRD open questions now-or-later in 0.6.2 (6.2), verify fixes in 0.6.3 and 0.6.4 (7 low review findings → M6) |
 | M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory, backfill | See that change once proposed | planned, not proposed; after M7 has been used once |
 | M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | not started |
 
@@ -58,7 +58,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
      - **check in M6:** a Ready PRD outranks an active change in `/kit:next`.
    - Test bed: `Projects/temp/Toughbubble` (a copy), before touching the real Toughbubble.
    - **M6 input** (build-readiness trial, 2026-10-12): a `/kit:start` re-sync can't update the routing alone; it bundles tool installs with file changes, so the only way to skip an install is Cancel.
-3. **Proposed 2026-10-12:** [`build-readiness`](../openspec/changes/build-readiness/) (M7), ahead of M6 by the user's choice. `kit-docs` (M8) comes after M7 has been used once. Source: `knowledge/notes/2026-10-12-living-docs-and-build-readiness-given-when-then-readiness-ch.md`.
+3. **Done 2026-10-12 (archived, kit 0.6.4):** [`build-readiness`](../openspec/changes/archive/2026-10-12-build-readiness/) (M7), ahead of M6 by the user's choice. `kit-docs` (M8) comes after M7 has been used once. Source: `knowledge/notes/2026-10-12-living-docs-and-build-readiness-given-when-then-readiness-ch.md`.
 4. Alongside: use the kit for real (e.g. `/kit:start` on Toughbubble itself, with your confirmations) to feed the M6 usage review around 2026-10-13.
 
 Inputs for the M3 explore (agreed with the user, 2026-10-06; all built in `quality-gates` except the two marked later):

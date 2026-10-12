@@ -10,7 +10,7 @@ import { laneMap } from './lanes.mjs';
 import { loadRegistry } from './setup.mjs';
 import { locate, pathWith } from './locate.mjs';
 import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
-import { scan as docsScan } from './docs.mjs';
+import { pageStatus } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine } from './decisions.mjs';
 
@@ -258,7 +258,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
   let docs = null;
-  try { docs = docsLine(docsScan({ dir }).page); } catch { /* no docs reminder */ }
+  try { docs = docsLine(pageStatus(dir)); } catch { /* no docs reminder */ }
   const s = suggest({ openspec, statusOf: name => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return null; // folder names reach a shell string: kebab-case only
     const st = openspecJson(`status --change "${name}" --json`, dir);

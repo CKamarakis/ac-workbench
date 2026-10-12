@@ -136,3 +136,11 @@ test('kit-docs: pass + 2 open decisions + knowledge/docs -> both texts', () => {
   assert.match(r, /2 decisions still open/);
   assert.match(r, /docs page/);
 });
+
+test('C8: the archive reminder says the project uses the living docs, not that a page exists', () => {
+  const d = passing();
+  w(d, 'knowledge/docs/tools.md', '## x\n');
+  const r = reminder(bash('openspec archive add-x'), d);
+  assert.match(r, /uses the living docs/);
+  assert.doesNotMatch(r, /has a docs page/);
+});

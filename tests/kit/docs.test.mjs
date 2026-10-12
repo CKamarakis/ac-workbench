@@ -293,3 +293,53 @@ test('final: a spec with a Requirements section but no readable requirement gets
   w(d, 'openspec/specs/odd/spec.md', '# odd\n\n## Requirements\n\nRequirement: missing heading marks\n');
   assert.ok(buildModel({ dir: d }).pages.odd.warnings.some(x => /no requirements could be read/.test(x)));
 });
+
+// Verify advisory fixes (code review C1, C4, C6, C9, C2; security S1)
+import { pageStatus } from '../../plugins/kit/scripts/docs.mjs';
+import { PAGE_MARK as PAGE_MARK_TEMPLATE } from '../../plugins/kit/scripts/docs-page.mjs';
+const gitAt = (d, date, ...a) => spawnSync('git', a, { cwd: d, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date } });
+
+test('C1: a committed note refreshed but not yet committed is not stale', () => {
+  const d = tmp();
+  gitAt(d, '2000-01-01T12:00:00', 'init', '-q');
+  w(d, 'openspec/specs/a/spec.md', SPEC('a'));
+  w(d, 'knowledge/docs/a.md', '## Why\n');
+  gitAt(d, '2000-01-01T12:00:00', 'add', '.'); gitAt(d, '2000-01-01T12:00:00', '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'n');
+  archive(d, '2000-01-02-x', { specs: { a: `## ADDED Requirements\n\n${REQ('R')}` } });
+  assert.equal(scan({ dir: d }).notes.stale.length, 1);
+  w(d, 'knowledge/docs/a.md', '## Why\n\n- **R**: refreshed.\n');
+  assert.deepEqual(scan({ dir: d }).notes.stale, []);
+});
+
+test('C4: an archive name with markup characters still reads as up to date after a build', () => {
+  const d = tmp();
+  w(d, 'openspec/specs/a/spec.md', SPEC('a'));
+  archive(d, "old&'thing");
+  build({ dir: d });
+  assert.equal(scan({ dir: d }).page.stale, false);
+  assert.deepEqual(pageStatus(d), { exists: true, builtFrom: "old&'thing", stale: false });
+});
+
+test('C6: a tool without a packages line is matched by name and never reported gone', () => {
+  const d = tmp();
+  w(d, 'package.json', JSON.stringify({ dependencies: { vitest: '1', '@tiptap/react': '1' } }));
+  w(d, 'knowledge/docs/tools.md', '## Testing\n\n### Vitest\n- for: tests\n\n## Rich text\n\n### TipTap\n- for: rich text\n');
+  const s = scan({ dir: d });
+  assert.deepEqual(s.tools.gone, []);
+  assert.deepEqual(s.tools.unlisted, ['@tiptap/react']);
+});
+
+test('C9: the page mark is one shared constant', () => {
+  assert.equal(PAGE_MARK, PAGE_MARK_TEMPLATE);
+});
+
+test('S1: a PRD path outside the project is ignored', () => {
+  const d = project();
+  const outside = path.join(path.dirname(d), `${path.basename(d)}-secret.md`);
+  fs.writeFileSync(outside, '---\ntitle: Secret title\nstatus: Shipped\n---\n');
+  fs.appendFileSync(path.join(d, 'openspec/changes/archive/2026-10-12-b/proposal.md'), '');
+  const p = path.join(d, 'openspec/changes/archive/2026-10-12-b/proposal.md');
+  fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('knowledge/prds/storms-canvas.md', `../${path.basename(outside)}`));
+  const prd = buildModel({ dir: d }).pages['storms/stickies'].prd;
+  assert.equal(prd, null);
+});

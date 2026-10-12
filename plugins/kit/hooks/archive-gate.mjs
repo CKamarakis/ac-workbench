@@ -28,7 +28,7 @@ export function reminder(event, projectDir) {
   if (line) parts.push(`Kit reminder for "${change}": ${line} (openspec/changes/${change}/decisions.md). Tell the user; the archive is not blocked.`);
   if (fs.existsSync(path.join(projectDir, 'knowledge', 'docs'))) {
     const kit = process.env.CLAUDE_PLUGIN_ROOT || '${CLAUDE_PLUGIN_ROOT}';
-    parts.push(`Kit reminder: this project has a docs page. After the archive (spec sync), ask the user whether to rebuild it (node "${kit}/scripts/docs.mjs" build --dir .) and include knowledge/docs/index.html in the archive commit.`);
+    parts.push(`Kit reminder: this project uses the living docs. After the archive (spec sync), ask the user whether to rebuild the docs page (node "${kit}/scripts/docs.mjs" build --dir .) and include knowledge/docs/index.html in the archive commit.`);
   }
   return parts.length ? parts.join(' ') : null;
 }

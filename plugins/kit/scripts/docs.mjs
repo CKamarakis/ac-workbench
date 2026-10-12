@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { readDecisions } from './decisions.mjs';
 import { prdLink } from './knowledge.mjs';
-import { renderPage } from './docs-page.mjs';
+import { renderPage, PAGE_MARK } from './docs-page.mjs';
+
+export { PAGE_MARK };
 
 const posix = p => p.split(path.sep).join('/');
 const lines = text => String(text ?? '').replace(/^﻿/, '').replace(/\r\n?/g, '\n').split('\n');
@@ -111,17 +113,24 @@ function sections(text) {
   return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, v.join('\n').trim()]));
 }
 
+const DATED = /^(\d{4}-\d{2}-\d{2})-(.+)$/;
+/** Archive folder names, newest first: dated ones by date (then name), undated ones after, by name. */
+function archiveFolders(dir) {
+  return list(path.join(dir, 'openspec', 'changes', 'archive')).filter(e => e.isDirectory()).map(e => e.name)
+    .sort((a, b) => { const da = DATED.test(a), db = DATED.test(b); return da && db ? b.localeCompare(a) : da ? -1 : db ? 1 : a.localeCompare(b); });
+}
+
 /** Archived changes, newest first (dated folders by date, then undated by name). History is read, never stored (D9).
  *  `requirements` maps each touched spec path to the requirement names its delta names. */
 export function archivedChanges(dir) {
   const root = path.join(dir, 'openspec', 'changes', 'archive');
-  return list(root).filter(e => e.isDirectory()).map(e => {
-    const m = /^(\d{4}-\d{2}-\d{2})-(.+)$/.exec(e.name);
+  return archiveFolders(dir).map(name => ({ name })).map(e => {
+    const m = DATED.exec(e.name);
     const why = (sections(read(path.join(root, e.name, 'proposal.md')) ?? '').Why ?? '').split('\n').find(l => l.trim()) ?? '';
     const specs = findSpecs(dir, path.join(root, e.name, 'specs'));
     const requirements = Object.fromEntries(specs.map(sp => [sp.path, parseSpec(read(sp.file)).requirements.map(r => r.name)]));
     return { folder: e.name, date: m ? m[1] : null, change: m ? m[2] : e.name, why: why.trim(), specPaths: specs.map(sp => sp.path), requirements };
-  }).sort((a, b) => (a.date && b.date ? b.folder.localeCompare(a.folder) : a.date ? -1 : b.date ? 1 : a.folder.localeCompare(b.folder)));
+  });
 }
 
 /** The newest archived change whose delta for `specPath` names the requirement, or null. */
@@ -164,7 +173,8 @@ export function parseTools(text) {
       else tool.dev = /^(yes|true)$/i.test(v);
     }
   }
-  for (const g of groups) for (const t of g.tools) if (!t.packages.length) t.packages = [t.name];
+  // No packages line: match by the tool's name, and never report it as gone.
+  for (const g of groups) for (const t of g.tools) if (!t.packages.length) { t.packages = [t.name]; t.inferred = true; }
   return groups;
 }
 
@@ -189,13 +199,14 @@ function frontmatter(text) {
   return { fm, body: m ? t.slice(m[0].length) : t };
 }
 
-export const PAGE_MARK = 'kit-docs-archive';
 export const PAGE = ['knowledge', 'docs', 'index.html'];
-const today = () => new Date().toISOString().slice(0, 10);
 
-/** Last commit date of a file (git), else its modified date; null when missing. */
+/** Last commit date of a file (git), else its modified date; null when missing. A file with uncommitted changes
+ *  (/kit:docs never commits) uses its modified date, so a just-refreshed note isn't reported stale again. */
 function fileDate(dir, file) {
   if (!fs.existsSync(file)) return null;
+  const st = spawnSync('git', ['status', '--porcelain', '--', file], { cwd: dir, encoding: 'utf8' });
+  if (st.status === 0 && st.stdout.trim()) return fs.statSync(file).mtime.toISOString().slice(0, 10);
   const r = spawnSync('git', ['log', '-1', '--format=%cs', '--', file], { cwd: dir, encoding: 'utf8' });
   const d = r.status === 0 ? r.stdout.trim() : '';
   return d || fs.statSync(file).mtime.toISOString().slice(0, 10);
@@ -213,7 +224,7 @@ export function findCards(dir) {
 export function readPackages(dir) {
   const t = read(path.join(dir, 'package.json'));
   if (t == null) return null;
-  try { const j = JSON.parse(t); return { runtime: Object.keys(j.dependencies ?? {}), dev: Object.keys(j.devDependencies ?? {}) }; } catch { return null; }
+  try { const j = JSON.parse(t); return { name: j.name ?? null, runtime: Object.keys(j.dependencies ?? {}), dev: Object.keys(j.devDependencies ?? {}) }; } catch { return null; }
 }
 
 /** What's missing or stale for the living docs (spec: living-docs "Docs scan"). Missing sources are reported, never errors. */
@@ -233,17 +244,25 @@ export function scan({ dir }) {
   if (pkgs) {
     const inv = parseTools(read(path.join(dir, 'knowledge', 'docs', 'tools.md')) ?? '').flatMap(g => g.tools);
     const all = [...pkgs.runtime, ...pkgs.dev];
-    const listed = new Set(inv.flatMap(t => t.packages));
-    tools = { unlisted: all.filter(p => !listed.has(p)).sort(), gone: inv.filter(t => !t.packages.some(p => all.includes(p))).map(t => t.name) };
+    const listed = new Set(inv.flatMap(t => t.packages.map(x => x.toLowerCase())));
+    tools = { unlisted: all.filter(x => !listed.has(x.toLowerCase())).sort(), gone: inv.filter(t => !t.inferred && !t.packages.some(x => all.includes(x))).map(t => t.name) };
   }
-  const html = read(path.join(dir, ...PAGE));
-  const builtFrom = html ? (new RegExp(`<meta name="${PAGE_MARK}" content="([^"]*)"`).exec(html)?.[1] || null) : null;
-  const newest = archives[0]?.folder ?? null;
   return {
     specs: specs.map(s => ({ path: s.path, requirements: parseSpec(read(s.file)).requirements.length })),
     notes, tools, cards: findCards(dir).map(c => c.replace(/\.md$/, '')),
-    page: { exists: html != null, builtFrom, stale: html != null && newest != null && builtFrom !== newest },
+    page: pageStatus(dir),
   };
+}
+
+const unesc = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+/** Cheap page check for /kit:next: the archive the page was built from vs the newest archive folder. No spec parsing. */
+export function pageStatus(dir) {
+  const html = read(path.join(dir, ...PAGE));
+  const m = html ? new RegExp(`<meta name="${PAGE_MARK}" content="([^"]*)"`).exec(html) : null;
+  const builtFrom = m && m[1] ? unesc(m[1]) : null;
+  const newest = archiveFolders(dir)[0] ?? null;
+  return { exists: html != null, builtFrom, stale: html != null && newest != null && builtFrom !== newest };
 }
 
 
@@ -272,7 +291,11 @@ function prdFor(dir, archives, specPath) {
     if (!a.specPaths.includes(specPath)) continue;
     const link = prdLink(read(path.join(dir, 'openspec', 'changes', 'archive', a.folder, 'proposal.md')));
     if (!link) continue;
-    const text = read(path.join(dir, ...link.path.split('/')));
+    // A PRD path must stay inside the project; anything else is ignored, not read.
+    const file = path.resolve(dir, ...link.path.split('/'));
+    const rel = path.relative(path.resolve(dir), file);
+    if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) continue;
+    const text = read(file);
     // A PRD file that's gone still links by its path; its status is unknown.
     const { fm } = frontmatter(text ?? '');
     return { title: fm.title || link.path, status: fm.status || 'unknown', path: link.path };
@@ -323,7 +346,7 @@ export function buildModel({ dir }) {
   const tree = dated(specTree(specs));
   for (const pg of Object.values(pages)) { delete pg.created; delete pg.updated; }
   const pkgs = readPackages(dir);
-  const pkgName = (() => { try { return JSON.parse(read(path.join(dir, 'package.json'))).name; } catch { return null; } })();
+  const pkgName = pkgs?.name ?? null;
   const undecidedByChange = {};
   for (const u of und.filter(u => !u.specPath)) (undecidedByChange[u.change] ??= []).push((({ specPath, ...x }) => x)(u));
   return {

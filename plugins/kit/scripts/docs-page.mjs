@@ -2,10 +2,16 @@
 // self-contained HTML string. Look: the three-panel docs style the user chose (.impeccable/mocks/decision/canon-v2.html).
 // Every source string goes through esc(); the page script only moves and shows existing nodes. Zero dependencies.
 
+/** The meta tag that records which archive the page was built from; docs.mjs reads it back to tell a stale page. */
+export const PAGE_MARK = 'kit-docs-archive';
+
 export const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 /** Requirement text: escaped first, then paragraphs, `- ` lists, **bold** and `code`. Nothing else is interpreted. */
 export function inlineMd(text) {
-  const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  // Code spans first, so ** inside backticks stays literal.
+  const inline = s => String(s).split(/(`[^`]+`)/).map(part => (/^`[^`]+`$/.test(part)
+    ? `<code>${esc(part.slice(1, -1))}</code>`
+    : esc(part).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>'))).join('');
   const out = [];
   for (const block of String(text ?? '').replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
     let para = [], items = null;
@@ -131,7 +137,7 @@ function show(){
   if(!found){document.querySelector('.page[data-page="overview"]').classList.add('on');view='overview';}
   var links=document.querySelectorAll('nav a[href]');
   for(var j=0;j<links.length;j++){if(links[j].getAttribute('href')==='#'+(view.indexOf('spec:')===0?'spec/'+view.slice(5):view))links[j].setAttribute('aria-current','page');else links[j].removeAttribute('aria-current');}
-  if(h.indexOf('foundations/')===0){var cards=document.querySelectorAll('[data-card]');for(var k=0;k<cards.length;k++)if(cards[k].getAttribute('data-card')===h.slice(12))cards[k].scrollIntoView();}
+  if(h.indexOf('foundations/')===0){var cards=document.querySelectorAll('[data-card]');var t=h.slice(12),hit=null;for(var k=0;k<cards.length;k++){var c=cards[k].getAttribute('data-card');if(c===t){hit=cards[k];break}if(!hit&&c.slice(-('/'+t).length)==='/'+t)hit=cards[k]}if(hit)hit.scrollIntoView();}
   else window.scrollTo(0,0);
 }
 function sort(){
@@ -188,7 +194,7 @@ ${p.prd ? `<section><h3 class="sh">From PRD</h3><p>${esc(p.prd.title)} · ${esc(
 }
 
 function cardsPage(cards) {
-  const body = cards.length ? cards.map(c => `<article class="card${c.status === 'replaced' ? ' replaced' : ''}" data-card="${esc(slugId(c.slug))}" id="card-${esc(slugId(c.slug))}">
+  const body = cards.length ? cards.map(c => `<article class="card${c.status === 'replaced' ? ' replaced' : ''}" data-card="${esc(slugId(c.product ? `${c.product}/${c.slug}` : c.slug))}">
 <h3>${esc(c.title)}<span class="tag">${c.product ? esc(c.product) : 'app-wide'}</span>${c.status === 'replaced' ? '<span class="tag">replaced</span>' : ''}</h3>
 ${c.status === 'replaced' && c.replacedBy ? `<p>Replaced by <a href="#foundations/${esc(slugId(c.replacedBy))}">${esc(c.replacedBy)}</a></p>` : ''}
 <dl>${Object.entries(c.sections).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${linkCards(v)}</dd>`).join('')}</dl></article>`).join('') : '<p class="empty">No foundation cards yet.</p>';
@@ -218,7 +224,7 @@ export function renderPage(m) {
   const pages = Object.keys(m.pages).sort().map(p => subPage(m.pages[p], p)).join('\n');
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="${'kit-docs-archive'}" content="${esc(m.builtFrom ?? '')}">
+<meta name="${PAGE_MARK}" content="${esc(m.builtFrom ?? '')}">
 <title>${esc(m.title)} · docs</title><style>${CSS}</style></head><body>
 <nav aria-label="Docs"><h1><a href="#overview" style="padding:0;display:inline">${esc(m.title)}</a></h1><p class="built">Living docs${m.builtFrom ? ` · built from ${esc(m.builtFrom)}` : ''}</p>
 <div class="sort"><label for="sort-by">Sort</label><select id="sort-by"><option value="updated" selected>Last updated</option><option value="created">Created</option><option value="name">Name</option></select><button type="button" id="sort-dir" data-dir="desc">Newest first</button></div>

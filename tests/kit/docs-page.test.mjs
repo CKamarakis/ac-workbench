@@ -80,7 +80,7 @@ test('requirement text renders basic Markdown safely', () => {
 test('card links match the card anchor, product cards included', () => {
   const html = renderPage(model());
   assert.match(html, /href="#foundations\/storms-canvas"/);
-  assert.match(html, /data-card="storms-canvas"/);
+  assert.match(html, /data-card="storms\/storms-canvas"/);
 });
 
 test('products open and close', () => {
@@ -108,4 +108,19 @@ test('final: archived changes without spec changes are listed', () => {
   const m = model();
   m.noSpecChanges = [{ folder: '2026-10-08-design-trial', date: '2026-10-08', change: 'design-trial', why: 'Try design tools.' }];
   assert.match(renderPage(m), /design-trial[\s\S]*no spec changes/);
+});
+
+// Verify advisory fixes (code review C5, C7)
+test('C7: ** inside a code span stays literal', () => {
+  assert.equal(inlineMd('Use `a**b**c` here and **bold**.'), '<p>Use <code>a**b**c</code> here and <b>bold</b>.</p>');
+});
+
+test('C5: product cards are anchored by product and slug; short links still resolve', () => {
+  const m = model();
+  m.cards.push({ slug: 'storms-canvas', product: 'notes', title: 'Notes canvas', status: 'current', replacedBy: null, sections: {} });
+  const html = renderPage(m);
+  assert.match(html, /data-card="storms\/storms-canvas"/);
+  assert.match(html, /data-card="notes\/storms-canvas"/);
+  assert.equal(count(html, /id="card-storms-canvas"/g), 0);
+  assert.match(html, /\.slice\(-\('\/'\+t\)\.length\)===/);
 });

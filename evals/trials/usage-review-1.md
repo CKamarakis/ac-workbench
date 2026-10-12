@@ -29,8 +29,7 @@ Date: 2026-10-12, a day before the planned date. Scope (from `kit-local-mvp` tas
 | `/kit:next` order | Finish the active change first; a Ready PRD waits as a reminder |
 | Follow-ups | One small change after M8 (`kit-docs`): items 2, 3, 4, 5 (hook), 6 |
 | Order | M6 now, then M8, then the follow-up change, then M5 |
-
-Agent's call, not yet confirmed by the user: task-observer stays **later** (still 9 skills, no feedback channel; revisit with M5).
+| task-observer | Stays **later** (still 9 skills, no feedback channel); revisit with M5 |
 
 Not decided here: scoring the 15 judgment evals (item 8) and the Windows friction (item 7). Both are listed for the follow-up change's explore.
 

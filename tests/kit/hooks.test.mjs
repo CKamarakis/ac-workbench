@@ -111,3 +111,28 @@ test('pass + 2 open decisions -> allowed, with a reminder; pass + 0 open -> no o
   assert.equal(j.hookSpecificOutput.permissionDecision, undefined);
   assert.match(j.hookSpecificOutput.additionalContext, /2 decisions still open/);
 });
+
+// kit-docs 5.1: docs page rebuild reminder at archive
+const passing = () => { const d = kitProject(); runVerify({ dir: d, change: 'add-x', registry: reg, run: () => ({ status: 0, out: '' }) }); return d; };
+test('kit-docs: pass + knowledge/docs present -> reminder names the docs page rebuild', () => {
+  const d = passing();
+  w(d, 'knowledge/docs/index.html', '<html></html>');
+  const r = reminder(bash('openspec archive add-x'), d);
+  assert.match(r, /docs page/);
+  assert.match(r, /docs\.mjs" build --dir \./);
+  assert.match(r, /knowledge\/docs\/index\.html in the archive commit/);
+});
+
+test('kit-docs: pass + no knowledge/docs -> no docs text', () => {
+  const d = passing();
+  assert.equal(reminder(bash('openspec archive add-x'), d), null);
+});
+
+test('kit-docs: pass + 2 open decisions + knowledge/docs -> both texts', () => {
+  const d = passing();
+  fs.mkdirSync(path.join(d, 'knowledge', 'docs'), { recursive: true });
+  for (const t of ['a', 'b']) addDecision({ dir: d, change: 'add-x', kind: 'confirm', text: t, from: 'x' });
+  const r = reminder(bash('openspec archive add-x'), d);
+  assert.match(r, /2 decisions still open/);
+  assert.match(r, /docs page/);
+});

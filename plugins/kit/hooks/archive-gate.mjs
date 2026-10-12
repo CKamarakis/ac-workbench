@@ -18,12 +18,19 @@ function archived(event, projectDir) {
   return m[2];
 }
 
-/** On an allowed archive: a reminder about open decisions (never a block; build-readiness D6), or null. */
+/** On an allowed archive: reminders about open decisions (build-readiness D6) and the docs page (kit-docs D5), or null.
+ *  Never a block. */
 export function reminder(event, projectDir) {
   const change = archived(event, projectDir);
   if (!change || gate(event, projectDir)) return null;
+  const parts = [];
   const line = openLine(decisionStatus({ dir: projectDir, change }));
-  return line ? `Kit reminder for "${change}": ${line} (openspec/changes/${change}/decisions.md). Tell the user; the archive is not blocked.` : null;
+  if (line) parts.push(`Kit reminder for "${change}": ${line} (openspec/changes/${change}/decisions.md). Tell the user; the archive is not blocked.`);
+  if (fs.existsSync(path.join(projectDir, 'knowledge', 'docs'))) {
+    const kit = process.env.CLAUDE_PLUGIN_ROOT || '${CLAUDE_PLUGIN_ROOT}';
+    parts.push(`Kit reminder: this project has a docs page. After the archive (spec sync), ask the user whether to rebuild it (node "${kit}/scripts/docs.mjs" build --dir .) and include knowledge/docs/index.html in the archive commit.`);
+  }
+  return parts.length ? parts.join(' ') : null;
 }
 
 /** Pure decision: null = allow, or a deny reason. */

@@ -101,6 +101,22 @@ The build SHALL read requirement names from `spec.md` itself. It SHALL produce t
 - **WHEN** the page is built
 - **THEN** Stickies shows "From PRD: Storms canvas · Shipped"
 
+#### Scenario: Products open and close
+- **GIVEN** the product Storms with the sub-features Stickies and Saving
+- **WHEN** the user clicks Storms in the left list
+- **THEN** its sub-features collapse, and a second click opens them again
+
+#### Scenario: Readable requirement text
+- **GIVEN** a requirement whose text has a bullet list, **bold** words and `code`
+- **WHEN** the page is built
+- **THEN** it shows a list, bold text and code, with no Markdown symbols
+- **AND** the sub-feature `prd-authoring` is titled "PRD authoring"
+
+#### Scenario: PRD file no longer there
+- **GIVEN** an archived proposal names `knowledge/prds/old.md`, and that file was deleted
+- **WHEN** the page is built
+- **THEN** the sub-feature shows "From PRD: knowledge/prds/old.md · unknown"
+
 #### Scenario: Markup in spec text
 - **GIVEN** a requirement whose text contains `<script>`
 - **WHEN** the page is built

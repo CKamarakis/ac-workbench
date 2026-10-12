@@ -2,7 +2,7 @@
 
 **Read this first in every session.** It holds the goal, the order of work, where we are, and every change of direction with its reason. When work drifts from it, the drift gets logged here (rules at the bottom) before anything else happens.
 
-Last updated: 2026-10-12 (M8 kit-docs built; verify and archive next; then a follow-up change, then M5)
+Last updated: 2026-10-12 (M8 kit-docs done and archived; next the follow-up change, then M5)
 
 ## North star: the workflow this kit exists for
 
@@ -23,7 +23,7 @@ In the user's words (2026-10-01): *"I create context, it is formatted in a PRD o
 | 10 | Code review | — | `/code-review` (owner of review; advisory in `/kit:verify`) | M3 | ✅ |
 | 11 | Delivery | test, accept | `/opsx:archive`; deploys out of scope for now | M1 | ◐ |
 | 12 | See everything in one place | look | cockpit | M5 | ⬜ |
-| 13 | Living product docs (what's built, and why) | look | docs sync in `/kit:verify` (M7); `/kit:docs` page (M8) | M7, M8 | ⬜ |
+| 13 | Living product docs (what's built, and why) | look | docs sync in `/kit:verify` (M7); `/kit:docs` page (M8), optional per project | M7, M8 | ✅ |
 
 Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, `/kit:start`, `/kit:next`, lane map, evals.
 
@@ -45,12 +45,12 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 | M4 | design trial (registry + one web UI project) | Impeccable, Emil, Playwright CLI tried for real; verdicts recorded | Verdicts with evidence in `toolkit.yaml` | **done**, archived 2026-10-08 (`design-trial`, kit 0.5.0; evidence `evals/trials/design-trial.md`) |
 | M5 | `kit-overview-feedback` | cockpit, `/kit:feedback` to a private inbox, `/kit:harness-review` | See that change's tasks | planned (0/13) |
 | M7 | `build-readiness` | `/kit:ready` before apply, decision record, docs sync in `/kit:verify`, Given/When/Then stories | Toughbubble-copy trial: the docs sync finds what the manual dry run found on `storms-canvas` | **done** 2026-10-12, archived (kit 0.6.4); trial done ([`build-readiness-live.md`](../evals/trials/build-readiness-live.md)), two fixes in 0.6.1, PRD open questions now-or-later in 0.6.2 (6.2), verify fixes in 0.6.3 and 0.6.4 (7 low review findings → M6) |
-| M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory; rebuilt during archive (backfill moved to its own change) | The page builds for this repo after a full `/kit:docs` run (Toughbubble trial dropped by the user) | **built** 2026-10-12 (kit 0.7.0, 25/25 tasks); next: final branch review, `/kit:verify`, archive |
+| M8 | `kit-docs` | `/kit:docs`: docs page (product → sub-feature → behavior), foundation cards, tools inventory; rebuilt during archive (backfill moved to its own change) | The page builds for this repo after a full `/kit:docs` run (Toughbubble trial dropped by the user) | **done** 2026-10-12, archived (kit 0.7.0); verify passed (security: 1 low, fixed; code: 10 advisory, 8 fixed); evidence [`kit-docs.md`](../evals/trials/kit-docs.md) |
 | M6 | usage review (~2026-10-13) | review after two weeks of real use (was kit-local-mvp task 9.4); revisit task-observer | Findings in `evals/trials/usage-review-1.md` | **done** 2026-10-12: [`usage-review-1.md`](../evals/trials/usage-review-1.md), Context7 A/B in [`context7-ab.md`](../evals/trials/context7-ab.md) |
 
 ## Current position and next actions
 
-1. **Now:** M1–M4, M6 and M7 are done (kit 0.6.4). **Now: M8** (`kit-docs`, proposed 2026-10-12 on branch `kit-docs`; [change](../openspec/changes/kit-docs/), plan in `plan.md`), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
+1. **Now:** M1–M4 and M6–M8 are done (kit 0.7.0). **Next:** the follow-up change (M6 findings, plus from M8: a way to clear fixed verify findings, the deferred kit-docs minors, a `living-docs` note). Earlier plan for reference: M1–M4, M6 and M7 were done (kit 0.6.4). **Now: M8** (`kit-docs`, proposed 2026-10-12 on branch `kit-docs`; [change](../openspec/changes/kit-docs/), plan in `plan.md`), then one small follow-up change from the M6 findings (`/kit:start` routing-only re-sync, the "what's waiting" list and `/kit:next` order, the Context7 hook fix, the 7 low review findings), then M5.
    - **M8 scope, decided by the user 2026-10-12 before `/opsx:propose`** (on branch `kit-docs`):
      - **Flow: SuperSpec** (the user's choice; `/kit:judge` matched "backfill"). Schema in `openspec/schemas/superspec/`; Superpowers on in `.claude/settings.local.json` only. Restart the session, then `/opsx:propose kit-docs --schema superspec`.
      - **Tree levels:** nested spec folders (`specs/storms/stickies/spec.md`) give product → sub-feature.

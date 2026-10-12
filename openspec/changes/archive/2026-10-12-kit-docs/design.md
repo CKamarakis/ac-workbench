@@ -61,6 +61,11 @@ The agent writes small Markdown notes once; `docs.mjs build` renders everything.
 - Look: the category-standard three-panel docs style chosen by the user over the rolled "patent" and the "drawing set" directions (sketches in `.impeccable/mocks/decision/`, final one `canon-v2.html`), because colour makes it easier to read and to spot things. The right panel is light, not dark.
 - A History view per sub-feature: archived changes, newest first, each with the first line of its proposal's "Why".
 - Visual design comes from Impeccable (`/impeccable shape` naming this page as the target; then `critique` and `audit` on the built page). Its findings are fixed in the script's template.
+- Not fixed, by the user's choice after that review ("enough"): the small-screen layout, a skip link and focus moves on navigation, control border contrast, and replaced-card contrast. The findings are in `evals/trials/kit-docs.md` (3.5).
+
+### D11: Docs always live in `knowledge/` (docs sync, 2026-10-12)
+- `docs.mjs` and the archive gate use `knowledge/docs/` and `knowledge/foundations/` literally, even when a project sets a custom knowledge folder in `.claude/kit.json`. The spec names these paths.
+- Revisit if a project uses a custom knowledge folder.
 
 ### D5: Rebuild during archive
 - The archive gate, on allow, adds: "after the archive, ask the user whether to rebuild the docs page (`docs.mjs build`) and include `knowledge/docs/index.html` in the archive commit". Only when the project has `knowledge/docs/index.html` or `knowledge/docs/`.

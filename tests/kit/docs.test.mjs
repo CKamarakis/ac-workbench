@@ -177,3 +177,90 @@ test('scan: cards found; page stale when built from an older archive', () => {
   assert.deepEqual(s.cards, ['local-first', 'storms/storms-canvas']);
   assert.deepEqual(s.page, { exists: true, builtFrom: '2026-10-07-a', stale: true });
 });
+
+// ---- Task 5: build (3.2-3.4)
+import { buildModel, build, undecided } from '../../plugins/kit/scripts/docs.mjs';
+
+const decisionsFile = (items) => `# Decisions\n\n<!-- kit-decisions-data ${JSON.stringify({ change: 'x', next: items.length + 1, items, readyAt: null })} -->\n`;
+const item = (id, from, status = 'open') => ({ id, kind: 'gap', text: `Question ${id}?`, from, status, dates: { opened: '2026-10-12' } });
+
+function project() {
+  const d = tmp();
+  w(d, 'package.json', JSON.stringify({ name: 'toughbubble', devDependencies: { vitest: '1' } }));
+  w(d, 'openspec/specs/storms/stickies/spec.md', `# s\n\n## Purpose\nSticky notes.\n\n## Requirements\n\n${REQ('Drag')}\n${REQ('Bring to front')}`);
+  w(d, 'openspec/specs/storms/saving/spec.md', `# s\n\n## Requirements\n\n${REQ('Save')}`);
+  archive(d, '2026-10-07-a', { why: 'First.', specs: { 'storms/stickies': `## ADDED Requirements\n\n${REQ('Drag')}` } });
+  archive(d, '2026-10-12-b', { why: 'Second.', specs: { 'storms/stickies': `## ADDED Requirements\n\n${REQ('Bring to front')}` } });
+  fs.appendFileSync(path.join(d, 'openspec/changes/archive/2026-10-12-b/proposal.md'), '\nPRD: knowledge/prds/storms-canvas.md @ abc1234\n');
+  w(d, 'knowledge/prds/storms-canvas.md', '---\ntitle: Storms canvas\nstatus: Shipped\n---\n');
+  w(d, 'knowledge/docs/storms/stickies.md', '## How it works, roughly\nCanvas.\n\n## Why\n\n- **Bring to front**: one sort key. [[storms-canvas]]\n- **Gone requirement**: because\n');
+  w(d, 'knowledge/foundations/storms/storms-canvas.md', '---\ntitle: Storms draws on a canvas\n---\n\n## In short\nCanvas.\n');
+  w(d, 'openspec/changes/x/proposal.md', '## Why\nx\n');
+  w(d, 'openspec/changes/x/decisions.md', decisionsFile([item('D1', 'openspec/changes/x/specs/storms/saving/spec.md:40'), item('D2', 'design.md:3', 'later'), { ...item('D3', 'design.md:4'), status: 'decided' }]));
+  return d;
+}
+
+test('model: tree dates, PRD link, why per requirement, orphan why, history, cards', () => {
+  const d = project();
+  const m = buildModel({ dir: d });
+  assert.equal(m.title, 'toughbubble');
+  assert.equal(m.builtFrom, '2026-10-12-b');
+  const storms = m.tree.find(n => n.path === 'storms');
+  const stickies = storms.children.find(n => n.path === 'storms/stickies');
+  assert.deepEqual([stickies.created, stickies.updated], ['2026-10-07', '2026-10-12']);
+  assert.deepEqual([storms.created, storms.updated], ['2026-10-07', '2026-10-12']);
+  const p = m.pages['storms/stickies'];
+  assert.deepEqual(p.prd, { title: 'Storms canvas', status: 'Shipped', path: 'knowledge/prds/storms-canvas.md' });
+  assert.equal(p.how, 'Canvas.');
+  assert.equal(p.purpose, 'Sticky notes.');
+  const front = p.requirements.find(r => r.name === 'Bring to front');
+  assert.deepEqual(front.why[0].cards, ['storms-canvas']);
+  assert.equal(front.change.folder, '2026-10-12-b');
+  assert.deepEqual(p.orphanWhy.map(o => o.requirement), ['Gone requirement']);
+  assert.deepEqual(p.history.map(h => h.folder), ['2026-10-12-b', '2026-10-07-a']);
+  assert.deepEqual(m.cards.map(c => c.slug), ['storms-canvas']);
+  assert.deepEqual(m.tools, []);
+});
+
+test('undecided on a sub-feature; others listed per change; decided ones left out', () => {
+  const d = project();
+  const u = undecided(d);
+  assert.deepEqual(u.map(x => [x.id, x.specPath, x.status, x.date]), [['D1', 'storms/saving', 'open', '2026-10-12'], ['D2', null, 'later', '2026-10-12']]);
+  const m = buildModel({ dir: d });
+  assert.equal(m.pages['storms/saving'].undecided.length, 1);
+  assert.equal(m.tree.find(n => n.path === 'storms').children.find(n => n.path === 'storms/saving').undecided, 1);
+  assert.equal(m.tree.find(n => n.path === 'storms').undecided, 1);
+  assert.deepEqual(m.undecidedByChange.x.map(x => x.id), ['D2']);
+});
+
+test('build writes a byte-identical, offline, escaped page that records the newest archive', () => {
+  const d = project();
+  w(d, 'openspec/specs/evil/spec.md', `## Requirements\n\n### Requirement: A <b>"x"</b> & y\n<script>alert(1)</script>\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n`);
+  const r1 = build({ dir: d });
+  const a = fs.readFileSync(r1.file, 'utf8');
+  build({ dir: d });
+  assert.equal(fs.readFileSync(r1.file, 'utf8'), a);
+  assert.equal(path.relative(d, r1.file).split(path.sep).join('/'), 'knowledge/docs/index.html');
+  assert.ok(!a.includes('<script>alert'));
+  assert.ok(!/https?:\/\//.test(a));
+  assert.match(a, /<meta name="kit-docs-archive" content="2026-10-12-b">/);
+  assert.deepEqual(r1.counts, { specs: 3, requirements: 4, cards: 1, tools: 0, undecided: 2 });
+  assert.equal(scan({ dir: d }).page.stale, false);
+});
+
+test('missing sources degrade: no specs, no package.json, unreadable decisions, unparsable spec', () => {
+  const d = tmp();
+  w(d, 'knowledge/foundations/local-first.md', '---\ntitle: Local first\n---\n');
+  w(d, 'openspec/changes/y/decisions.md', '# broken, no data block\n');
+  const r = build({ dir: d });
+  const html = fs.readFileSync(r.file, 'utf8');
+  const m = buildModel({ dir: d });
+  assert.equal(m.empty, true);
+  assert.equal(m.tools, null);
+  assert.match(html, /No specs yet/);
+  assert.match(html, /Local first/);
+  assert.match(html, /No package\.json/);
+  assert.ok(r.warnings.some(x => /openspec\/changes\/y\/decisions\.md/.test(x)));
+  w(d, 'openspec/specs/bad/spec.md', '### Requirement:\nno name\n');
+  assert.ok(buildModel({ dir: d }).pages.bad.warnings.length > 0);
+});

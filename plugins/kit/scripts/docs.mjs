@@ -5,6 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { readDecisions } from './decisions.mjs';
+import { prdLink } from './next.mjs';
+import { renderPage } from './docs-page.mjs';
 
 const posix = p => p.split(path.sep).join('/');
 const lines = text => String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
@@ -162,16 +165,23 @@ export function parseTools(text) {
 
 /** Foundation card: frontmatter (title, status, replaced_by) and `## ` sections. `rel` is relative to knowledge/foundations. */
 export function parseCard(text, rel) {
-  const fm = {};
-  const m = /^---\n([\s\S]*?)\n---\n?/.exec(lines(text).join('\n'));
-  if (m) for (const l of m[1].split('\n')) { const kv = /^([\w-]+):\s*(.*)$/.exec(l); if (kv) fm[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, ''); }
+  const { fm, body } = frontmatter(text);
   const segs = posix(rel).replace(/\.md$/, '').split('/');
   const slug = segs.at(-1);
   return {
     slug, product: segs.length > 1 ? segs[0] : null, title: fm.title || slug,
     status: fm.status === 'replaced' ? 'replaced' : 'current', replacedBy: fm.replaced_by || null,
-    sections: sections(m ? text.slice(m[0].length) : text),
+    sections: sections(body),
   };
+}
+
+/** Simple `key: value` frontmatter (cards, PRDs) and the body after it. */
+function frontmatter(text) {
+  const t = lines(text).join('\n');
+  const m = /^---\n([\s\S]*?)\n---\n?/.exec(t);
+  const fm = {};
+  if (m) for (const l of m[1].split('\n')) { const kv = /^([\w-]+):\s*(.*)$/.exec(l); if (kv) fm[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, ''); }
+  return { fm, body: m ? t.slice(m[0].length) : t };
 }
 
 export const PAGE_MARK = 'kit-docs-archive';
@@ -231,6 +241,106 @@ export function scan({ dir }) {
   };
 }
 
+
+/** Open and later items of every active change's decision record, mapped to a spec path when `from` names one. */
+export function undecided(dir, specPaths = findSpecs(dir).map(s => s.path), warnings = []) {
+  const root = path.join(dir, 'openspec', 'changes');
+  const out = [];
+  for (const e of list(root).filter(e => e.isDirectory() && e.name !== 'archive').sort((a, b) => a.name.localeCompare(b.name))) {
+    const file = path.join(root, e.name, 'decisions.md');
+    if (!fs.existsSync(file)) continue;
+    const state = readDecisions(file);
+    if (!state) { warnings.push(`openspec/changes/${e.name}/decisions.md could not be read`); continue; }
+    for (const i of state.items ?? []) {
+      if (i.status !== 'open' && i.status !== 'later') continue;
+      const from = posix(String(i.from ?? ''));
+      const specPath = specPaths.filter(sp => from.includes(`specs/${sp}/`)).sort((a, b) => b.length - a.length)[0] ?? null;
+      out.push({ change: e.name, id: i.id, text: i.text, date: i.dates?.later ?? i.dates?.opened ?? '', status: i.status, specPath });
+    }
+  }
+  return out;
+}
+
+/** Title and status of the PRD the newest archived change touching `specPath` names, or null. */
+function prdFor(dir, archives, specPath) {
+  for (const a of archives) {
+    if (!a.specPaths.includes(specPath)) continue;
+    const link = prdLink(read(path.join(dir, 'openspec', 'changes', 'archive', a.folder, 'proposal.md')));
+    if (!link) continue;
+    const text = read(path.join(dir, ...link.path.split('/')));
+    // A PRD file that's gone still links by its path; its status is unknown.
+    const { fm } = frontmatter(text ?? '');
+    return { title: fm.title || link.path, status: fm.status || 'unknown', path: link.path };
+  }
+  return null;
+}
+
+/** Everything the page shows (spec: living-docs "Docs page build", "Open decisions on the page", "Missing sources degrade"). */
+export function buildModel({ dir }) {
+  const warnings = [];
+  const specs = findSpecs(dir);
+  const archives = archivedChanges(dir);
+  const und = undecided(dir, specs.map(s => s.path), warnings);
+  const pages = {};
+  for (const s of specs) {
+    const spec = parseSpec(read(s.file));
+    const note = parseNote(read(path.join(dir, 'knowledge', 'docs', ...s.path.split('/')) + '.md') ?? '');
+    const names = new Set(spec.requirements.map(r => r.name));
+    const touched = archives.filter(a => a.specPaths.includes(s.path));
+    pages[s.path] = {
+      title: segmentName(s.path.split('/').at(-1)), crumb: s.path.split('/').map(segmentName), purpose: spec.purpose,
+      prd: prdFor(dir, archives, s.path), how: note.how,
+      requirements: spec.requirements.map(r => {
+        const a = lastChangedBy(archives, s.path, r.name);
+        return { ...r, why: note.why.filter(w => w.requirement === r.name).map(({ text, cards }) => ({ text, cards })), change: a ? { folder: a.folder, date: a.date, change: a.change } : null };
+      }),
+      orphanWhy: note.why.filter(w => !names.has(w.requirement)).map(({ requirement, text }) => ({ requirement, text })),
+      history: touched.map(({ folder, date, change, why }) => ({ folder, date, change, why })),
+      undecided: und.filter(u => u.specPath === s.path).map(({ specPath, ...u }) => u),
+      warnings: spec.warnings,
+      created: touched.map(a => a.date).filter(Boolean).sort()[0] ?? null,
+      updated: touched.map(a => a.date).filter(Boolean).sort().at(-1) ?? null,
+    };
+  }
+  const dated = nodes => nodes.map(n => {
+    const children = dated(n.children);
+    const own = pages[n.path];
+    const all = [own, ...children].filter(Boolean);
+    const created = all.map(x => x.created).filter(Boolean).sort()[0] ?? null;
+    const updated = all.map(x => x.updated).filter(Boolean).sort().at(-1) ?? null;
+    const count = (own?.undecided.length ?? 0) + children.reduce((t, c) => t + c.undecided, 0);
+    return { ...n, created, updated, undecided: count, children };
+  });
+  const tree = dated(specTree(specs));
+  for (const pg of Object.values(pages)) { delete pg.created; delete pg.updated; }
+  const pkgs = readPackages(dir);
+  const pkgName = (() => { try { return JSON.parse(read(path.join(dir, 'package.json'))).name; } catch { return null; } })();
+  const undecidedByChange = {};
+  for (const u of und.filter(u => !u.specPath)) (undecidedByChange[u.change] ??= []).push((({ specPath, ...x }) => x)(u));
+  return {
+    title: pkgName || path.basename(path.resolve(dir)), builtFrom: archives[0]?.folder ?? null, empty: specs.length === 0, warnings,
+    tree, pages,
+    cards: findCards(dir).map(c => parseCard(read(path.join(dir, 'knowledge', 'foundations', ...c.split('/'))), c)),
+    tools: pkgs ? parseTools(read(path.join(dir, 'knowledge', 'docs', 'tools.md')) ?? '') : null,
+    toolsNote: pkgs ? null : 'No package.json in this project.',
+    undecidedByChange,
+  };
+}
+
+/** Writes knowledge/docs/index.html. Same sources -> same bytes. */
+export function build({ dir }) {
+  const m = buildModel({ dir });
+  const file = path.join(dir, ...PAGE);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, renderPage(m));
+  const pages = Object.values(m.pages);
+  return {
+    file,
+    counts: { specs: pages.length, requirements: pages.reduce((t, p) => t + p.requirements.length, 0), cards: m.cards.length, tools: (m.tools ?? []).reduce((t, g) => t + g.tools.length, 0), undecided: pages.reduce((t, p) => t + p.undecided.length, 0) + Object.values(m.undecidedByChange).reduce((t, l) => t + l.length, 0) },
+    warnings: [...m.warnings, ...Object.entries(m.pages).flatMap(([p, pg]) => pg.warnings.map(w => `${p}: ${w}`))],
+  };
+}
+
 function scanSummary(s) {
   const L = [`specs: ${s.specs.length}`, `notes missing: ${s.notes.missing.length ? s.notes.missing.join(', ') : 'none'}`,
     `notes stale: ${s.notes.stale.length ? s.notes.stale.map(n => `${n.path} (since ${n.since})`).join(', ') : 'none'}`,
@@ -244,7 +354,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const opt = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
   const dir = path.resolve(opt('--dir') ?? '.');
   try {
-    if (args[0] === 'scan') { const s = scan({ dir }); console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : scanSummary(s)); }
+    if (args[0] === 'build') { const r = build({ dir }); console.log(`wrote ${path.relative(dir, r.file)}: ${r.counts.specs} specs, ${r.counts.requirements} requirements, ${r.counts.cards} cards, ${r.counts.tools} tools, ${r.counts.undecided} undecided`); for (const w of r.warnings) console.log(`warning: ${w}`); }
+    else if (args[0] === 'scan') { const s = scan({ dir }); console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : scanSummary(s)); }
     else throw new Error('usage: docs.mjs <scan|build> --dir <project> [--json]');
   } catch (e) { console.error(`error: ${e.message}`); process.exitCode = 1; }
 }

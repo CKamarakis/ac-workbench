@@ -19,7 +19,7 @@
 - [x] 3.2 `build`: one self-contained file, no network requests; tree with the sort control (name / last updated / created, ascending or descending, default last updated newest first), how it works, requirements with numbered and separated user stories, "why" entries and cards per requirement, change that added or last changed it, the PRD link, history view. Search deferred. Verify with tests: same sources → byte-identical output; a `<script>` in spec text is escaped; no `http` URLs in the output
 - [x] 3.3 Open decisions on the page via the `decisions.mjs` reader; mapped by `from` path to a sub-feature, otherwise an "Undecided" list per change. Verify the "Undecided on a sub-feature" scenario
 - [x] 3.4 Missing sources degrade (no specs, unparsable spec, unreadable decision record, no `package.json`). Verify each with a test; the build exits 0
-- [ ] 3.5 `/impeccable critique` and `/impeccable audit` on the built page for this repo, scope named. Fix what's accepted in the template; record findings and fixes in `evals/trials/kit-docs.md`
+- [x] 3.5 `/impeccable critique` and `/impeccable audit` on the built page for this repo, scope named. Fix what's accepted in the template; record findings and fixes in `evals/trials/kit-docs.md`
 
 ## 4. Skill (`/kit:docs`)
 

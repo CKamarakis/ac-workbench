@@ -72,7 +72,11 @@ export function findSpecs(dir, root = path.join(dir, 'openspec', 'specs')) {
 }
 
 /** `moving-around` -> `Moving around`. */
-export const segmentName = seg => { const s = seg.replace(/[-_]+/g, ' ').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
+const ACRONYMS = new Set(['prd', 'ui', 'ux', 'api', 'sso', 'url', 'pdf', 'ai', 'id', 'seo', 'cli', 'mcp']);
+export const segmentName = seg => {
+  const s = seg.replace(/[-_]+/g, ' ').trim().split(' ').map(w => (ACRONYMS.has(w.toLowerCase()) ? w.toUpperCase() : w)).join(' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 /** Tree of products and sub-features from the spec folder paths. */
 export function specTree(specs) {

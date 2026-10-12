@@ -23,3 +23,13 @@ Result: `openspec/specs/a/b/spec.md` holds both requirements; the archive keeps 
 - The user chose the **category standard** with changes (light right panel, sort instead of search, no numbers, numbered user stories, PRD link) → `canon-v2.html`, then `docs-page.mjs`.
 - Detector on the rendered fixture: one finding (skipped heading level, aside h4 after h2), fixed; then clean.
 - Token use: not measured precisely (no per-skill counter); the round cost an interview, 4 HTML sketches and two rounds of feedback.
+
+## 3.5 Impeccable critique and audit (2026-10-12)
+
+Method: dual-agent (A design review, B detector + technical audit), isolated; no browser automation (judged from HTML/CSS/JS).
+
+- **Heuristics (A):** 21/36 (error prevention n/a). Strengths: story blocks, amber "undecided" used only for that, solid fallbacks and escaping.
+- **Audit (B):** accessibility 3, performance 4, theming 4, responsive 2, implementation 3. All main text pairs pass AA in both themes (ink 15.5/14.6, muted 5.5–8.0).
+- **Detector:** fixture page clean; this repo's page 1 `aphoristic-cadence` hit from spec text (false positive: content, not template).
+- **Findings:** P1 requirement text shows raw Markdown; P1 undecided items fall below everything on narrow screens; P1 blank page without JS; P2 card links from a product card don't scroll (slug mismatch, a bug); P2 why far from its requirement; P2 PRD shown as text, not a link; P2 no `<main>`/skip link, no focus move on navigation; P2 control borders 1.17:1; P2 tap targets < 44 px and cramped grids at 390 px; P2 replaced cards via opacity drop to 3.5:1; P2 malformed hash throws; P3 duplicate "Changed by", Name sort keeps "Z–A", badge reads as a bare number, title acronyms ("Prd authoring"), story row corners.
+- **User's pick (one batch):** readable text only, plus open/close per product in the left list; "enough" — no further polishing. Fixed: basic Markdown in requirement text (escaped first), acronyms in titles, card-link anchor bug, collapsible products. Other findings stay as recorded above (not fixed, by the user's choice). Remaining detector hit: `aphoristic-cadence` from spec text (false positive).

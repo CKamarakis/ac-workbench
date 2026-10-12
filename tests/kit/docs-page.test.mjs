@@ -69,3 +69,21 @@ test('empty project says no specs yet', () => {
   Object.assign(m, { empty: true, tree: [], pages: {} });
   assert.match(renderPage(m), /No specs yet/);
 });
+
+// Task 6 fixes chosen by the user: readable text, card links, collapsible products
+import { inlineMd } from '../../plugins/kit/scripts/docs-page.mjs';
+test('requirement text renders basic Markdown safely', () => {
+  const html = inlineMd('The sync SHALL gather:\n- **gaps**: missing `empty` cases;\n- <b>raw</b> stays text\n\nSecond paragraph.');
+  assert.equal(html, '<p>The sync SHALL gather:</p><ul><li><b>gaps</b>: missing <code>empty</code> cases;</li><li>&lt;b&gt;raw&lt;/b&gt; stays text</li></ul><p>Second paragraph.</p>');
+});
+
+test('card links match the card anchor, product cards included', () => {
+  const html = renderPage(model());
+  assert.match(html, /href="#foundations\/storms-canvas"/);
+  assert.match(html, /data-card="storms-canvas"/);
+});
+
+test('products open and close', () => {
+  const html = renderPage(model());
+  assert.match(html, /<details open><summary>Storms[^<]*<span class="badge"[^>]*>1<\/span><\/summary><ul data-tree>/);
+});

@@ -3,6 +3,24 @@
 // Every source string goes through esc(); the page script only moves and shows existing nodes. Zero dependencies.
 
 export const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+/** Requirement text: escaped first, then paragraphs, `- ` lists, **bold** and `code`. Nothing else is interpreted. */
+export function inlineMd(text) {
+  const inline = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  const out = [];
+  for (const block of String(text ?? '').replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
+    let para = [], items = null;
+    const flushP = () => { if (para.length) out.push(`<p>${inline(para.join(' '))}</p>`); para = []; };
+    const flushL = () => { if (items) out.push(`<ul>${items.map(i => `<li>${inline(i)}</li>`).join('')}</ul>`); items = null; };
+    for (const line of block.split('\n')) {
+      const m = /^\s*[-*]\s+(.*)$/.exec(line);
+      if (m) { flushP(); (items ??= []).push(m[1].trim()); }
+      // An indented line continues the current list item.
+      else if (line.trim()) { if (items && /^\s+/.test(line)) items[items.length - 1] += ` ${line.trim()}`; else { flushL(); para.push(line.trim()); } }
+    }
+    flushP(); flushL();
+  }
+  return out.join('');
+}
 const slugId = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9/-]+/g, '-');
 
 /** Tree order, shared by the build (default order) and the page script (re-sorting). Missing dates always sort last. */
@@ -42,9 +60,16 @@ nav ul ul{padding-left:16px}
 nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;font-size:14px;color:var(--ink);text-decoration:none}
 nav a:hover{background:var(--accent-soft)}
 nav a[aria-current=page]{background:var(--accent-soft);color:var(--accent);font-weight:600}
-nav .prod>a{font-weight:600}
-nav .prod>a:not([href]){cursor:default}
-nav .prod>a:not([href]):hover{background:none}
+nav summary{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
+nav summary::-webkit-details-marker{display:none}
+nav summary::before{content:"";width:6px;height:6px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:rotate(-45deg);transition:transform .15s ease-out;flex:none}
+nav details[open]>summary::before{transform:rotate(45deg)}
+nav summary:hover{background:var(--accent-soft)}
+nav summary a{padding:0;display:inline;font-weight:600}
+nav summary .badge{margin-left:auto}
+.req ul{margin:4px 0 8px;padding-left:20px}
+.req p{margin:0 0 6px}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--row);border-radius:4px;padding:1px 4px}
 .badge{background:var(--und-bg);color:var(--und-ink);border:1px solid var(--und-line);border-radius:999px;padding:0 7px;font-size:12px;font-weight:600}
 .page{display:none;grid-template-columns:minmax(0,1fr) 360px;min-height:100vh}
 .page.on{display:grid}
@@ -127,9 +152,11 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 function treeItems(nodes) {
   return nodes.map(n => {
     const kids = n.children?.length ? `<ul data-tree>${treeItems(n.children)}</ul>` : '';
+    const attrs = `data-path="${esc(n.path)}" data-name="${esc(n.name.toLowerCase())}" data-created="${dateAttr(n.created)}" data-updated="${dateAttr(n.updated)}"`;
     const badge = n.undecided ? ` <span class="badge" title="${n.undecided} undecided">${n.undecided}</span>` : '';
-    const link = n.hasSpec ? `<a href="#${esc(n.path)}">${esc(n.name)}${badge}</a>` : `<a>${esc(n.name)}${badge}</a>`;
-    return `<li${kids ? ' class="prod"' : ''} data-path="${esc(n.path)}" data-name="${esc(n.name.toLowerCase())}" data-created="${dateAttr(n.created)}" data-updated="${dateAttr(n.updated)}">${link}${kids}</li>`;
+    // A product opens and closes; its own spec (if any) is a link inside the summary.
+    if (kids) return `<li class="prod" ${attrs}><details open><summary>${n.hasSpec ? `<a href="#${esc(n.path)}">${esc(n.name)}</a>` : esc(n.name)}${badge}</summary>${kids}</details></li>`;
+    return `<li ${attrs}><a href="#${esc(n.path)}">${esc(n.name)}${badge}</a></li>`;
   }).join('');
 }
 
@@ -142,7 +169,7 @@ function story(sc, i) {
 }
 
 function subPage(p, path) {
-  const reqs = p.requirements.map(r => `<article class="req"><h3>${esc(r.name)}</h3>${r.text ? `<p>${esc(r.text)}</p>` : ''}${r.change ? `<div class="changed">Changed by ${esc(r.change.change)}${r.change.date ? ` · ${esc(r.change.date)}` : ''}</div>` : ''}${r.scenarios.length ? `<ol class="stories">${r.scenarios.map(story).join('')}</ol>` : ''}</article>`).join('');
+  const reqs = p.requirements.map(r => `<article class="req"><h3>${esc(r.name)}</h3>${r.text ? inlineMd(r.text) : ''}${r.change ? `<div class="changed">Changed by ${esc(r.change.change)}${r.change.date ? ` · ${esc(r.change.date)}` : ''}</div>` : ''}${r.scenarios.length ? `<ol class="stories">${r.scenarios.map(story).join('')}</ol>` : ''}</article>`).join('');
   const why = p.requirements.filter(r => r.why?.length).map(r => `<p class="for">${esc(r.name)}</p>${r.why.map(w => `<p>${linkCards(w.text)}</p>`).join('')}`).join('');
   const orphan = p.orphanWhy?.length ? `<section><h3 class="sh">Notes without a requirement</h3>${p.orphanWhy.map(o => `<p class="for">${esc(o.requirement)}</p><p>${linkCards(o.text)}</p>`).join('')}</section>` : '';
   const last = p.history?.[0];
@@ -158,7 +185,7 @@ ${p.prd ? `<section><h3 class="sh">From PRD</h3><p>${esc(p.prd.title)} · ${esc(
 }
 
 function cardsPage(cards) {
-  const body = cards.length ? cards.map(c => `<article class="card${c.status === 'replaced' ? ' replaced' : ''}" data-card="${esc(slugId(c.product ? `${c.product}/${c.slug}` : c.slug))}" id="card-${esc(slugId(c.slug))}">
+  const body = cards.length ? cards.map(c => `<article class="card${c.status === 'replaced' ? ' replaced' : ''}" data-card="${esc(slugId(c.slug))}" id="card-${esc(slugId(c.slug))}">
 <h3>${esc(c.title)}<span class="tag">${c.product ? esc(c.product) : 'app-wide'}</span>${c.status === 'replaced' ? '<span class="tag">replaced</span>' : ''}</h3>
 ${c.status === 'replaced' && c.replacedBy ? `<p>Replaced by <a href="#foundations/${esc(slugId(c.replacedBy))}">${esc(c.replacedBy)}</a></p>` : ''}
 <dl>${Object.entries(c.sections).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${linkCards(v)}</dd>`).join('')}</dl></article>`).join('') : '<p class="empty">No foundation cards yet.</p>';

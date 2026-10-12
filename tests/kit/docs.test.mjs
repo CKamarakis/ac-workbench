@@ -264,3 +264,10 @@ test('missing sources degrade: no specs, no package.json, unreadable decisions, 
   w(d, 'openspec/specs/bad/spec.md', '### Requirement:\nno name\n');
   assert.ok(buildModel({ dir: d }).pages.bad.warnings.length > 0);
 });
+
+test('titles keep acronyms', async () => {
+  const { segmentName } = await import('../../plugins/kit/scripts/docs.mjs');
+  assert.equal(segmentName('prd-authoring'), 'PRD authoring');
+  assert.equal(segmentName('ui-api-sso'), 'UI API SSO');
+  assert.equal(segmentName('moving-around'), 'Moving around');
+});

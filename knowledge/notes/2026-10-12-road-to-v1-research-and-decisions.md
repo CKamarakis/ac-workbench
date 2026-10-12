@@ -104,7 +104,9 @@ Research and decisions from the 2026-10-12 session after M8, for the road to v1 
 ## v1 scope (user, 2026-10-12)
 
 - **In v1:** Mac support, harness review, a prototype lane plus a share link, and a reliable way to test the kit from here before anyone else touches it ("I share as a professional; no basic bugs").
-- **After v1 (coming next):** Python, Node backend, mobile, cockpit.
+- **After v1 (coming next):** Python, Node backend, mobile, cockpit, small teams.
+- **Small teams (checked in the code, 2026-10-12):** everything is files in git and the project tools are committed, so a team can share a repo. But `decisions.md` keeps its data in one JSON block (two branches adding decisions conflict), the committed docs page conflicts across parallel archives (a rebuild fixes it), and `/kit:next` assumes one person. Untested with more than one person. v1 wording: "built for solo builders; a small team can share it, untested with more than one person". Evidence idea: one M14 friend shares a repo for a day.
+- **Install test in CI:** try `claude plugin marketplace add` + `install` on a clean runner (no model calls, no API key); fall back to our own manifest check if the CLI wants a login. Research thin: https://claudeissues.com/issue/12840-feature-headless-programmatic-plugin-installation, https://github.com/anthropics/claude-code/issues/66750.
 
 ## Testing the kit from here (proposal, to plan in phase A/C)
 

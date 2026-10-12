@@ -9,7 +9,7 @@ User verdict: "The experience was fine."
 ## 1. `/kit:start` re-sync
 
 - Asked one question (type, web-ui recommended from `next.config.ts`), then showed the diff: routing 0.5.3 → 0.6.0 (adds the `ready` phase and the two quality-gate rules), `.claude/kit.json`, install playwright-cli.
-- **The user chose Cancel.** Nothing changed; the copy's `CLAUDE.md` still says kit 0.5.3 with no `ready` row. The agent said how to apply later (`/kit:start web-ui`).
+- **The user chose Cancel.** The trial instructions said the re-sync should "only update the routing and not change anything else", but Apply bundled the routing with a playwright-cli install the trial didn't need. "Apply all except some files" covers files, not installs, so Cancel was the only way to follow the instructions. **Finding:** a re-sync can't update the routing alone. Nothing changed; the copy's `CLAUDE.md` still says kit 0.5.3 with no `ready` row. The agent said how to apply later (`/kit:start web-ui`).
 - So the routing re-sync is **not tested** in this trial. `/kit:ready` still ran, because it was called by name.
 
 ## 2. `/kit:verify storms-canvas`: docs sync against the dry run

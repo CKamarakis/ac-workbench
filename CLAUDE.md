@@ -23,7 +23,7 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 npm test                    # unit tests
 npm run evals               # eval cases for every kit skill
 npm run registry            # validate toolkit.yaml, write plugins/kit/data/toolkit.json, print lane map
-npm run smoke               # whole kit end to end in a throwaway project, no AI (on request; ~1-2 min)
+npm run smoke               # whole kit end to end in a throwaway project, no AI (on request; ~20 s here)
 npm run smoke:check         # kit files changed since the last passing smoke run: run recommended or not needed
 ```
 

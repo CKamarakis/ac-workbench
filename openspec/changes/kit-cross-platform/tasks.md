@@ -36,5 +36,5 @@
 
 ## 7. Wrap-up
 
-- [ ] 7.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check` (expect "not needed" right after the pass). Record results, token use and anything unverified for the Mac tester (Homebrew installs, `~/.local/bin/claude`) in `evals/trials/kit-cross-platform.md`
-- [ ] 7.2 Roadmap: M9 row and "Current position" updated with this change's state, in the same commit as the change's final tasks
+- [x] 7.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check` (expect "not needed" right after the pass). Record results, token use and anything unverified for the Mac tester (Homebrew installs, `~/.local/bin/claude`) in `evals/trials/kit-cross-platform.md`
+- [x] 7.2 Roadmap: M9 row and "Current position" updated with this change's state, in the same commit as the change's final tasks

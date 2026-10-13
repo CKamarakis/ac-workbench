@@ -15,3 +15,14 @@
 - Broken on purpose (step 13 expected `/kit:BROKEN`): the run stopped at step 13 of 33, printed the command, the expectation and the real output, exited 1, kept the project folder, and wrote no pass record.
 - `npm test` (316 tests, ~15 s) does not run the smoke test.
 - Observation for later (not a smoke failure): the docs page counts open decisions only for **active** changes (spec living-docs "Open decisions on the page"). A decision left for Later disappears from the page once its change is archived; the smoke test builds the page before and after the archive, and the count goes 1 → 0.
+
+## 7.1 Full run (2026-10-13, Windows 11)
+
+- `npm test`: 326 pass, 0 fail (was 302 before this change).
+- `npm run registry:check`: passes; the `win32` install commands in `plugins/kit/data/toolkit.json` are byte-identical to before (diffed).
+- `npm run evals`: no script case failed; judgment cases unscored, as before (M13).
+- `npm run smoke`: 33 steps pass in about 20 s. `npm run smoke:check` right after: "not needed", exit 0.
+- Tokens: not measured (no per-task counter in this session).
+- Found while building: Emil's install `-s *` would be expanded by a macOS/Linux shell; the POSIX command quotes it (`-s '*'`). Windows keeps the original.
+- Left for the Mac tester (M14), unverified here: Homebrew installs on a real Mac; Claude Code's native installer path `~/.local/bin/claude` on macOS and Linux; `/kit:setup` with and without Homebrew; the smoke test on macOS.
+- Noticed, not changed (pre-existing; for `kit-followups`): two registry entries have prose instead of a command as their install (`claude-code-builtins`: "nothing to install - part of Claude Code"; `context7`: "nothing to install - ..."). If their check ever fails, setup would try to run that text as a command.

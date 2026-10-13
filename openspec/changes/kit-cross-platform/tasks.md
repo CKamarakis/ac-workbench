@@ -2,8 +2,8 @@
 
 ## 1. Checks before building
 
-- [ ] 1.1 OpenSpec isolation check (design D6). In a throwaway folder with `HOME`, `USERPROFILE`, `APPDATA` and `XDG_CONFIG_HOME` pointed inside it: `openspec init --tools claude`, `openspec new change x`, `openspec archive x -y`. Compare the real global OpenSpec config folder and `~/.claude` (file list and modified times) before and after. Record the result in `evals/trials/kit-cross-platform.md`; if anything is written outside, note the fix in `design.md` D6 before group 4
-- [ ] 1.2 Bump the kit to `0.8.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.1 OpenSpec isolation check (design D6). In a throwaway folder with `HOME`, `USERPROFILE`, `APPDATA` and `XDG_CONFIG_HOME` pointed inside it: `openspec init --tools claude`, `openspec new change x`, `openspec archive x -y`. Compare the real global OpenSpec config folder and `~/.claude` (file list and modified times) before and after. Record the result in `evals/trials/kit-cross-platform.md`; if anything is written outside, note the fix in `design.md` D6 before group 4
+- [x] 1.2 Bump the kit to `0.8.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
 
 ## 2. Install commands per platform
 

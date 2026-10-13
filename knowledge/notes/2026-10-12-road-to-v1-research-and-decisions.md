@@ -110,7 +110,7 @@ Research and decisions from the 2026-10-12 session after M8, for the road to v1 
 
 ## Testing the kit from here (proposal, to plan in phase A/C)
 
-1. **CI on three systems:** a GitHub Actions workflow runs `npm test`, `npm run evals` (script cases) and `npm run registry:check` on Windows, macOS and Ubuntu runners. Free for public repos (to confirm on GitHub's pricing page: unverified). This catches Mac and Linux breakage without owning a Mac.
+1. **(Moved to later by the user, 2026-10-13: no CI for now; the smoke test and install check run here.)** **CI on three systems:** a GitHub Actions workflow runs `npm test`, `npm run evals` (script cases) and `npm run registry:check` on Windows, macOS and Ubuntu runners. Free for public repos (to confirm on GitHub's pricing page: unverified). This catches Mac and Linux breakage without owning a Mac.
 2. **End-to-end smoke test (no AI):** a script that makes a throwaway project and runs the kit's scripts in order: start plan and apply, new note, new PRD, decisions, verify run, docs build, and checks every output. Runs in CI on all three systems.
 3. **Install test:** in CI, add the marketplace and install the plugin with the `claude` CLI on a clean runner (needs research: whether the CLI runs on CI without a login is unverified).
 4. **Skill runs with Claude:** score the 18 judgment evals once per release by running each prompt headless (`claude -p`) in a sandbox here, on your subscription; record tokens. Not in CI (it needs a login and costs usage).

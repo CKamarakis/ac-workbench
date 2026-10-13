@@ -7,7 +7,9 @@
     "test": "node --test",
     "registry": "node tools/validate-registry.mjs toolkit.yaml --out plugins/kit/data/toolkit.json",
     "registry:check": "node tools/validate-registry.mjs toolkit.yaml --out plugins/kit/data/toolkit.json --check",
-    "evals": "node tools/run-evals.mjs"
+    "evals": "node tools/run-evals.mjs",
+    "smoke": "node tools/smoke.mjs",
+    "smoke:check": "node tools/smoke-check.mjs"
   },
   "devDependencies": {
     "yaml": "^2.5.0"

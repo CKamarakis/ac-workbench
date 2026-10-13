@@ -17,3 +17,6 @@ evals/**/sandbox/
 
 # Impeccable decision-page scratch (session-local)
 .impeccable/questions/
+
+# Last passing smoke run (npm run smoke; read by npm run smoke:check)
+.smoke-pass.json

@@ -18,6 +18,10 @@ const KNOWN_WIN32 = {
   winget: ['{LOCALAPPDATA}/Microsoft/WindowsApps/winget.exe'],
 };
 
+// Known folders on macOS and Linux, for any tool (kit-cross-platform D4): Homebrew (Apple Silicon, Intel, Linux)
+// and ~/.local/bin (Claude Code's native installer; unverified on macOS and Linux).
+const KNOWN_POSIX = ['/opt/homebrew/bin', '/usr/local/bin', '/home/linuxbrew/.linuxbrew/bin'];
+
 function expandPattern(pattern, env) {
   const filled = pattern.replace(/\{(\w+)\}/g, (_, k) => env[k] ?? `\0missing:${k}`);
   if (filled.includes('\0missing:')) return [];
@@ -68,12 +72,18 @@ function defaultNpmPrefix() {
 /**
  * Locate one tool. Returns { path, via } or null.
  * via: 'path' (on PATH), 'npm-prefix' (npm global folder), 'known' (standard install folder).
+ * fsRoot: prefix for the macOS/Linux known folders (tests only).
  * preferKnown: check the standard install folder before PATH (e.g. Windows Gitcmd, whose git can run `submodule`,
  * rather than Git Bash's mingw64 git, which fails inside `claude plugin install`).
  */
-export function locate(name, { env = process.env, platform = process.platform, npmPrefix = defaultNpmPrefix, preferKnown = false } = {}) {
+export function locate(name, { env = process.env, platform = process.platform, npmPrefix = defaultNpmPrefix, preferKnown = false, fsRoot = '' } = {}) {
   const known = () => {
-    if (platform !== 'win32') return null;
+    if (platform !== 'win32') {
+      const dirs = KNOWN_POSIX.map(d => path.join(fsRoot || '/', d));
+      if (env.HOME) dirs.push(path.join(env.HOME, '.local', 'bin'));
+      for (const d of dirs) { const p = path.join(d, name); if (isFile(p)) return { path: p, via: 'known' }; }
+      return null;
+    }
     for (const pattern of KNOWN_WIN32[name] ?? []) {
       for (const p of expandPattern(pattern, env)) if (isPresent(p)) return { path: p, via: 'known' };
     }

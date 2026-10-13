@@ -86,3 +86,33 @@ test('locateAll and pathWith prepend the tool folders', () => {
   assert.equal(p[1], path.join(m.env.USERPROFILE, '.local', 'bin'));
   assert.equal(p.at(-1), m.env.PATH);
 });
+
+// kit-cross-platform 3.1: Homebrew folders and ~/.local/bin on macOS and Linux
+function posixMachine(files) {
+  const m = machine(files);
+  const env = { PATH: path.join(m.root, 'bin'), HOME: path.join(m.root, 'home') };
+  return { ...m, opts: { env, platform: 'darwin', npmPrefix: () => null, fsRoot: m.root } };
+}
+
+test('macOS: a tool only in /opt/homebrew/bin is found as known', () => {
+  const m = posixMachine(['opt/homebrew/bin/gitleaks']);
+  const r = locate('gitleaks', m.opts);
+  assert.equal(r.via, 'known');
+  assert.equal(r.path, path.join(m.root, 'opt/homebrew/bin/gitleaks'));
+});
+
+test('Linux: linuxbrew and ~/.local/bin are known folders', () => {
+  const m = posixMachine(['home/linuxbrew/.linuxbrew/bin/gh', 'home/.local/bin/claude']);
+  const opts = { ...m.opts, platform: 'linux' };
+  assert.equal(locate('gh', opts)?.via, 'known');
+  assert.equal(locate('claude', opts)?.path, path.join(m.root, 'home/.local/bin/claude'));
+});
+
+test('macOS: PATH still wins over the Homebrew folder', () => {
+  const m = posixMachine(['bin/jq', 'usr/local/bin/jq']);
+  assert.equal(locate('jq', m.opts).via, 'path');
+});
+
+test('macOS: nothing found returns null', () => {
+  assert.equal(locate('jq', posixMachine([]).opts), null);
+});

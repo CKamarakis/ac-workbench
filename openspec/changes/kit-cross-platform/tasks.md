@@ -15,7 +15,7 @@
 
 ## 3. Tool finder on macOS and Linux
 
-- [ ] 3.1 `locate.mjs` known folders for `darwin` and `linux` (design D4). Verify with `tests/kit/locate.test.mjs` using a fake folder tree and `platform: 'darwin'`: a tool only in `<fake>/opt/homebrew/bin` is found with `via: 'known'`; a tool on PATH is still found first; Windows tests unchanged (make the folder roots injectable for the test)
+- [x] 3.1 `locate.mjs` known folders for `darwin` and `linux` (design D4). Verify with `tests/kit/locate.test.mjs` using a fake folder tree and `platform: 'darwin'`: a tool only in `<fake>/opt/homebrew/bin` is found with `via: 'known'`; a tool on PATH is still found first; Windows tests unchanged (make the folder roots injectable for the test)
 
 ## 4. Smoke test
 

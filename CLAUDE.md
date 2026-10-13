@@ -11,7 +11,7 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 ## Rules
 
 - **Tools per project, kit global.** Never enable workflow plugins, MCPs or tool configs at user scope or in global config. `claude plugin install` defaults to `--scope user`, so always pass `--scope project`.
-- **Never touch real projects for tests.** Use throwaway folders, or a copy of the project.
+- **Never touch real projects for tests.** Use throwaway folders, or a copy of the project. Throwaway folders go in `../temp` (`C:\Users\Chris\Documents\Projects\temp`, next to the Toughbubble copy), never the system temp folder.
 - **Before a tool becomes a default:** read its full docs, trial it, and record the verdict and evidence in `toolkit.yaml` (`npm run registry`).
 - Mark anything not checked against official docs as **unverified**.
 - **Smoke test:** when verifying a change that touches kit files, run `npm run smoke:check` and tell the user what it says. Before a release or tag, run `npm run smoke` (it must pass).

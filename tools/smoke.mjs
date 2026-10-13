@@ -14,6 +14,9 @@ const FIXTURES = path.join(REPO, 'tools', 'smoke', 'fixtures');
 export const TESTED_OPENSPEC = '1.13.2';
 export const RECORD = path.join(REPO, '.smoke-pass.json');
 const CHANGE = 'smoke-change';
+// Throwaway folders go next to the repo in ../temp when it exists (the maintainer's test area), else the system temp.
+// KIT_TEST_DIR overrides both.
+export const testRoot = () => process.env.KIT_TEST_DIR || (fs.existsSync(path.join(REPO, '..', 'temp')) ? path.join(REPO, '..', 'temp') : os.tmpdir());
 
 /**
  * Run steps in order; stop at the first failure.
@@ -55,7 +58,7 @@ function main() {
   }
   const openspecCmd = args => `"${os_.path}" ${args.join(' ')}`;
 
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-smoke-'));
+  const work = fs.mkdtempSync(path.join(testRoot(), 'kit-smoke-'));
   const home = path.join(work, 'home');
   const proj = path.join(work, 'project');
   fs.mkdirSync(path.join(home, '.config'), { recursive: true });

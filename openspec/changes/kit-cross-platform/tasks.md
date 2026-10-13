@@ -27,8 +27,8 @@
 
 ## 5. Smoke-test judge
 
-- [ ] 5.1 `tools/smoke-check.mjs` (spec: kit-self-test "Smoke-test judge", design D8): kit paths, committed and uncommitted changes, exit 0 or 3, "no pass recorded" and "commit not found" cases. Verify with a unit test on a throwaway git repo: script changed → recommended, exit 3; only `docs/` changed → not needed, exit 0; no record → recommended
-- [ ] 5.2 `package.json` script `smoke:check`; a line in this repo's `CLAUDE.md` (Commands and Rules): run `npm run smoke:check` when verifying a change that touches kit files and tell the user; run `npm run smoke` before a release. Verify by reading `CLAUDE.md`, and run `npm run smoke:check` once
+- [x] 5.1 `tools/smoke-check.mjs` (spec: kit-self-test "Smoke-test judge", design D8): kit paths, committed and uncommitted changes, exit 0 or 3, "no pass recorded" and "commit not found" cases. Verify with a unit test on a throwaway git repo: script changed → recommended, exit 3; only `docs/` changed → not needed, exit 0; no record → recommended
+- [x] 5.2 `package.json` script `smoke:check`; a line in this repo's `CLAUDE.md` (Commands and Rules): run `npm run smoke:check` when verifying a change that touches kit files and tell the user; run `npm run smoke` before a release. Verify by reading `CLAUDE.md`, and run `npm run smoke:check` once
 
 ## 6. Install check
 

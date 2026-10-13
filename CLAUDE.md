@@ -14,6 +14,7 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 - **Never touch real projects for tests.** Use throwaway folders, or a copy of the project.
 - **Before a tool becomes a default:** read its full docs, trial it, and record the verdict and evidence in `toolkit.yaml` (`npm run registry`).
 - Mark anything not checked against official docs as **unverified**.
+- **Smoke test:** when verifying a change that touches kit files, run `npm run smoke:check` and tell the user what it says. Before a release or tag, run `npm run smoke` (it must pass).
 - Commits pass the gitleaks hook (`git config core.hooksPath .githooks`, once per clone).
 
 ## Commands
@@ -22,6 +23,8 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 npm test                    # unit tests
 npm run evals               # eval cases for every kit skill
 npm run registry            # validate toolkit.yaml, write plugins/kit/data/toolkit.json, print lane map
+npm run smoke               # whole kit end to end in a throwaway project, no AI (on request; ~1-2 min)
+npm run smoke:check         # kit files changed since the last passing smoke run: run recommended or not needed
 ```
 
 Windows: `openspec`, `gh`, `jq`, `gitleaks` may not be on the agent's PATH. Kit scripts find them via `plugins/kit/scripts/locate.mjs`. From PowerShell, prepend `$env:APPDATA\npm` for `openspec`.

@@ -111,3 +111,36 @@ test('warns when a project-scope plugin is enabled in user settings', () => {
   assert.equal(p.warnings.length, 1);
   assert.match(p.warnings[0], /superpowers@superpowers-marketplace.*user scope/);
 });
+
+// kit-cross-platform 2.2, 2.3: install command per platform; missing Homebrew
+import { installFor } from '../../plugins/kit/scripts/setup.mjs';
+
+test('installFor: platform key wins over all; all when no key; null when neither', () => {
+  const e = { install: { win32: 'winget x', all: 'brew install x' } };
+  assert.equal(installFor(e, 'win32'), 'winget x');
+  assert.equal(installFor(e, 'darwin'), 'brew install x');
+  assert.equal(installFor({ install: { win32: 'w' } }, 'linux'), null);
+  assert.equal(installFor({}, 'linux'), null);
+});
+
+test('mac without Homebrew: brew installs fail with the brew.sh hint and run nothing; npm still installs', () => {
+  const m = fakeDeps();
+  m.deps.platform = 'darwin';
+  m.deps.hasBrew = () => false;
+  const gh = tool('gh', { install: { win32: 'install gh', darwin: 'brew install gh' } });
+  const os = tool('openspec', { install: { all: 'install openspec' } });
+  const r = apply(registry([gh, os]), { deps: m.deps });
+  assert.deepEqual(r.installed, ['openspec']);
+  assert.equal(r.failed[0].name, 'gh');
+  assert.match(r.failed[0].error + r.failed[0].hint, /https:\/\/brew\.sh/);
+  assert.match(r.failed[0].hint, /re-run \/kit:setup/);
+  assert.ok(!m.calls.some(c => c.startsWith('brew')), 'no brew command run');
+});
+
+test('mac with Homebrew: runs the darwin command', () => {
+  const m = fakeDeps();
+  m.deps.platform = 'darwin';
+  m.deps.hasBrew = () => true;
+  const jq = tool('jq', { install: { win32: 'install jq', darwin: 'install jq' } });
+  assert.deepEqual(apply(registry([jq]), { deps: m.deps }).installed, ['jq']);
+});

@@ -44,3 +44,11 @@ test('openspec off PATH but locatable counts as present', () => {
   assert.equal(r.ready, true);
   assert.match(r.located.openspec, /npm/);
 });
+
+// kit-cross-platform 2.2: the hint uses the platform's command, else `all`
+test('missing openspec on Linux -> hint from install.all', () => {
+  const reg = { tools: [{ name: 'git', status: 'adopted', scope: 'machine', check: 'check git', install: { all: 'install git' } },
+    { name: 'openspec', status: 'adopted', scope: 'machine', check: 'check openspec', install: { all: 'npm i -g openspec-from-registry' } }] };
+  const r = checkPrereqs({ registry: reg, platform: 'linux', locateFn: locateFn(['git']), setupDeps: setupDeps(['git']) });
+  assert.match(r.blocked[0].hint, /^npm i -g openspec-from-registry \(or run \/kit:setup\)/);
+});

@@ -149,8 +149,30 @@ test('missing check', () => {
 
 test('install without win32', () => {
   const doc = validDoc();
-  tool(doc, 'openspec').install = { linux: 'x' };
+  tool(doc, 'openspec').install = { linux: 'x', darwin: 'x' };
   assert.ok(validate(doc).errors.some((e) => e.includes('openspec.install.win32')));
+});
+
+test('install: a platform with neither its own key nor all fails, naming it', () => {
+  const doc = validDoc();
+  tool(doc, 'openspec').install = { win32: 'winget x', darwin: 'brew install x' };
+  const errors = validate(doc).errors;
+  assert.ok(errors.some((e) => e.includes('openspec.install.linux')));
+  assert.ok(!errors.some((e) => e.includes('install.win32') || e.includes('install.darwin')));
+});
+
+test('install: all alone covers every platform; platform keys plus all pass', () => {
+  const doc = validDoc();
+  tool(doc, 'openspec').install = { all: 'npm install -g @fission-ai/openspec' };
+  assert.deepEqual(validate(doc).errors, []);
+  tool(doc, 'openspec').install = { win32: 'winget x', all: 'brew install x' };
+  assert.deepEqual(validate(doc).errors, []);
+});
+
+test('install: unknown platform key fails', () => {
+  const doc = validDoc();
+  tool(doc, 'openspec').install = { all: 'x', mac: 'brew install x' };
+  assert.ok(validate(doc).errors.some((e) => e.includes('openspec.install.mac') && /unknown/.test(e)));
 });
 
 test('invalid scope', () => {

@@ -4,13 +4,13 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { locate } from './locate.mjs';
-import { plan as setupPlan, loadRegistry } from './setup.mjs';
+import { plan as setupPlan, loadRegistry, installFor } from './setup.mjs';
 
 // Tools the starter itself runs. Missing one blocks the run before anything is written.
 export const REQUIRED = ['git', 'openspec'];
 
 const HINTS = {
-  git: 'winget install --id Git.Git -e (or run /kit:setup)',
+  git: process.platform === 'win32' ? 'winget install --id Git.Git -e (or run /kit:setup)' : 'brew install git (or run /kit:setup)',
   openspec: 'npm install -g @fission-ai/openspec (or run /kit:setup)',
 };
 
@@ -23,12 +23,12 @@ const HINTS = {
  *   located: { tool: path|null }
  * }
  */
-export function checkPrereqs({ registry = loadRegistry(), locateFn = locate, setupDeps } = {}) {
+export function checkPrereqs({ registry = loadRegistry(), locateFn = locate, setupDeps, platform = process.platform } = {}) {
   const located = Object.fromEntries(REQUIRED.map(t => [t, locateFn(t, { preferKnown: t === 'git' })?.path ?? null]));
   const entry = name => (registry.tools ?? []).find(t => t.name === name);
   const blocked = REQUIRED.filter(t => !located[t]).map(t => ({
     name: t,
-    hint: entry(t)?.install?.[process.platform] ? `${entry(t).install[process.platform]} (or run /kit:setup)` : HINTS[t],
+    hint: installFor(entry(t), platform) ? `${installFor(entry(t), platform)} (or run /kit:setup)` : HINTS[t],
   }));
   const sp = setupPlan(registry, setupDeps);
   const machineMissing = sp.missing.filter(m => !REQUIRED.includes(m.name)).map(m => ({ name: m.name, install: m.install }));

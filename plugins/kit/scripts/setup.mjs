@@ -13,6 +13,13 @@ import { locate, pathWith } from './locate.mjs';
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACTIVE = ['adopted', 'trial'];
 
+/** The install command for this platform: its own key, else `all`, else null (kit-cross-platform D1). */
+export function installFor(entry, platform) {
+  return entry?.install?.[platform] ?? entry?.install?.all ?? null;
+}
+
+const BREW_HINT = 'install Homebrew from https://brew.sh, then re-run /kit:setup';
+
 export function loadRegistry(file = path.join(KIT, 'data', 'toolkit.json')) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
@@ -29,6 +36,7 @@ export function defaultDeps() {
   const env = { ...process.env, PATH: pathWith(located) };
   return {
     platform: process.platform,
+    hasBrew: () => Boolean(locate('brew')),
     userSettings: () => readJson(path.join(os.homedir(), '.claude', 'settings.json')),
     run: (command, { timeout = 300000, cwd } = {}) => {
       const r = spawnSync(command, { shell: true, encoding: 'utf8', env, timeout, cwd });
@@ -60,7 +68,7 @@ export function plan(registry, deps = defaultDeps()) {
     if (!ACTIVE.includes(e.status)) { out.skipped.push({ name: e.name, reason: `status ${e.status}` }); continue; }
     if (e.scope !== 'machine') { out.skipped.push({ name: e.name, reason: 'project scope (enabled per project by /kit:start)' }); continue; }
     const p = isPresent(e, deps);
-    const item = { name: e.name, detail: p.detail, install: e.install?.[deps.platform] ?? null };
+    const item = { name: e.name, detail: p.detail, install: installFor(e, deps.platform) };
     (p.present ? out.present : out.missing).push(item);
   }
   const enabled = deps.userSettings()?.enabledPlugins ?? {};
@@ -85,6 +93,11 @@ export function apply(registry, { only = [], deps = defaultDeps() } = {}) {
   const result = { installed: [], failed: [], present: p.present.map(x => x.name), skipped: p.skipped.map(x => x.name), warnings: p.warnings };
   for (const m of todo) {
     if (!m.install) { result.failed.push({ name: m.name, error: `no install command for ${deps.platform}`, hint: 'add install.' + deps.platform + ' to the registry entry' }); continue; }
+    // Homebrew is a platform prerequisite, never installed by the kit (spec: tool-setup "Missing Homebrew").
+    if (deps.platform !== 'win32' && /^brew\s/.test(m.install) && !deps.hasBrew?.()) {
+      result.failed.push({ name: m.name, error: 'Homebrew is not installed', hint: BREW_HINT });
+      continue;
+    }
     const r = deps.run(m.install);
     const entry = registry.tools.find(t => t.name === m.name);
     const after = r.status === 0 ? isPresent(entry, deps) : { present: false };

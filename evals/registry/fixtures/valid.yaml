@@ -19,7 +19,7 @@ tools:
     scope: machine
     check: openspec --version
     install:
-      win32: npm install -g @fission-ai/openspec
+      all: npm install -g @fission-ai/openspec
     rubric:
       problem_fit: Structured planning with artifacts
       overlap: Plans like Superpowers; resolved via skip_skills there
@@ -45,7 +45,7 @@ tools:
     scope: project
     check: claude plugin list
     install:
-      win32: claude plugin install superpowers@superpowers-marketplace
+      all: claude plugin install superpowers@superpowers-marketplace
     rubric:
       problem_fit: Strong build discipline (TDD, subagents)
       overlap: Its planning overlaps OpenSpec artifacts

@@ -97,7 +97,7 @@
       "scope": "machine",
       "check": "openspec --version",
       "install": {
-        "win32": "npm install -g @fission-ai/openspec"
+        "all": "npm install -g @fission-ai/openspec"
       },
       "rubric": {
         "problem_fit": "Structured, reviewable planning that lives in the repo",
@@ -160,7 +160,7 @@
       "check_match": "superspec",
       "interactive": true,
       "install": {
-        "win32": "copy openspec/schemas/superspec from github.com/danielhanold/superspec, then openspec init --tools claude --profile custom --force with XDG_CONFIG_HOME pointed at a throwaway config"
+        "all": "copy openspec/schemas/superspec from github.com/danielhanold/superspec, then openspec init --tools claude --profile custom --force with XDG_CONFIG_HOME pointed at a throwaway config"
       },
       "install_note": "Multi-step and project-only - follow evals/trials/workflow-ab-setup.md (never change the global OpenSpec config). Automating it is a follow-up.",
       "rubric": {
@@ -226,7 +226,7 @@
       "check": "claude plugin list --json",
       "check_match": "\"id\": \"superpowers@superpowers-marketplace\"[^}]*\"projectEnabled\": true",
       "install": {
-        "win32": "claude plugin install superpowers@superpowers-marketplace --scope project --json"
+        "all": "claude plugin install superpowers@superpowers-marketplace --scope project --json"
       },
       "rubric": {
         "problem_fit": "Build discipline (TDD, small commits, worktrees)",
@@ -267,7 +267,9 @@
       "scope": "machine",
       "check": "gitleaks version",
       "install": {
-        "win32": "winget install --id Gitleaks.Gitleaks -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+        "win32": "winget install --id Gitleaks.Gitleaks -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install gitleaks",
+        "linux": "brew install gitleaks"
       },
       "rubric": {
         "problem_fit": "Catches tokens and keys before they reach a public repo",
@@ -299,7 +301,9 @@
       "scope": "machine",
       "check": "git --version",
       "install": {
-        "win32": "winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+        "win32": "winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install git",
+        "linux": "brew install git"
       },
       "rubric": {
         "problem_fit": "Required by every project and by plugin installs",
@@ -331,7 +335,9 @@
       "scope": "machine",
       "check": "gh --version",
       "install": {
-        "win32": "winget install --id GitHub.cli -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+        "win32": "winget install --id GitHub.cli -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install gh",
+        "linux": "brew install gh"
       },
       "rubric": {
         "problem_fit": "Repo creation, issues (feedback inbox), release downloads",
@@ -362,7 +368,9 @@
       "scope": "machine",
       "check": "jq --version",
       "install": {
-        "win32": "winget install --id jqlang.jq -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"
+        "win32": "winget install --id jqlang.jq -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install jq",
+        "linux": "brew install jq"
       },
       "rubric": {
         "problem_fit": "Small, needed by SuperSpec tooling",
@@ -394,7 +402,7 @@
       "check": "claude plugin list --json",
       "check_match": "\"kit@ac-workbench\"",
       "install": {
-        "win32": "claude plugin marketplace add CKamarakis/ac-workbench && claude plugin install kit@ac-workbench --scope user"
+        "all": "claude plugin marketplace add CKamarakis/ac-workbench && claude plugin install kit@ac-workbench --scope user"
       },
       "rubric": {
         "problem_fit": "Bootstraps and routes everything else",
@@ -442,7 +450,7 @@
       "scope": "machine",
       "check": "claude --version",
       "install": {
-        "win32": "nothing to install - part of Claude Code"
+        "all": "nothing to install - part of Claude Code"
       },
       "rubric": {
         "problem_fit": "Reviews a diff for bugs and security issues at an effort level you choose",
@@ -481,7 +489,7 @@
       "check": "claude plugin marketplace list --json",
       "check_match": "\"superpowers-marketplace\"",
       "install": {
-        "win32": "claude plugin marketplace add obra/superpowers-marketplace --scope user"
+        "all": "claude plugin marketplace add obra/superpowers-marketplace --scope user"
       },
       "rubric": {
         "problem_fit": "Needed for per-project Superpowers installs (SuperSpec flow)",
@@ -513,7 +521,7 @@
       "scope": "project",
       "check": "playwright-cli --version && node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/playwright-cli'))\"",
       "install": {
-        "win32": "npm install -g @playwright/cli@latest && playwright-cli install --skills"
+        "all": "npm install -g @playwright/cli@latest && playwright-cli install --skills"
       },
       "install_note": "Verified 2026-10-01 (sandbox) - the CLI (0.1.22) is a machine-wide npm install (a CLI, inert until called); `playwright-cli install --skills` adds .claude/skills/playwright-cli to the project and uses the installed Chrome. A small helper (winldd) goes to the shared Playwright cache in AppData/Local/ms-playwright.",
       "rubric": {
@@ -557,7 +565,7 @@
       "scope": "project",
       "check": "node --version",
       "install": {
-        "win32": "nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in)"
+        "all": "nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in)"
       },
       "install_note": "Verified 2026-10-07 - lookups (ctx7 library, ctx7 docs) work logged out; only ctx7 setup forces a browser sign-in, even with -y, so the kit skips setup and uses a routing rule instead. Limits without a key are unverified; a limit-hit message and the optional sign-in are deferred (roadmap).",
       "rubric": {
@@ -634,7 +642,7 @@
       "check": "claude mcp get notion",
       "check_match": "Status:.*[Cc]onnected",
       "install": {
-        "win32": "claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local"
+        "all": "claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local"
       },
       "install_note": "Then run /mcp in Claude Code and finish the OAuth sign-in. Verified 2026-10-01 - `--scope local` is private to you in this project (kept in ~/.claude.json under this project's path, not committed); until sign-in, `claude mcp get notion` shows \"Needs authentication\". The connected status wording is unverified.",
       "rubric": {
@@ -700,7 +708,7 @@
       "scope": "project",
       "check": "node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))\"",
       "install": {
-        "win32": "npx -y impeccable install --providers=claude --scope=project"
+        "all": "npx -y impeccable install --providers=claude --scope=project"
       },
       "first_use": "When you first do UI polish or a design review, run /impeccable init once (it writes PRODUCT.md)",
       "install_note": "Verified 2026-10-01 (sandbox) - skill in .claude/skills/impeccable, 4 agents in .claude/agents, hooks in .claude/settings.local.json (personal, gitignored by the kit block), engine binary inside the skill folder. Then run /impeccable init once (writes PRODUCT.md). Its hooks use bash syntax; that they run on Windows is unverified.",
@@ -748,7 +756,8 @@
       "scope": "project",
       "check": "node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/review-animations'))\"",
       "install": {
-        "win32": "npx -y skills@latest add emilkowalski/skills -a claude-code -s * -y --copy"
+        "win32": "npx -y skills@latest add emilkowalski/skills -a claude-code -s * -y --copy",
+        "all": "npx -y skills@latest add emilkowalski/skills -a claude-code -s '*' -y --copy"
       },
       "install_note": "Verified 2026-10-01 (sandbox) - project-level by default (-g would be user-level, never use it); 14 skills copied into .claude/skills (--copy avoids symlinks on Windows; counted 2026-10-08).",
       "rubric": {

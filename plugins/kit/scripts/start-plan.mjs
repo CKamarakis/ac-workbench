@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laneMap, routingBlock, BLOCK_START, BLOCK_END } from './lanes.mjs';
-import { loadRegistry, defaultDeps } from './setup.mjs';
+import { loadRegistry, defaultDeps, installFor } from './setup.mjs';
 import { DEFAULT_DIR, SUBDIRS } from './knowledge.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -92,7 +92,7 @@ function toolAction(entry, dir, deps) {
   if (present) return { ...base, action: 'present' };
   // Installed but waiting on the user (e.g. OAuth not done): the check runs, its match fails. Don't reinstall.
   if (check.status === 0 && entry.check_match && entry.install_note) return { ...base, action: 'pending', command: null, note: entry.install_note };
-  const command = entry.plugin ? `claude plugin install ${entry.plugin} --scope project --json` : entry.install?.[deps.platform] ?? null;
+  const command = entry.plugin ? `claude plugin install ${entry.plugin} --scope project --json` : installFor(entry, deps.platform);
   if (entry.interactive) return { ...base, action: 'pending', command, note: entry.install_note ?? 'needs you to complete it' };
   if (!command) return { ...base, action: 'pending', command: null, note: `no install command for ${deps.platform}` };
   return { ...base, action: 'install', kind: entry.plugin ? 'plugin' : 'command', plugin: entry.plugin ?? null, command, note: entry.install_note ?? null };

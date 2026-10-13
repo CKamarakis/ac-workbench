@@ -7,11 +7,11 @@
 
 ## 2. Install commands per platform
 
-- [ ] 2.1 Validator (spec: toolkit-registry): adopted and trial entries need install commands for `win32`, `darwin` and `linux`, through platform keys or `all`; unknown keys fail. Verify with new cases in `tools/validate-registry.test.mjs`: platform missing, `all` only, unknown key `mac`, `later` entry without install
-- [ ] 2.2 `installFor(entry, platform)` in `setup.mjs` (design D1), used by `setup.mjs`, `start-plan.mjs` and `prereqs.mjs`. Verify with `tests/kit/setup.test.mjs`: platform key wins over `all`; `all` used when no key; `null` when neither
-- [ ] 2.3 Homebrew detection (design D3, spec: tool-setup "Missing Homebrew"): a `brew ` command with no `brew` found fails with the brew.sh hint and runs nothing; other tools continue. Verify with a test using fake `deps` (platform `darwin`, no brew, gh and openspec missing)
-- [ ] 2.4 Rewrite the 15 install blocks in `toolkit.yaml` (design D1, D2): npm, npx and `claude` commands under `all`; gh, jq, gitleaks and git as `win32` (unchanged) plus `darwin` and `linux` `brew install <formula>`; superspec's manual instruction under `all`. Run `npm run registry` and verify `npm run registry:check` passes and the Windows commands in `plugins/kit/data/toolkit.json` are unchanged (diff the `win32` values before and after)
-- [ ] 2.5 Update `plugins/kit/skills/setup/SKILL.md` so it no longer reads Windows-only (WinGet timing, "Program Files, winget" → per platform, Homebrew hint). Verify `npm run evals` for `setup` still passes its script cases
+- [x] 2.1 Validator (spec: toolkit-registry): adopted and trial entries need install commands for `win32`, `darwin` and `linux`, through platform keys or `all`; unknown keys fail. Verify with new cases in `tools/validate-registry.test.mjs`: platform missing, `all` only, unknown key `mac`, `later` entry without install
+- [x] 2.2 `installFor(entry, platform)` in `setup.mjs` (design D1), used by `setup.mjs`, `start-plan.mjs` and `prereqs.mjs`. Verify with `tests/kit/setup.test.mjs`: platform key wins over `all`; `all` used when no key; `null` when neither
+- [x] 2.3 Homebrew detection (design D3, spec: tool-setup "Missing Homebrew"): a `brew ` command with no `brew` found fails with the brew.sh hint and runs nothing; other tools continue. Verify with a test using fake `deps` (platform `darwin`, no brew, gh and openspec missing)
+- [x] 2.4 Rewrite the 15 install blocks in `toolkit.yaml` (design D1, D2): npm, npx and `claude` commands under `all`; gh, jq, gitleaks and git as `win32` (unchanged) plus `darwin` and `linux` `brew install <formula>`; superspec's manual instruction under `all`. Run `npm run registry` and verify `npm run registry:check` passes and the Windows commands in `plugins/kit/data/toolkit.json` are unchanged (diff the `win32` values before and after)
+- [x] 2.5 Update `plugins/kit/skills/setup/SKILL.md` so it no longer reads Windows-only (WinGet timing, "Program Files, winget" → per platform, Homebrew hint). Verify `npm run evals` for `setup` still passes its script cases
 
 ## 3. Tool finder on macOS and Linux
 

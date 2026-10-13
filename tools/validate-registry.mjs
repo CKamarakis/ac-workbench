@@ -12,6 +12,7 @@ const isMapping = (v) => v !== null && typeof v === 'object' && !Array.isArray(v
 export const STATUSES = ['trial', 'adopted', 'dropped', 'later'];
 export const COSTS = ['free', 'free-tier', 'paid', 'uses-claude-quota'];
 export const SCOPES = ['machine', 'project'];
+export const PLATFORMS = ['win32', 'darwin', 'linux'];
 export const RUBRIC_KEYS = ['problem_fit', 'overlap', 'context_cost', 'run_cost', 'trust', 'reversibility', 'license'];
 export const REQUIRED_FIELDS = ['name', 'source', 'tier', 'reason', 'cost', 'status', 'rubric', 'reviewed_version', 'reviewed_on', 'verdicts'];
 export const ACTIVE = ['adopted', 'trial'];
@@ -133,7 +134,15 @@ export function validate(doc) {
       if (isMissing(entry.check)) errors.push(`${id}.check: missing required field`);
       if (isMissing(entry.install)) errors.push(`${id}.install: missing required field`);
       else if (!isMapping(entry.install)) errors.push(`${id}.install: must be a mapping`);
-      else if (isMissing(entry.install.win32)) errors.push(`${id}.install.win32: missing required field`);
+      else {
+        // One command per platform, or `all` for every platform without its own key (kit-cross-platform D1).
+        for (const k of Object.keys(entry.install)) {
+          if (!PLATFORMS.includes(k) && k !== 'all') errors.push(`${id}.install.${k}: unknown platform key (use ${PLATFORMS.join(', ')} or all)`);
+        }
+        for (const p of PLATFORMS) {
+          if (isMissing(entry.install[p]) && isMissing(entry.install.all)) errors.push(`${id}.install.${p}: missing required field (or set install.all)`);
+        }
+      }
     }
 
     if (!isMissing(entry.first_use) && typeof entry.first_use !== 'string') errors.push(`${id}.first_use: must be one line of text`);

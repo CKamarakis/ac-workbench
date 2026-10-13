@@ -236,3 +236,11 @@ test('install_why is shown under an install, not for a present tool', () => {
   const present = formatPlan(planProject({ dir: tmp(), registry: reg, type: 'web-ui', version: '9.9.9', today: '2026-10-01', deps: deps([t.check.split(' ')[1]]) }));
   assert.doesNotMatch(present, /why: machine-wide CLI/);
 });
+
+// kit-cross-platform 2.2: project tools use the platform's command, else `all`
+test('project tool with only an all command gets it on macOS', () => {
+  const reg = { phases: [], tools: [{ name: 'skx', tier: 'project', status: 'trial', scope: 'project', check: 'check skx', install: { all: 'npx -y skx install' } }] };
+  const p = planProject({ dir: tmp(), registry: reg, optIn: ['skx'], version: '9.9.9', today: '2026-10-01', deps: { platform: 'darwin', run: () => ({ status: 1, stdout: '', stderr: '' }) } });
+  assert.equal(p.tools[0].action, 'install');
+  assert.equal(p.tools[0].command, 'npx -y skx install');
+});

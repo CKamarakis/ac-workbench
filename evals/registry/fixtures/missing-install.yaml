@@ -45,7 +45,7 @@ tools:
     scope: project
     check: claude plugin list
     install:
-      win32: claude plugin install superpowers@superpowers-marketplace
+      all: claude plugin install superpowers@superpowers-marketplace
     rubric:
       problem_fit: Strong build discipline (TDD, subagents)
       overlap: Its planning overlaps OpenSpec artifacts

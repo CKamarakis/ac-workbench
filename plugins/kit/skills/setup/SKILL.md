@@ -24,12 +24,12 @@ Brings this machine up to the kit's toolset from the registry. It is safe to re-
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/setup.mjs" apply <name> <name>
    ```
-   winget installs can take a few minutes each. Use a long timeout.
+   Installs (winget on Windows, Homebrew on macOS and Linux) can take a few minutes each. Use a long timeout.
 
-4. **Summarize** using the script's output: installed, failed (with the fix line), present. If an install succeeded but its check fails, tell the user to open a new terminal so PATH refreshes, then run `/kit:setup` again.
+4. **Summarize** using the script's output: installed, failed (with the fix line), present. A tool that failed with "Homebrew is not installed" needs the user to install Homebrew from https://brew.sh first; never install Homebrew yourself. If an install succeeded but its check fails, tell the user to open a new terminal so PATH refreshes, then run `/kit:setup` again.
 
 ## Notes
 
-- Scripts locate tools outside PATH themselves (npm global folder, Program Files, winget). Do not edit PATH or profiles.
+- Scripts locate tools outside PATH themselves (npm global folder; Program Files and winget on Windows; the Homebrew folders and `~/.local/bin` on macOS and Linux). Do not edit PATH or profiles.
 - Never pass `--scope user` for a project-scope plugin, and never edit `~/.claude/settings.json` from this skill.
 - The registry lives in the kit repo (`toolkit.yaml`). To change what gets installed, edit it there and run `npm run registry`. Never edit it from a consuming project; use `/kit:feedback` instead.

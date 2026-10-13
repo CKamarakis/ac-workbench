@@ -68,8 +68,10 @@ export function checkInstall(root) {
   if (!mp.name) problems.push('.claude-plugin/marketplace.json: missing name');
   if (!Array.isArray(mp.plugins) || !mp.plugins.length) problems.push('.claude-plugin/marketplace.json: no plugins listed');
   for (const p of mp.plugins ?? []) {
-    const dir = path.resolve(root, String(p.source ?? ''));
     if (!p.name || !p.source) { problems.push(`.claude-plugin/marketplace.json: plugin entry needs name and source (${JSON.stringify(p)})`); continue; }
+    // Only plugins stored in this repo (a "./..." path) can be checked here; GitHub/URL sources are skipped.
+    if (typeof p.source !== 'string' || !p.source.startsWith('./')) continue;
+    const dir = path.resolve(root, p.source);
     if (!fs.existsSync(dir)) { problems.push(`.claude-plugin/marketplace.json: plugin "${p.name}" points to ${p.source}, which does not exist`); continue; }
     checkPlugin(root, dir, problems);
   }

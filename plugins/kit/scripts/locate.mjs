@@ -64,9 +64,11 @@ function npmPrefixDirs(env, platform, npmPrefix) {
   return [...new Set(dirs)];
 }
 
+let npmPrefixCache; // `npm prefix -g` takes ~0.5 s; ask once per process
 function defaultNpmPrefix() {
+  if (npmPrefixCache !== undefined) return npmPrefixCache;
   const r = spawnSync('npm prefix -g', { encoding: 'utf8', shell: true, timeout: 15000 });
-  return r.status === 0 ? r.stdout.trim() : null;
+  return (npmPrefixCache = r.status === 0 ? r.stdout.trim() : null);
 }
 
 /**

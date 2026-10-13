@@ -36,7 +36,7 @@ export function defaultDeps() {
   const env = { ...process.env, PATH: pathWith(located) };
   return {
     platform: process.platform,
-    hasBrew: () => Boolean(locate('brew')),
+    hasBrew: () => Boolean(located.brew),
     userSettings: () => readJson(path.join(os.homedir(), '.claude', 'settings.json')),
     run: (command, { timeout = 300000, cwd } = {}) => {
       const r = spawnSync(command, { shell: true, encoding: 'utf8', env, timeout, cwd });

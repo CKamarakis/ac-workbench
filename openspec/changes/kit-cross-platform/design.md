@@ -24,6 +24,7 @@
 
 **D1. `all` key plus platform keys.** `install: { all: "npm install -g @fission-ai/openspec" }` for commands that are the same everywhere; `win32` / `darwin` / `linux` keys where they differ; a platform key wins over `all`. A shared `installFor(entry, platform)` in `setup.mjs` is used by `start-plan.mjs` and `prereqs.mjs`.
 *Alternative:* repeat the same command under three keys. Rejected: 11 of 15 entries would triple, and copies drift.
+Commands with shell wildcards differ per shell: Emil's `-s *` stays as is under `win32` (cmd doesn't expand it) and is quoted `-s '*'` under `all` for macOS and Linux, where the shell would expand it into file names. Found while building.
 
 **D2. Homebrew on macOS and Linux.** `brew install gh`, `jq`, `gitleaks`, `git`. All four formulas are in homebrew/core with bottles for Apple Silicon, Intel macOS (jq, gitleaks), x86_64 Linux and arm64 Linux (formulae.brew.sh API, checked 2026-10-13).
 *Alternative for Linux:* apt/dnf per distro. Rejected for v1: gh needs its own apt repository, gitleaks isn't in every distro's packages, and per-distro commands can't be tested here. Homebrew gives one tested command set; Linux users without it get the brew.sh hint (spec: tool-setup). Proposed by the agent, confirmed by the user in `/kit:ready` (2026-10-13); revisit if a Linux user asks.

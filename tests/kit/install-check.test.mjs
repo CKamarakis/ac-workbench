@@ -59,3 +59,13 @@ test('marketplace pointing to a missing folder, and a bad plugin version, fail',
   assert.ok(p.some(x => x.includes('ghost')), p.join('\n'));
   assert.ok(p.some(x => x.includes('plugin.json') && x.includes('version')), p.join('\n'));
 });
+
+// Code review C4: plugins hosted elsewhere (GitHub, URL) are not checked as local folders
+test('a plugin with a non-local source is not reported missing', () => {
+  const dir = copy();
+  const m = path.join(dir, '.claude-plugin/marketplace.json');
+  const mj = JSON.parse(fs.readFileSync(m, 'utf8'));
+  mj.plugins.push({ name: 'remote', source: { source: 'github', repo: 'someone/remote' } });
+  fs.writeFileSync(m, JSON.stringify(mj));
+  assert.deepEqual(checkInstall(dir), []);
+});

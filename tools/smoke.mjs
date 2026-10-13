@@ -53,7 +53,6 @@ function main() {
     console.log('OpenSpec is needed for the smoke test and was not found. Install it: npm install -g @fission-ai/openspec');
     process.exit(2);
   }
-  const shell = process.platform === 'win32';
   const openspecCmd = args => `"${os_.path}" ${args.join(' ')}`;
 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-smoke-'));
@@ -79,7 +78,7 @@ function main() {
   });
   const openspec = args => ({
     cmd: `openspec ${args.join(' ')}`,
-    run: () => { const r = spawnSync(openspecCmd(args), { cwd: proj, env, encoding: 'utf8', shell, timeout: 300000 }); return { status: r.status, out: out(r) }; },
+    run: () => { const r = spawnSync(openspecCmd(args), { cwd: proj, env, encoding: 'utf8', shell: true, timeout: 300000 }); return { status: r.status, out: out(r) }; },
   });
   const local = (cmd, fn) => ({ cmd, run: () => { fn(); return { status: 0, out: '' }; } });
   const gate = { tool_name: 'Bash', tool_input: { command: `openspec archive ${CHANGE} -y` }, cwd: proj };

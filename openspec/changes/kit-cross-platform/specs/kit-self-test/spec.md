@@ -24,6 +24,11 @@ Lets the kit's maintainer test the whole kit from this repo, on this machine, wi
 - **WHEN** the user runs `npm run smoke`
 - **THEN** it stops before creating anything and says OpenSpec is needed, with its install command
 
+#### Scenario: Another OpenSpec version
+- **GIVEN** OpenSpec 1.14.0 is installed and the kit was tested with 1.13.2
+- **WHEN** the user runs `npm run smoke`
+- **THEN** it prints "OpenSpec 1.14.0 (kit tested with 1.13.2)" before the first step and runs every step as usual
+
 #### Scenario: Archive gate in order
 - **GIVEN** the smoke project has a change with all tasks done
 - **WHEN** the archive gate is given an `openspec archive` command before verify has passed, and again after
@@ -37,12 +42,17 @@ The smoke test SHALL NOT run as part of `npm test`, a git hook, or any kit skill
 - **THEN** the smoke test does not run
 
 ### Requirement: Last pass is recorded
-After a pass, the smoke test SHALL record the current commit and the date in a file that git ignores. A failed run SHALL NOT change the record.
+After a pass, the smoke test SHALL record the current commit, the date and the operating system it ran on in a file that git ignores. A failed run SHALL NOT change the record. `npm run smoke:check` SHALL show the system of the last pass.
 
 #### Scenario: Pass recorded
-- **GIVEN** the repo is at commit `abc1234`
+- **GIVEN** the repo is at commit `abc1234` on Windows
 - **WHEN** `npm run smoke` passes
-- **THEN** the record names `abc1234` and today's date, and `git status` does not list the record
+- **THEN** the record names `abc1234`, today's date and Windows, and `git status` does not list the record
+
+#### Scenario: System shown by the judge
+- **GIVEN** the last pass was on Windows
+- **WHEN** the user runs `npm run smoke:check`
+- **THEN** its output says the last pass was on Windows
 
 ### Requirement: Smoke-test judge
 `npm run smoke:check` SHALL list the kit files changed since the commit of the last passing smoke run, including uncommitted changes, and SHALL say "smoke test recommended" with the count when any changed, or "not needed" when none did. Kit files are the plugin's scripts, hooks, skills, templates and data, its `plugin.json`, the marketplace manifest and `toolkit.yaml`. Docs, notes, roadmap, OpenSpec and eval-run files SHALL NOT count. With no recorded pass, or a recorded commit git no longer knows, it SHALL recommend a run and say why. It SHALL exit 0 when no run is needed and with a distinct non-zero code when a run is recommended, so a release step can stop on it. It SHALL be file-based only: no AI, no judgment of risk.

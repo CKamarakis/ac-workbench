@@ -26,7 +26,7 @@
 *Alternative:* repeat the same command under three keys. Rejected: 11 of 15 entries would triple, and copies drift.
 
 **D2. Homebrew on macOS and Linux.** `brew install gh`, `jq`, `gitleaks`, `git`. All four formulas are in homebrew/core with bottles for Apple Silicon, Intel macOS (jq, gitleaks), x86_64 Linux and arm64 Linux (formulae.brew.sh API, checked 2026-10-13).
-*Alternative for Linux:* apt/dnf per distro. Rejected for v1: gh needs its own apt repository, gitleaks isn't in every distro's packages, and per-distro commands can't be tested here. Homebrew gives one tested command set; Linux users without it get the brew.sh hint (spec: tool-setup). Agent's choice; easy to revisit if a Linux user asks.
+*Alternative for Linux:* apt/dnf per distro. Rejected for v1: gh needs its own apt repository, gitleaks isn't in every distro's packages, and per-distro commands can't be tested here. Homebrew gives one tested command set; Linux users without it get the brew.sh hint (spec: tool-setup). Proposed by the agent, confirmed by the user in `/kit:ready` (2026-10-13); revisit if a Linux user asks.
 
 **D3. Homebrew detection.** Before running a command that starts with `brew `, setup locates `brew` (PATH, then the three Homebrew folders). Not found → the tool fails with the brew.sh hint, without running anything. No registry entry for Homebrew: it's a prerequisite of the platform, not a kit tool.
 
@@ -38,7 +38,7 @@
 
 **D7. Fixtures, not AI, for the planning artifacts.** The proposal, a flat spec delta, a nested spec delta (`storms/stickies`), `tasks.md` (all done) and `design.md` are small fixture files in `tools/smoke/fixtures/`, written into the change that `openspec new change` creates. Verify runs the project's `npm run test` (`node -e 0`) and records both reviews as `skipped` with the note "smoke test", so the report passes without AI.
 
-**D8. Last-pass record.** `.smoke-pass.json` at the repo root (`{ commit, date }`), gitignored. `smoke:check` compares `git diff --name-only <commit>` plus `git status --porcelain` against the kit paths (spec: kit-self-test). Exit 0 = not needed; exit 3 = recommended (matches the kit's "attention" code in `prereqs.mjs`).
+**D8. Last-pass record.** `.smoke-pass.json` at the repo root (`{ commit, date, platform }`), gitignored. `smoke:check` compares `git diff --name-only <commit>` plus `git status --porcelain` against the kit paths (spec: kit-self-test). Exit 0 = not needed; exit 3 = recommended (matches the kit's "attention" code in `prereqs.mjs`).
 
 **D9. Install check as a unit test.** `tests/kit/install-check.test.mjs` reads the real manifests, so it runs in `npm test` on every change at no cost. Hook events allowed: the ones Claude Code documents (PreToolUse, PostToolUse, PostToolUseFailure, SessionStart, Stop, ...; the list is copied from the hooks docs at build time and marked with the date). Frontmatter is parsed with the `yaml` package already in the repo's dev dependencies (tests only; the kit's runtime scripts stay dependency-free).
 
@@ -47,7 +47,7 @@
 - [Mac commands untested until M14] → formula names checked against Homebrew's API; the Mac tester runs `/kit:setup` first and the findings go into M14 fixes.
 - [The smoke test asserts output lines, so wording changes break it] → expectations use short stable fragments (`created`, `status Draft`, `pass`), not whole sentences; a failure prints the actual output, so updating takes a minute.
 - [`openspec init` or `archive` might write global config or telemetry] → D6 redirects the home folders; task 1 checks for writes outside the throwaway folders; OpenSpec telemetry and its opt-out are unverified.
-- [A smoke pass on Windows says nothing about macOS] → stated in the README status (M13); the record names the platform it passed on.
+- [A smoke pass on Windows says nothing about macOS] → stated in the README status (M13); the record names the platform it passed on, and `smoke:check` shows it.
 - [`smoke:check` trusts a local file] → fine solo; a second maintainer would need CI (later).
 
 ## Migration Plan

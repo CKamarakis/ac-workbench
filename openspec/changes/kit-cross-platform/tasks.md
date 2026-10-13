@@ -32,7 +32,7 @@
 
 ## 6. Install check
 
-- [ ] 6.1 `tests/kit/install-check.test.mjs` (spec: kit-self-test "Install check", design D9): marketplace manifest, `plugin.json` (name, semantic version), `hooks.json` (known events from the hooks docs, each command's file exists), every `SKILL.md` (`name` matches the folder, `description` non-empty). Verify it passes on the repo, then fails with a clear message on a temporary copy with a broken `SKILL.md` and a hook pointing to a missing file
+- [x] 6.1 `tests/kit/install-check.test.mjs` (spec: kit-self-test "Install check", design D9): marketplace manifest, `plugin.json` (name, semantic version), `hooks.json` (known events from the hooks docs, each command's file exists), every `SKILL.md` (`name` matches the folder, `description` non-empty). Verify it passes on the repo, then fails with a clear message on a temporary copy with a broken `SKILL.md` and a hook pointing to a missing file
 
 ## 7. Wrap-up
 

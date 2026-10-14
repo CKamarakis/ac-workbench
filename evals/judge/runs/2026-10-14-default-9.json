@@ -1,0 +1,188 @@
+{
+  "skill": "judge",
+  "date": "2026-10-14T19:43:45.150Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 3124,
+  "summary": {
+    "pass": 13,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "openspec-dark-mode-toggle",
+      "outcome": "pass",
+      "duration_ms": 259,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-rename-page-title",
+      "outcome": "pass",
+      "duration_ms": 236,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-shipping-address-display",
+      "outcome": "pass",
+      "duration_ms": 365,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-profile-email-shown",
+      "outcome": "pass",
+      "duration_ms": 288,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-sort-notes",
+      "outcome": "pass",
+      "duration_ms": 227,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "openspec-paypal-word-boundary",
+      "outcome": "pass",
+      "duration_ms": 214,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-stripe-and-migration",
+      "outcome": "pass",
+      "duration_ms": 224,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-password-reset",
+      "outcome": "pass",
+      "duration_ms": 232,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-roles",
+      "outcome": "pass",
+      "duration_ms": 235,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-backfill",
+      "outcome": "pass",
+      "duration_ms": 258,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-purge-and-pii",
+      "outcome": "pass",
+      "duration_ms": 324,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "superspec-wide-and-vague",
+      "outcome": "pass",
+      "duration_ms": 258,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-user-decides",
+      "outcome": "pass",
+      "duration_ms": 4,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/judge/SKILL.md matches /\\*\\*The user decides\\*\\*; never switch flows on your own/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/judge/SKILL.md matches /scripts/judge\\.mjs\" --file <path>/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

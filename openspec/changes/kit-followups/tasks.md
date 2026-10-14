@@ -21,17 +21,18 @@
 
 - [ ] 4.1 `decisions.mjs` finds an archived change by name (design D3, spec build-readiness "Decisions after archive"). Verify with a test: decide D2 of an archived change; the record shows the answer and date
 - [ ] 4.2 Docs page shows open/Later items from archived changes, labelled with their change (spec living-docs "Open decisions on the page"). Verify with `tests/kit/docs.test.mjs`: the "Later decision survives the archive" scenario; extend the smoke test so the page built after the archive still says "1 undecided"
+- [ ] 4.3 `/kit:next` line "N decisions still open in archived changes" (design D3, spec build-readiness). Verify with `tests/kit/next.test.mjs` and a smoke-test step after the archive
 
 ## 5. Docs page fixes
 
 - [ ] 5.1 Stable order (design D8): plain comparison instead of `localeCompare()`; same-day archives by archive commit time. Verify with tests: two archives on one day order newest first; sort result independent of locale (`Intl` not used)
-- [ ] 5.2 Page: links into a collapsed product open it; badge text "N undecided". Verify with `tests/kit/docs-page.test.mjs` (badge text; `show()` opens `details` ancestors) and a look at the rebuilt page in the browser
+- [ ] 5.2 Page: links into a collapsed product open it (the badge stays a bare number). Verify with `tests/kit/docs-page.test.mjs` (`show()` opens `details` ancestors) and a look at the rebuilt page in the browser
 - [ ] 5.3 Notes for this repo's page: run `/kit:docs`, draft the `living-docs` and `kit-self-test` notes, write them only on the user's yes, rebuild the page. Verify `docs.mjs scan` lists no missing notes for them
 
 ## 6. Re-sync without installs
 
 - [ ] 6.1 `start-apply.mjs --files-only` (design D7, spec project-starter "Re-sync without tool installs"). Verify with `tests/kit/start-apply.test.mjs`: an out-of-date routing block is updated, no install command runs, the summary lists the tools left alone
-- [ ] 6.2 Start skill: on a re-sync, ask "files only, or files and tools?" and pass `--files-only` on the first. Verify `npm run evals` for `start`; try it on the Toughbubble copy (`../temp/Toughbubble`) and record the result in `evals/trials/kit-followups.md`
+- [ ] 6.2 Start skill: only on a re-sync whose plan would install a tool, ask "files only, or files and tools?" and pass `--files-only` on the first; otherwise ask nothing extra. Verify `npm run evals` for `start`; try it on the Toughbubble copy (`../temp/Toughbubble`) and record the result in `evals/trials/kit-followups.md`
 
 ## 7. Tested versions
 

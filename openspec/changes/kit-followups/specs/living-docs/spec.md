@@ -3,12 +3,12 @@
 ## MODIFIED Requirements
 
 ### Requirement: Open decisions on the page
-The page SHALL show each `open` or `later` item from the decision records of active **and archived** changes as "undecided", with its question, date and change. An item SHALL appear on the sub-feature whose spec folder its `from` path names; otherwise it SHALL appear in an "Undecided" list for its change. An item from an archived change SHALL say which archived change it came from. A sub-feature with undecided items SHALL show their count in the tree as "N undecided".
+The page SHALL show each `open` or `later` item from the decision records of active **and archived** changes as "undecided", with its question, date and change. An item SHALL appear on the sub-feature whose spec folder its `from` path names; otherwise it SHALL appear in an "Undecided" list for its change. An item from an archived change SHALL say which archived change it came from. A sub-feature with undecided items SHALL show their count in the tree.
 
 #### Scenario: Undecided on a sub-feature
 - **GIVEN** an open decision whose `from` is `specs/storms/saving/spec.md:40`
 - **WHEN** the page is built
-- **THEN** Saving shows "1 undecided" in the tree, and the item on its page
+- **THEN** Saving shows a badge "1" in the tree (tooltip "1 undecided"), and the item on its page
 
 #### Scenario: Later decision survives the archive
 - **GIVEN** a decision marked `later` in change `storms-canvas`

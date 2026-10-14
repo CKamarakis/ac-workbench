@@ -13,7 +13,7 @@ v1 means a stranger installs the kit and goes from an idea to an archived change
 5. **Installs that are sentences:** registry entries with nothing to install say `install: none` instead of a prose sentence, so setup can never run text as a command.
 6. **Unit-test folders:** tests create their throwaway folders in `../temp` (as the smoke test does) and remove them afterwards.
 7. **Routing-only re-sync:** `/kit:start` can apply file updates (such as the CLAUDE.md routing block) without running tool installs, so an existing project can take a kit update (usage review finding 2).
-8. **Docs page fixes:** same-day archives in the right order; sorting that doesn't depend on the machine's locale; following a link into a collapsed product opens it; the undecided badge says "N undecided" instead of a bare number; the missing `living-docs` and `kit-self-test` notes for this repo's page.
+8. **Docs page fixes:** same-day archives in the right order; sorting that doesn't depend on the machine's locale; following a link into a collapsed product opens it; the missing `living-docs` and `kit-self-test` notes for this repo's page.
 9. **`/kit:start` docs line from the script:** the Later line about `/kit:docs` is printed by the planner, not composed by the skill.
 10. **Tool versions:** the registry's `reviewed_version` is the "tested with" version; the smoke test reads OpenSpec's from it instead of a constant, and this repo's `CLAUDE.md` says to bump it after updating a tool and passing the smoke test. Users get updates through Claude Code's plugin update (auto-update is off by default for third-party marketplaces; the README telling users to turn it on goes to M13). No notice is built.
 
@@ -41,7 +41,7 @@ Not in this change (roadmap 2026-10-14): the browser-check recommendation (M12),
 ### Modified Capabilities
 - `skill-routing`: Ready PRDs wait while a change is active; the library-error hook is removed.
 - `quality-gates`: advisory findings can be resolved with a note.
-- `living-docs`: open decisions from archived changes stay on the page; the badge reads "N undecided"; links into a collapsed product open it; ordering is stable across machines.
+- `living-docs`: open decisions from archived changes stay on the page; links into a collapsed product open it; ordering is stable across machines.
 - `build-readiness`: decisions in archived changes can still be decided.
 - `project-starter`: a re-sync can apply files without tool installs. (Item 9 changes no behavior: the same docs line, printed by the planner; design only.)
 - `toolkit-registry`: `install: none` for entries with nothing to install.

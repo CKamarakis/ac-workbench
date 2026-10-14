@@ -13,6 +13,7 @@
     "ui-polish",
     "close",
     "docs",
+    "assess",
     "kit-issues"
   ],
   "project_types": {
@@ -81,9 +82,14 @@
       "use": "gitleaks pre-commit hook (runs automatically)"
     },
     {
+      "when": "I want a check-up of this project's Claude Code setup",
+      "phase": "assess",
+      "use": "/kit:harness-review"
+    },
+    {
       "when": "the kit itself got in my way",
       "phase": "kit-issues",
-      "use": "/kit:feedback"
+      "use": "github.com/CKamarakis/ac-workbench/issues"
     }
   ],
   "tools": [
@@ -395,7 +401,7 @@
       "name": "kit",
       "source": "github:CKamarakis/ac-workbench",
       "tier": "global",
-      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:feedback; the only plugin enabled for every session",
+      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:ready, /kit:verify, /kit:docs, /kit:harness-review; the only plugin enabled for every session",
       "cost": "free",
       "status": "adopted",
       "scope": "machine",
@@ -421,6 +427,7 @@
         "ready",
         "verify",
         "docs",
+        "assess",
         "kit-issues"
       ],
       "skills": {
@@ -429,7 +436,8 @@
         "ready": "/kit:ready",
         "verify": "/kit:verify",
         "docs": "/kit:docs",
-        "kit-issues": "/kit:feedback"
+        "assess": "/kit:harness-review",
+        "kit-issues": "github.com/CKamarakis/ac-workbench/issues"
       },
       "verdicts": [
         {
@@ -810,7 +818,7 @@
       "status": "later",
       "rubric": {
         "problem_fit": "Keeps kit skills improving from real use",
-        "overlap": "/kit:feedback covers kit issues; Claude memory covers small preferences",
+        "overlap": "GitHub issues cover kit issues; Claude memory covers small preferences",
         "context_cost": "Runs in every session (activation via CLAUDE.md or a hook)",
         "run_cost": "Uses Claude quota while observing",
         "trust": "3k stars, 69 contributors, security audits listed on skills.sh",

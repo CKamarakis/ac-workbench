@@ -7,8 +7,8 @@
 
 ## 2. Routing
 
-- [ ] 2.1 `toolkit.yaml` (design D6): add phase `assess` (kit owns it, `/kit:harness-review`); route `kit-issues` to the GitHub issues page; update the situations entry and the `kit` entry's reason; run `npm run registry`. Verify with `tests/kit/lanes.test.mjs`: the lane map lists `assess` with `/kit:harness-review`, and the routing block contains no `/kit:feedback`
-- [ ] 2.2 Remove `/kit:feedback` from the next and setup skills. Verify `grep -r "kit:feedback" plugins README.md` finds nothing and `npm run evals` for `next` and `setup` pass
+- [x] 2.1 `toolkit.yaml` (design D6): add phase `assess` (kit owns it, `/kit:harness-review`); route `kit-issues` to the GitHub issues page; update the situations entry and the `kit` entry's reason; run `npm run registry`. Verify with `tests/kit/lanes.test.mjs`: the lane map lists `assess` with `/kit:harness-review`, and the routing block contains no `/kit:feedback`
+- [x] 2.2 Remove `/kit:feedback` from the next and setup skills. Verify `grep -r "kit:feedback" plugins README.md` finds nothing and `npm run evals` for `next` and `setup` pass
 
 ## 3. Scan script
 

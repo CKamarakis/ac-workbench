@@ -121,3 +121,18 @@ test('kit-docs 5.3: the real registry has a docs phase after close, owned by the
   assert.equal(lane.owner.name, 'kit');
   assert.equal(lane.owner.skill, '/kit:docs');
 });
+
+// kit-harness-review 2.1: assess phase; kit issues go to GitHub, never /kit:feedback
+test('the real registry has an assess phase owned by the kit with /kit:harness-review', () => {
+  const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));
+  const lane = laneMap(reg).lanes.find(l => l.phase === 'assess');
+  assert.equal(lane.owner.name, 'kit');
+  assert.equal(lane.owner.skill, '/kit:harness-review');
+});
+
+test('the routing block sends kit issues to GitHub and never names /kit:feedback', () => {
+  const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));
+  const block = routingBlock(laneMap(reg), { kitVersion: 'x' });
+  assert.doesNotMatch(block, /kit:feedback/);
+  assert.match(block, /\| kit-issues \| `github\.com\/CKamarakis\/ac-workbench\/issues` \|/);
+});

@@ -5,7 +5,7 @@
 version: 1
 
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).
-phases: [capture, prd, brainstorm, artifacts, plan, ready, build, verify, review, ui-polish, close, docs, kit-issues]
+phases: [capture, prd, brainstorm, artifacts, plan, ready, build, verify, review, ui-polish, close, docs, assess, kit-issues]
 
 # Test policy per project type (spec: toolkit-registry "Test policy per project type").
 # /kit:verify runs these package.json scripts. Projects without a type use "none".
@@ -46,9 +46,12 @@ situations:
     use: SuperSpec flow (/opsx:ff -> /opsx:apply -> /opsx:verify), trial
   - when: I'm about to commit
     use: gitleaks pre-commit hook (runs automatically)
+  - when: I want a check-up of this project's Claude Code setup
+    phase: assess
+    use: /kit:harness-review
   - when: the kit itself got in my way
     phase: kit-issues
-    use: /kit:feedback
+    use: github.com/CKamarakis/ac-workbench/issues
 
 tools:
   - name: openspec
@@ -286,7 +289,7 @@ tools:
   - name: kit
     source: github:CKamarakis/ac-workbench
     tier: global
-    reason: This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:feedback; the only plugin enabled for every session
+    reason: This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:ready, /kit:verify, /kit:docs, /kit:harness-review; the only plugin enabled for every session
     cost: free
     status: adopted
     scope: machine
@@ -304,14 +307,15 @@ tools:
       license: Own work
     reviewed_version: 0.1.0
     reviewed_on: 2026-10-01
-    phases: [capture, prd, ready, verify, docs, kit-issues]
+    phases: [capture, prd, ready, verify, docs, assess, kit-issues]
     skills:
       capture: /kit:capture
       prd: /kit:prd
       ready: /kit:ready
       verify: /kit:verify
       docs: /kit:docs
-      kit-issues: /kit:feedback
+      assess: /kit:harness-review
+      kit-issues: github.com/CKamarakis/ac-workbench/issues
     verdicts:
       - date: 2026-10-01
         status: adopted
@@ -608,7 +612,7 @@ tools:
     status: later
     rubric:
       problem_fit: Keeps kit skills improving from real use
-      overlap: /kit:feedback covers kit issues; Claude memory covers small preferences
+      overlap: GitHub issues cover kit issues; Claude memory covers small preferences
       context_cost: Runs in every session (activation via CLAUDE.md or a hook)
       run_cost: Uses Claude quota while observing
       trust: 3k stars, 69 contributors, security audits listed on skills.sh

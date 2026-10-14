@@ -32,4 +32,4 @@ Brings this machine up to the kit's toolset from the registry. It is safe to re-
 
 - Scripts locate tools outside PATH themselves (npm global folder; Program Files and winget on Windows; the Homebrew folders and `~/.local/bin` on macOS and Linux). Do not edit PATH or profiles.
 - Never pass `--scope user` for a project-scope plugin, and never edit `~/.claude/settings.json` from this skill.
-- The registry lives in the kit repo (`toolkit.yaml`). To change what gets installed, edit it there and run `npm run registry`. Never edit it from a consuming project; use `/kit:feedback` instead.
+- The registry lives in the kit repo (`toolkit.yaml`). To change what gets installed, edit it there and run `npm run registry`. Never edit it from a consuming project; open an issue at github.com/CKamarakis/ac-workbench/issues instead.

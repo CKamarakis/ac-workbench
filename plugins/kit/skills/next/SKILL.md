@@ -28,5 +28,5 @@ It checks the project's PRDs (in the knowledge folder) before the OpenSpec state
 ## Notes
 
 - "No OpenSpec here yet": suggest `/kit:start`.
-- "no owner yet" for a phase: say so plainly, and that the kit registry decides owners (`/kit:feedback` to raise it).
+- "no owner yet" for a phase: say so plainly, and that the kit registry decides owners (raise it as an issue at github.com/CKamarakis/ac-workbench/issues).
 - If the script fails (e.g. OpenSpec missing), show the error and suggest `/kit:setup`.

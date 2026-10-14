@@ -445,6 +445,10 @@ tools:
         status: trial
         rationale: M6 A/B (user decision - keep trial, fix the hook) - the rule is followed in a clean context (4/4) but made no measurable difference on typed, installed packages; the library-error hook never fired (chained commands exit 0; PowerShell not matched). Never used in 16 real sessions
         evidence: evals/trials/context7-ab.md
+      - date: 2026-10-14
+        status: trial
+        rationale: Library-error hook removed (user, kit-followups) - it never fired in real use and the A/B showed no benefit; the routing rule stays
+        evidence: openspec/changes/kit-followups/design.md
 
   - name: lint-hook
     source: tbd

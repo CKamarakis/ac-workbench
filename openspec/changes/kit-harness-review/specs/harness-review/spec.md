@@ -7,12 +7,17 @@ Gives any Claude Code user a read-only check-up of a project's agent setup: a ma
 ## ADDED Requirements
 
 ### Requirement: Setup scan
-A scan SHALL list the current project's Claude Code setup without AI and without reading memory text: instruction files (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/rules/`) with their sizes; skills, subagents and commands at project and user level with name, description and size; hooks per event (project, local and user settings, and the kit's plugin hooks when enabled); permission rules; MCP servers; enabled plugins; and the project's auto-memory files with their `type` and size. Each item SHALL name its file. A missing or unreadable file SHALL be reported, not fail the scan.
+A scan SHALL list the current project's Claude Code setup without AI and without reading memory text: instruction files (`CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/rules/`) with their sizes; skills, subagents and commands at project and user level with name, description and size; hooks per event (project, local and user settings); permission rules; MCP servers; enabled plugins, each with the hooks and skills it turns on when its install folder is found (else marked "not inspected"); it SHALL NOT judge a plugin's own code; and the project's auto-memory files with their `type` and size. Each item SHALL name its file. A missing or unreadable file SHALL be reported, not fail the scan.
 
 #### Scenario: Plain Claude Code project
 - **GIVEN** a project with a `CLAUDE.md`, two skills in `.claude/skills/` and no kit
 - **WHEN** the scan runs
 - **THEN** it lists the `CLAUDE.md` with its size, both skills with name and description, and reports the kit as not present
+
+#### Scenario: Plugin hooks count
+- **GIVEN** the kit plugin is enabled and adds an archive-gate hook
+- **WHEN** the scan runs
+- **THEN** it lists the kit with its blocking hook and its skills, so the guardrails layer can count the gate
 
 #### Scenario: Broken settings file
 - **GIVEN** `.claude/settings.json` holds invalid JSON
@@ -28,6 +33,11 @@ The review SHALL begin with a plain-ASCII diagram of the setup built from the sc
 
 ### Requirement: Eight layers rated
 The review SHALL rate eight layers (context, tools, memory, loops, verification, guardrails, feedback, observability) as OK, PARTIAL or GAP, each with a one-line note naming the evidence from the scan or the project. Each rating SHALL follow the questions in the review's checklist for that layer.
+
+#### Scenario: Almost empty setup
+- **GIVEN** a project with no `CLAUDE.md` and no `.claude` folder
+- **WHEN** the review runs
+- **THEN** it gives a short report: the map shows what's missing, most layers are GAP, and the first fix is writing a `CLAUDE.md`
 
 #### Scenario: No verification
 - **GIVEN** a project with no test script, no verify step and no hook that runs checks
@@ -72,6 +82,11 @@ When the project has `.claude/kit.json`, the review SHALL also check the kit's s
 
 ### Requirement: Read-only, report on a yes
 The review SHALL NOT create, change or delete any file in the project or in user settings. The report SHALL stay in the chat; it SHALL be saved as a note in the project's knowledge folder only when the user says yes.
+
+#### Scenario: Saved note keeps personal setup private
+- **GIVEN** the user has 12 skills and 2 plugins at user level
+- **WHEN** the user says yes to saving the report
+- **THEN** the note names only project-level items and shows the user-level ones as counts ("12 user skills, 2 plugins"); the chat report still shows them in full
 
 #### Scenario: Read-only review
 - **WHEN** a review runs and the user doesn't ask to save it

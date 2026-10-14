@@ -2,8 +2,8 @@
 
 ## 1. Setup
 
-- [ ] 1.1 Close the M5 change: `openspec archive kit-overview-feedback --skip-specs -y` (design D7). Verify `openspec list` no longer shows it and `openspec/specs/` has no `cockpit`, `kit-feedback` or `harness-review` spec from it
-- [ ] 1.2 Bump the kit to `0.10.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.1 Close the M5 change: `openspec archive kit-overview-feedback --skip-specs -y` (design D7). Verify `openspec list` no longer shows it and `openspec/specs/` has no `cockpit`, `kit-feedback` or `harness-review` spec from it
+- [x] 1.2 Bump the kit to `0.10.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
 
 ## 2. Routing
 

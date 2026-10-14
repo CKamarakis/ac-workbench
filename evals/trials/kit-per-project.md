@@ -35,3 +35,11 @@ Also seen on this machine (real config, read only): the user-level kit reports `
 - **Found:** `claude plugin list --json` showed 18 more project installs of the kit, all in deleted `../temp/kit-eval-*` folders. `npm run evals` ran `/kit:start` in its sandboxes with the real Claude config, and since 1.2 the kit is a tool every kit project gets, so each run really installed it. Fixed: eval commands run with a throwaway `CLAUDE_CONFIG_DIR` and `CLAUDE_CODE_PLUGIN_CACHE_DIR` (`tools/evals/lib.mjs`, test in `lib.test.mjs`); the kit's registry check now reads the project's `.claude/settings.json` instead of the CLI (design D1), so the `start / idempotent-rerun` case passes for the right reason.
 - Stale records removed with the user's OK: for each gone folder, recreate it empty, `claude plugin uninstall kit@ac-workbench --scope project` there, delete it (tried on one first). Left: user, ac-workbench, Toughbubble copy.
 - After the fix: `npm test` 360 pass, `npm run evals` no failures (start 14), smoke 38 steps; an eval run left the real config's kit records unchanged. `start-plan` reads `ok kit` in ac-workbench and the copy, `INSTALL kit` in the real Toughbubble (not migrated yet, by the user's choice).
+- Real Toughbubble (user's go, diff shown first): `install --scope project` ok; `.claude/settings.json` gained only `"kit@ac-workbench": true` (left uncommitted for the user); `start-plan` reads `ok kit`. All three projects now have their own kit install.
+
+## 5.2 User-level kit removed (2026-10-14, by the user)
+
+- The user ran `claude plugin uninstall kit@ac-workbench --scope user`. `claude plugin list` then shows the kit three times; that's one line per install (ac-workbench, `temp\Toughbubble`, `Toughbubble`, all `project`, 0.11.0); `--json` names each folder. No user-level install left.
+- A folder outside the three: the kit isn't enabled there.
+- `/kit:setup` (user) and `setup.mjs plan`: "Nothing to do", no warning.
+- Note for the README: the plain `claude plugin list` doesn't say which folder each project install belongs to; `claude plugin list --json` does (`projectPath`).

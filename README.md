@@ -41,7 +41,7 @@ claude plugin install kit@ac-workbench --scope project
 
 The first time on a machine, run `/kit:setup` in a session there. It installs the machine tools (git, gh, jq, gitleaks, OpenSpec) and asks before installing anything. Details: [`docs/setup.md`](docs/setup.md).
 
-The install is recorded in the project's `.claude/settings.json`. Someone who clones the project runs the same install command; until then Claude Code tells them the kit isn't installed there.
+The install is recorded in the project's `.claude/settings.json`. Someone who clones the project runs the same install command; until then Claude Code tells them the kit isn't installed there. `claude plugin list` shows the kit once per project it's installed in; `claude plugin list --json` names each folder (`projectPath`).
 
 ## Use it in a project
 

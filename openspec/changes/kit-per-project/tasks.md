@@ -24,6 +24,6 @@
 
 ## 5. Migration on this machine (with the user)
 
-- [ ] 5.1 After merge to `main`: `claude plugin update kit@ac-workbench`, then install the kit at project scope in ac-workbench, the Toughbubble copy and the real Toughbubble (show the `.claude/settings.json` diff first; ask for its path). Verify each with `claude plugin list --json` (`projectEnabled: true`)
-- [ ] 5.2 With the user's OK: `claude plugin uninstall kit@ac-workbench --scope user`. Verify a session in an unrelated folder lists no kit skill, and `/kit:setup` no longer warns. Record in `evals/trials/kit-per-project.md`
-- [ ] 5.3 Roadmap: drift entry's impact marked done, "Current position" updated, in the same commit as the change's last tasks
+- [x] 5.1 After merge to `main`: `claude plugin update kit@ac-workbench`, then install the kit at project scope in ac-workbench, the Toughbubble copy and the real Toughbubble (show the `.claude/settings.json` diff first; ask for its path). Verify each with `claude plugin list --json` (`projectEnabled: true`)
+- [x] 5.2 With the user's OK: `claude plugin uninstall kit@ac-workbench --scope user`. Verify a session in an unrelated folder lists no kit skill, and `/kit:setup` no longer warns. Record in `evals/trials/kit-per-project.md`
+- [x] 5.3 Roadmap: drift entry's impact marked done, "Current position" updated, in the same commit as the change's last tasks

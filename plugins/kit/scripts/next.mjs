@@ -40,7 +40,7 @@ export { PRD_LINE, prdLink } from './knowledge.mjs';
  *   changedSince: (projectRelPath, commit) -> true | false | null (unknown)
  * Returns { suggestion|null, warnings: [] }.
  */
-export function prdSuggest({ knowledge, map, activeCount = 0, changedSince = () => null }) {
+export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null, changedSince = () => null }) {
   const warnings = [];
   if (!knowledge?.list?.exists) return { suggestion: null, warnings };
   const { dir, list, changes = [] } = knowledge;
@@ -62,6 +62,10 @@ export function prdSuggest({ knowledge, map, activeCount = 0, changedSince = () 
     if (changed) return at('plan', `PRD "${p.slug}" changed after change "${c.name}" was planned (at ${c.link.commit}): review the plan against it.`, p, { change: c.name });
   }
   const ready = prds.filter(p => p.status === 'Ready' && !p.change && !changeFor(p));
+  // kit-followups D1: finish the active change first; a Ready PRD waits as a reminder line.
+  if (ready.length && activeCount > 0) {
+    return { suggestion: null, warnings, waiting: `PRD ${ready.map(p => p.slug).join(', ')} ${ready.length === 1 ? 'is' : 'are'} Ready; ${ready.length === 1 ? 'it waits' : 'they wait'} until ${activeName ?? 'the active change'} is done` };
+  }
   if (ready.length) {
     const others = ready.slice(1).map(p => p.slug);
     return at('artifacts', `PRD "${ready[0].slug}" is Ready and no change uses it yet: propose a change from it.`, ready[0], others.length ? { otherReady: others } : {});
@@ -99,9 +103,9 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   // Every change in `openspec list` is unarchived; "complete" only means all tasks are ticked (verify + archive still due).
   const active = (openspec.changes ?? []).filter(c => c.status !== 'archived')
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
-  const { suggestion, warnings } = prdSuggest({ knowledge, map, activeCount: active.length, changedSince });
+  const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: active[0]?.name, changedSince });
   const questions = questionsLine(knowledge);
-  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(warnings.length ? { warnings } : {}) });
+  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(warnings.length ? { warnings } : {}) });
   if (suggestion) return withWarnings(suggestion);
   return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
 }
@@ -156,6 +160,7 @@ export function format(s) {
   if (s.then) lines.push(`  then:  ${s.then}`);
   if (s.open) lines.push(`  open:  ${s.open}`);
   if (s.questions) lines.push(`  later: ${s.questions}`);
+  if (s.waiting) lines.push(`  waiting: ${s.waiting}`);
   if (s.docs) lines.push(`  docs:  ${s.docs}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);

@@ -296,3 +296,13 @@ test('kit-docs: a stale docs page adds a reminder line; no page -> none; the ste
   assert.match(format(s), /\n  docs:  docs page is older than the last archive; run \/kit:docs/);
   assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).docs, undefined);
 });
+
+// kit-followups 2.3: a Ready PRD waits while a change is active
+test('Ready PRD waits for the active change: suggestion stays on the change, with a waiting line', () => {
+  const allDone = status([['proposal', 'done'], ['specs', 'done'], ['design', 'done'], ['tasks', 'done']]);
+  const s = suggest({ openspec: { root: {}, changes: [change('storms-canvas', 2, 5)] }, statusOf: allDone, map: kmap, knowledge: K({ prds: [P('gift-cards', 'Ready')] }) });
+  assert.equal(s.use, '/opsx:apply');
+  assert.equal(s.change, 'storms-canvas');
+  assert.match(s.waiting, /PRD gift-cards is Ready; it waits until storms-canvas is done/);
+  assert.match(format(s), /PRD gift-cards is Ready; it waits until storms-canvas is done/);
+});

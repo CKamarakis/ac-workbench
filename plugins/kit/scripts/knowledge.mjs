@@ -39,14 +39,17 @@ const read = p => { try { return norm(fs.readFileSync(p, 'utf8')); } catch { ret
 
 // ---------- location (D1) ----------
 
+/** `knowledge_dir` from a `.claude/kit.json` stamp, tidied (trimmed, `/` separators, no trailing slash); `knowledge` when unset. */
+export function stampKnowledgeDir(stamp) {
+  const v = stamp?.knowledge_dir;
+  return typeof v === 'string' && v.trim() ? v.trim().replace(/\\/g, '/').replace(/\/+$/, '') || DEFAULT_DIR : DEFAULT_DIR;
+}
+
 /** The project's knowledge folder: `.claude/kit.json` `knowledge_dir`, else `knowledge/`. */
 export function knowledgeDir(projectDir) {
-  let rel = DEFAULT_DIR;
-  try {
-    const stamp = JSON.parse(fs.readFileSync(path.join(projectDir, '.claude', 'kit.json'), 'utf8'));
-    if (typeof stamp.knowledge_dir === 'string' && stamp.knowledge_dir.trim()) rel = stamp.knowledge_dir.trim();
-  } catch { /* no stamp: default */ }
-  return path.resolve(projectDir, rel);
+  let stamp = null;
+  try { stamp = JSON.parse(fs.readFileSync(path.join(projectDir, '.claude', 'kit.json'), 'utf8')); } catch { /* no stamp: default */ }
+  return path.resolve(projectDir, stampKnowledgeDir(stamp));
 }
 
 // ---------- frontmatter subset (D3) ----------

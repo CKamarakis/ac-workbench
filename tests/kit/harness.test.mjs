@@ -5,6 +5,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { tmpDir } from '../../tools/test-root.mjs';
 import { scan, memorySlug, formatScan } from '../../plugins/kit/scripts/harness.mjs';
+import { laneMap, routingBlock } from '../../plugins/kit/scripts/lanes.mjs';
+
+const KIT = path.resolve(import.meta.dirname, '../../plugins/kit');
 
 // kit-harness-review 3.1-3.3 (spec: harness-review "Setup scan", "Kit checks only with the kit", "Read-only")
 const w = (root, rel, text) => { const p = path.join(root, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, text); return p; };
@@ -109,6 +112,31 @@ test('kit project: kit version, routing block status and lane conflicts', () => 
   assert.equal(s.kit.routing, 'missing');
   assert.deepEqual(s.kit.conflicts, [{ phase: 'plan', tools: ['a', 'b'] }]);
   assert.match(formatScan(s), /routing block: missing/);
+});
+
+test('kit project: routing block reads as current the way /kit:start writes it (knowledge_dir unset or untidy)', () => {
+  const registry = { phases: ['plan'], tools: [{ name: 'a', status: 'adopted', phases: ['plan'] }] };
+  const version = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
+  const block = routingBlock(laneMap(registry), { kitVersion: version, knowledgeDir: 'knowledge', libraryDocs: true, qualityGates: true });
+  for (const stamp of [{ kit_version: version }, { kit_version: version, knowledge_dir: ' knowledge\\ ' }]) {
+    const m = machine();
+    w(m.dir, '.claude/kit.json', JSON.stringify(stamp));
+    w(m.dir, 'CLAUDE.md', `# P\n\n${block}\n`);
+    assert.equal(scan({ ...m.opts, registry }).kit.routing, 'current', JSON.stringify(stamp));
+  }
+});
+
+test('memory: a git worktree shares the main repo\'s memory folder', () => {
+  const m = machine();
+  const g = (...a) => assert.equal(spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: m.dir }).status, 0, a.join(' '));
+  g('commit', '--allow-empty', '-qm', 'x');
+  const wt = tmpDir('kit-harness-wt-');
+  g('worktree', 'add', '-q', wt);
+  w(path.join(m.home, '.claude', 'projects', memorySlug(m.dir), 'memory'), 'a.md', '---\ntype: project\n---\nx\n');
+  w(wt, 'CLAUDE.md', '# Worktree\n');
+  const s = scan({ ...m.opts, dir: wt });
+  assert.equal(s.memory.found, true);
+  assert.deepEqual(s.instructions.map(i => i.file), ['CLAUDE.md']); // project files still come from the worktree
 });
 
 test('almost empty project: nothing listed, no errors', () => {

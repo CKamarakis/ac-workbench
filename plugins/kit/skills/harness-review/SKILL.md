@@ -27,7 +27,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/harness.mjs" scan --dir . --json
 5. **Kit checks only with the kit.** When the scan shows the kit: the routing block's status under context, lane conflicts under loops. Without the kit, don't mention the kit at all, and don't suggest installing it.
 6. **Scorecard and fixes.** The scorecard table, then **at most three fixes**, most impact first: the layer, what to do, why that layer matters.
 7. **Almost empty setup** (no CLAUDE.md, no `.claude` folder): keep it short. The map shows what's missing, most layers are GAP, and the first fix is writing a `CLAUDE.md` (what the project is, how to run and test it, the rules that matter).
-8. **Offer to save.** Ask once: "Save this review as a note?" Only on a yes, and only when the project has a knowledge folder, write it with:
+8. **Offer to save.** Ask once: "Save this review as a note?" Only on a yes:
+   - **Knowledge folder found** (`knowledge/`, or the `knowledge_dir` in `.claude/kit.json`): write it with the command below.
+   - **No knowledge folder:** say so and offer to create it (`knowledge/notes/`), since the note needs a home. On a yes, the same command creates it. On a no, ask which folder to save this one note in, and write it there as `<YYYY-MM-DD>-harness-review.md`; create nothing else.
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" new-note --dir . --title "Harness review <YYYY-MM-DD>" --body-file <tmp.md> --tags harness-review
    ```

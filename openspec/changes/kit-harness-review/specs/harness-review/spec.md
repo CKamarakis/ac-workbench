@@ -24,6 +24,11 @@ A scan SHALL list the current project's Claude Code setup without AI and without
 - **WHEN** the scan runs
 - **THEN** it reports that file as unreadable and lists everything else
 
+#### Scenario: Memory folder not found
+- **GIVEN** a project whose memory folder name would be over 200 characters
+- **WHEN** the scan runs
+- **THEN** it reports the memory folder as not found with the reason, and doesn't guess a folder
+
 ### Requirement: Review starts with a map
 The review SHALL begin with a plain-ASCII diagram of the setup built from the scan: the instruction files, skills, hooks, MCP servers, plugins and memory, and how they connect to a session, before rating any layer.
 
@@ -81,12 +86,17 @@ When the project has `.claude/kit.json`, the review SHALL also check the kit's s
 - **THEN** it flags the overlap
 
 ### Requirement: Read-only, report on a yes
-The review SHALL NOT create, change or delete any file in the project or in user settings. The report SHALL stay in the chat; it SHALL be saved as a note in the project's knowledge folder only when the user says yes.
+The review SHALL NOT create, change or delete any file in the project or in user settings. The report SHALL stay in the chat; it SHALL be saved as a note only when the user says yes, in the project's knowledge folder (created on the user's yes when missing) or in a folder the user names.
 
 #### Scenario: Saved note keeps personal setup private
 - **GIVEN** the user has 12 skills and 2 plugins at user level
 - **WHEN** the user says yes to saving the report
 - **THEN** the note names only project-level items and shows the user-level ones as counts ("12 user skills, 2 plugins"); the chat report still shows them in full
+
+#### Scenario: Saving without a knowledge folder
+- **GIVEN** a project with no knowledge folder
+- **WHEN** the user says yes to saving the report
+- **THEN** the review offers to create the knowledge folder for it; if the user declines, it asks which folder to save this note in and writes only the note there
 
 #### Scenario: Read-only review
 - **WHEN** a review runs and the user doesn't ask to save it

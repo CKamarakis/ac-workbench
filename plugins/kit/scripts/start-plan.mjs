@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laneMap, routingBlock, BLOCK_START, BLOCK_END } from './lanes.mjs';
 import { loadRegistry, defaultDeps, installFor, nothingToInstall } from './setup.mjs';
-import { DEFAULT_DIR, SUBDIRS } from './knowledge.mjs';
+import { DEFAULT_DIR, SUBDIRS, stampKnowledgeDir } from './knowledge.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACTIVE = ['adopted', 'trial'];
@@ -156,7 +156,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   const project = path.basename(abs);
   const actions = [];
   const stampCur = (() => { try { return JSON.parse(read(path.join(abs, '.claude', 'kit.json'))); } catch { return null; } })();
-  const knowledgeDir = (typeof stampCur?.knowledge_dir === 'string' && stampCur.knowledge_dir.trim()) ? stampCur.knowledge_dir.trim().replace(/\\/g, '/').replace(/\/+$/, '') : DEFAULT_DIR;
+  const knowledgeDir = stampKnowledgeDir(stampCur);
   const file = (rel, proposed, { owned = true } = {}) => {
     const cur = norm(read(path.join(abs, rel)));
     if (cur == null) return actions.push({ id: rel, kind: 'file', action: 'create', content: proposed });

@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { laneMap, routingBlock, BLOCK_START, BLOCK_END } from './lanes.mjs';
 import { managedBlock } from './start-plan.mjs';
+import { stampKnowledgeDir } from './knowledge.mjs';
 import { locate } from './locate.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -45,10 +46,16 @@ export function memorySlug(p) {
   return path.resolve(p).replace(/[^a-zA-Z0-9]/g, '-');
 }
 
-function gitRoot(dir) {
+/**
+ * `top`: the checkout's own root (project files). `shared`: the main repo's root, which names the memory folder;
+ * worktrees share it (design D2a). Outside git: null.
+ */
+function gitRoots(dir) {
   const git = locate('git', { preferKnown: true })?.path ?? 'git';
-  const r = spawnSync(git, ['rev-parse', '--show-toplevel'], { cwd: dir, encoding: 'utf8' });
-  return r.status === 0 && r.stdout.trim() ? path.resolve(r.stdout.trim()) : null;
+  const [top, common] = spawnSync(git, ['rev-parse', '--show-toplevel', '--git-common-dir'], { cwd: dir, encoding: 'utf8' }).stdout?.trim().split(/\r?\n/) ?? [];
+  if (!top) return null;
+  const commonDir = common ? path.resolve(dir, common) : null;
+  return { top: path.resolve(top), shared: commonDir && path.basename(commonDir) === '.git' ? path.dirname(commonDir) : path.resolve(top) };
 }
 
 /**
@@ -57,7 +64,8 @@ function gitRoot(dir) {
  */
 export function scan({ dir = process.cwd(), home = os.homedir(), env = process.env, registry = null } = {}) {
   const start = path.resolve(dir);
-  const root = gitRoot(start) ?? start;
+  const roots = gitRoots(start);
+  const root = roots?.top ?? start;
   const configDir = env.CLAUDE_CONFIG_DIR || path.join(home, '.claude');
   const userLabel = p => '~/' + posix(path.relative(home, p));
   const projLabel = p => posix(path.relative(root, p));
@@ -155,7 +163,7 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
   const auto = [...settings].reverse().map(s => s.data?.autoMemoryDirectory).find(Boolean);
   if (auto) memory.dir = path.resolve(String(auto).replace(/^~(?=[\\/])/, home));
   else {
-    const name = env.CLAUDE_CODE_PROJECT_DIR_NAME && env.CLAUDE_CONFIG_DIR ? env.CLAUDE_CODE_PROJECT_DIR_NAME : memorySlug(root);
+    const name = env.CLAUDE_CODE_PROJECT_DIR_NAME && env.CLAUDE_CONFIG_DIR ? env.CLAUDE_CODE_PROJECT_DIR_NAME : memorySlug(roots?.shared ?? root);
     if (name.length > 200) memory.reason = 'project path is too long to find its memory folder (Claude Code shortens it with a hash)';
     else memory.dir = path.join(configDir, 'projects', name, 'memory');
   }
@@ -182,7 +190,7 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
     const claude = readText(path.join(root, 'CLAUDE.md'));
     let routing = 'missing';
     if (claude != null) {
-      const block = routingBlock(map, { kitVersion: current, knowledgeDir: kitJson?.knowledge_dir ?? null, libraryDocs: true, qualityGates: true });
+      const block = routingBlock(map, { kitVersion: current, knowledgeDir: stampKnowledgeDir(kitJson), libraryDocs: true, qualityGates: true });
       const m = managedBlock(claude.replace(/\r\n/g, '\n'), BLOCK_START, BLOCK_END, block);
       routing = m.action === 'same' ? 'current' : m.action === 'append' ? 'missing' : m.action === 'conflict' ? 'damaged' : 'outdated';
     }

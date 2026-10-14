@@ -41,5 +41,5 @@
 
 ## 8. Wrap-up
 
-- [ ] 8.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check`; no `kit-*` folders left in the test area or `%TEMP%`. Record results in `evals/trials/kit-followups.md`
-- [ ] 8.2 Roadmap: M9 row and "Current position" updated, in the same commit as the change's last tasks
+- [x] 8.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check`; no `kit-*` folders left in the test area or `%TEMP%`. Record results in `evals/trials/kit-followups.md`
+- [x] 8.2 Roadmap: M9 row and "Current position" updated, in the same commit as the change's last tasks

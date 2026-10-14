@@ -16,3 +16,13 @@
 
 - Before: every `npm test` left ~20 `kit-*` folders in `%TEMP%` (11,558 found on 2026-10-13, 185 more on 2026-10-14; all deleted).
 - After: `npm test` leaves none in `../temp` or `%TEMP%`. Two leaks found while switching: the eval runner's own tests (`makeSandbox`) and a docs test writing a file next to its folder; both now cleaned up.
+
+## 8.1 Full run (2026-10-14, Windows 11, kit 0.9.0)
+
+- `npm test`: 339 pass, 0 fail (was 327).
+- `npm run registry:check`: passes.
+- `npm run evals`: no script case failed; judgment cases unscored, as before (M13).
+- `npm run smoke`: 36 steps pass (3 new: the `/kit:next` line for an archived decision, deciding it after archive, the page count dropping to 0). `npm run smoke:check` right after: "not needed".
+- Leftover folders: none in `../temp` or `%TEMP%` after the runs (15 old `kit-docs-*-secret.md` files from earlier days removed).
+- Tokens: not measured.
+- Changed while building (in the design): sort with a fixed `'en'` locale instead of a plain `<` (keeps names in human order, still the same on every machine); approval questions show drafts in full in the message (added by the user after the previews cut drafts off).

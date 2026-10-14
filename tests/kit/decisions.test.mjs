@@ -138,3 +138,12 @@ test('a Later item in an archived change can still be decided, found by its chan
   assert.equal(st.items.find(i => i.id === 'D2').answer, 'keep full undo history');
   assert.equal(archivedOpen(d).open, 1);
 });
+
+// kit-followups verify C3: only deciding and listing reach into the archive
+test('C3: adding to a name that exists only in the archive fails instead of writing there', () => {
+  const d = tmpDir('kit-decisions-arch2-');
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-10-12-search'), { recursive: true });
+  assert.throws(() => addDecision({ dir: d, change: 'search', kind: 'gap', text: 'x?', from: 'design.md', options: 'a|b' }), /change not found/);
+  assert.throws(() => readyDone({ dir: d, change: 'search' }), /change not found/);
+  assert.ok(!fs.existsSync(path.join(d, 'openspec/changes/archive/2026-10-12-search/decisions.md')));
+});

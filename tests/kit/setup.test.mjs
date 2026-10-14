@@ -157,3 +157,11 @@ test('install: none -> nothing to install, no command run', () => {
   assert.ok(!m.calls.some(c => c.startsWith('install') || c.startsWith('none')), 'no install command run');
   assert.equal(installFor(builtins, 'win32'), null);
 });
+
+// kit-followups verify C9: one definition of "nothing to install"
+import { nothingToInstall } from '../../plugins/kit/scripts/setup.mjs';
+test('C9: nothingToInstall is the single check for install: none', () => {
+  assert.equal(nothingToInstall({ install: 'none' }), true);
+  assert.equal(nothingToInstall({ install: { all: 'x' } }), false);
+  assert.equal(nothingToInstall({}), false);
+});

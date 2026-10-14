@@ -13,9 +13,12 @@ import { locate, pathWith } from './locate.mjs';
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACTIVE = ['adopted', 'trial'];
 
+/** True for a registry entry with nothing to install (`install: none`); the one place that knows the form (kit-followups D5). */
+export const nothingToInstall = entry => entry?.install === 'none';
+
 /** The install command for this platform: its own key, else `all`, else null (kit-cross-platform D1). */
 export function installFor(entry, platform) {
-  if (entry?.install === 'none') return null; // nothing to install (kit-followups D5)
+  if (nothingToInstall(entry)) return null;
   return entry?.install?.[platform] ?? entry?.install?.all ?? null;
 }
 
@@ -68,7 +71,7 @@ export function plan(registry, deps = defaultDeps()) {
   for (const e of registry.tools ?? []) {
     if (!ACTIVE.includes(e.status)) { out.skipped.push({ name: e.name, reason: `status ${e.status}` }); continue; }
     if (e.scope !== 'machine') { out.skipped.push({ name: e.name, reason: 'project scope (enabled per project by /kit:start)' }); continue; }
-    if (e.install === 'none') { out.skipped.push({ name: e.name, reason: `nothing to install: ${e.install_note ?? ''}`.trim() }); continue; }
+    if (nothingToInstall(e)) { out.skipped.push({ name: e.name, reason: `nothing to install: ${e.install_note ?? ''}`.trim() }); continue; }
     const p = isPresent(e, deps);
     const item = { name: e.name, detail: p.detail, install: installFor(e, deps.platform) };
     (p.present ? out.present : out.missing).push(item);

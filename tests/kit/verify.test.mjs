@@ -338,3 +338,21 @@ test('resolve: refuses HARD items, unknown items, and a missing note', () => {
   addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'y' });
   assert.throws(() => resolveFinding({ dir: d, change: 'add-x', item: 'C1' }), /--note is required/);
 });
+
+// kit-followups verify C1, C2: finding ids are never reused; only review findings can be resolved
+test('C1: after a resolve, a new finding gets a fresh id', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'one' });
+  addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'two' });
+  resolveFinding({ dir: d, change: 'add-x', item: 'C1', note: 'fixed' });
+  const s = addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'three' });
+  assert.deepEqual(s.items.filter(i => i.source === 'code').map(i => i.id), ['C2', 'C3']);
+});
+
+test('C2: generated items (untested file, policy check, open decisions) cannot be resolved', () => {
+  const d = project();
+  const s = runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  const policy = s.items.find(i => i.source === 'policy');
+  assert.throws(() => resolveFinding({ dir: d, change: 'add-x', item: policy.id, note: 'x' }), /only review findings/);
+});

@@ -20,10 +20,11 @@ const today = () => new Date().toISOString().slice(0, 10);
 const esc = s => String(s ?? '').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 const isOpen = i => i.status === 'open' || i.status === 'later';
 
-function changeFolder(dir, change) {
+function changeFolder(dir, change, { archived = false } = {}) {
   if (!change || !/^[a-z0-9][a-z0-9-]*$/.test(change)) throw new Error('--change <name> is required (kebab-case)');
   const d = path.join(dir, 'openspec', 'changes', change);
   if (fs.existsSync(d)) return d;
+  if (!archived) throw new Error(`change not found: openspec/changes/${change}`);
   // An archived change is still found by its name: decisions left for Later stay decidable (kit-followups D3).
   const arch = archivedFolders(dir).filter(a => a.change === change).at(-1);
   if (arch) return arch.path;
@@ -53,7 +54,8 @@ export function archivedOpen(dir) {
 export function archivedLine(a) {
   return a?.open ? `${a.open} decision${a.open === 1 ? '' : 's'} still open in archived changes (${a.changes.join(', ')})` : null;
 }
-const fileOf = (dir, change) => path.join(changeFolder(dir, change), 'decisions.md');
+// Only deciding and listing reach into the archive; adding or marking ready needs an active change (code review C3).
+const fileOf = (dir, change, opts) => path.join(changeFolder(dir, change, opts), 'decisions.md');
 
 export function readDecisions(file) {
   try { const m = DATA.exec(fs.readFileSync(file, 'utf8')); return m ? JSON.parse(m[1]) : null; } catch { return null; }
@@ -81,8 +83,8 @@ function oldestOf(items) {
   return items.map(i => i.dates.later ?? i.dates.opened).sort()[0] ?? null;
 }
 
-function load(dir, change) {
-  const file = fileOf(dir, change);
+function load(dir, change, opts) {
+  const file = fileOf(dir, change, opts);
   const state = readDecisions(file);
   // An unreadable record (merge conflict, hand edit) must never be replaced by an empty one.
   if (!state && fs.existsSync(file)) throw new Error(`openspec/changes/${change}/decisions.md exists but its data can't be read (merge conflict or hand edit?): fix it from git, then re-run`);
@@ -112,7 +114,7 @@ export function addDecision({ dir, change, kind, text, from, options, recommende
 
 export function decide({ dir, change, id, answer, written }) {
   if (!answer || !String(answer).trim()) throw new Error('--answer is required');
-  const { file, state } = load(dir, change);
+  const { file, state } = load(dir, change, { archived: true });
   const it = find(state, id);
   Object.assign(it, { status: 'decided', answer: String(answer).trim(), written: written ? String(written).trim() : 'not written' });
   it.dates.decided = today();
@@ -142,7 +144,7 @@ export function readyDone({ dir, change }) {
 }
 
 export function listDecisions({ dir, change, open = false }) {
-  const { state } = load(dir, change);
+  const { state } = load(dir, change, { archived: true });
   return open ? state.items.filter(isOpen) : state.items;
 }
 

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { laneMap, routingBlock, BLOCK_START, BLOCK_END } from './lanes.mjs';
-import { loadRegistry, defaultDeps, installFor } from './setup.mjs';
+import { loadRegistry, defaultDeps, installFor, nothingToInstall } from './setup.mjs';
 import { DEFAULT_DIR, SUBDIRS } from './knowledge.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -87,7 +87,7 @@ export function selectTools(registry, { type = null, optIn = [] } = {}) {
 
 function toolAction(entry, dir, deps) {
   const base = { name: entry.name, tier: entry.tier, status: entry.status };
-  if (entry.install === 'none') return { ...base, action: 'present' }; // nothing to install (kit-followups D5)
+  if (nothingToInstall(entry)) return { ...base, action: 'present' };
   const check = deps.run(entry.check, { cwd: dir, timeout: 60000 });
   const present = check.status === 0 && (!entry.check_match || new RegExp(entry.check_match, 'm').test(check.stdout));
   if (present) return { ...base, action: 'present' };

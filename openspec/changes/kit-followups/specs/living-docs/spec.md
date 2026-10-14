@@ -15,6 +15,23 @@ The page SHALL show each `open` or `later` item from the decision records of act
 - **WHEN** `storms-canvas` is archived and the page is rebuilt
 - **THEN** the item is still shown as undecided, labelled with the archived change `storms-canvas`
 
+### Requirement: Draft notes on a yes
+`/kit:docs` SHALL run the scan, then draft only the missing or stale capability notes, inventory entries and foundation cards. It SHALL show each draft in full in its message, numbered, with where it will be written, then ask the user per item in one batch (yes / change / skip), naming each draft by its number, and write only what the user says yes to. It SHALL NOT put draft text in a question's option preview. It SHALL then build the page. It SHALL NOT edit specs, archived changes or `decisions.md`, and SHALL NOT commit.
+
+#### Scenario: Nothing missing
+- **GIVEN** the scan finds no missing or stale notes and no unlisted tools
+- **WHEN** the user runs `/kit:docs`
+- **THEN** nothing is asked, and the page is rebuilt
+
+#### Scenario: User skips a draft
+- **WHEN** the user picks skip for a drafted card
+- **THEN** no file is written for it, and the next scan still lists it as missing
+
+#### Scenario: Drafts shown in full before the question
+- **GIVEN** three drafted notes, one of them 12 lines long
+- **WHEN** /kit:docs asks which to write
+- **THEN** every draft is shown in full in the message, numbered, and the questions name them by number; no draft text sits in an option preview
+
 ## ADDED Requirements
 
 ### Requirement: Page order and navigation are stable

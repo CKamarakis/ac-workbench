@@ -14,8 +14,8 @@
 
 ## 3. Verify resolves fixed findings
 
-- [ ] 3.1 `verify.mjs resolve --item <id> --note` (design D2, spec quality-gates "Fixed findings are resolved"): Resolved section, refuses HARD items, stays resolved across `run` unless the same finding is recorded again. Verify with `tests/kit/verify.test.mjs` for both scenarios
-- [ ] 3.2 `/kit:verify` skill: after fixing an advisory finding, resolve it with a note naming the commit. Verify `npm run evals` for `verify`
+- [x] 3.1 `verify.mjs resolve --item <id> --note` (design D2, spec quality-gates "Fixed findings are resolved"): Resolved section, refuses HARD items, stays resolved across `run` unless the same finding is recorded again. Verify with `tests/kit/verify.test.mjs` for both scenarios
+- [x] 3.2 `/kit:verify` skill: after fixing an advisory finding, resolve it with a note naming the commit. Verify `npm run evals` for `verify`
 
 ## 4. Decisions after archive
 

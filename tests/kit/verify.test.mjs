@@ -311,3 +311,30 @@ test('a verify.md the kit did not write is kept as verify-earlier.md and listed 
   assert.equal(again.items.find(i => i.id === 'E:report').detail, 'openspec/changes/add-x/verify-earlier.md');
   assert.equal(fs.existsSync(path.join(dir, 'verify-earlier-2.md')), false);
 });
+
+// kit-followups 3.1: fixed advisory findings are resolved with a note
+import { resolveFinding } from '../../plugins/kit/scripts/verify.mjs';
+test('resolve: an advisory finding moves to Resolved with its note and date, and stays resolved after run', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'off-by-one in paging' });
+  const s = resolveFinding({ dir: d, change: 'add-x', item: 'C1', note: 'fixed in 76fbaaa' });
+  assert.ok(!s.items.some(i => i.id === 'C1'));
+  assert.equal(s.resolved[0].item, 'C1');
+  const md = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md, /## Resolved[\s\S]*\| C1 \| code review \(low\) - off-by-one in paging \| fixed in 76fbaaa \| \d{4}-\d\d-\d\d \|/);
+  assert.doesNotMatch(md.split('## Resolved')[0], /off-by-one/);
+  const again = runVerify({ dir: d, change: 'add-x', registry, run: runner({}) });
+  assert.ok(!again.items.some(i => i.id === 'C1'));
+  assert.equal(again.resolved.length, 1);
+});
+
+test('resolve: refuses HARD items, unknown items, and a missing note', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: runner({ test: 1 }) });
+  const hard = readState(path.join(d, 'openspec/changes/add-x/verify.md')).items.find(i => i.level === 'HARD');
+  assert.throws(() => resolveFinding({ dir: d, change: 'add-x', item: hard.id, note: 'x' }), /HARD item needs a passing re-run or the user's override/);
+  assert.throws(() => resolveFinding({ dir: d, change: 'add-x', item: 'C9', note: 'x' }), /no item "C9"/);
+  addFinding({ dir: d, change: 'add-x', source: 'code', severity: 'low', text: 'y' });
+  assert.throws(() => resolveFinding({ dir: d, change: 'add-x', item: 'C1' }), /--note is required/);
+});

@@ -229,6 +229,7 @@ export function render(state) {
     '## HARD (blocks archive)', '', ...(hard.length ? ['| Id | Item | Detail |', '|---|---|---|', ...hard.map(row)] : ['None.']), '',
     '## ADVISORY (your call)', '', ...(adv.length ? ['| Id | Item | Detail |', '|---|---|---|', ...adv.map(row)] : ['None.']), '',
     '## Overrides', '', ...(state.overrides.length ? ['| Item | Reason | Date |', '|---|---|---|', ...state.overrides.map(o => `| ${o.item} | ${esc(o.reason)} | ${o.date} |`)] : ['None.']), '',
+    ...(state.resolved?.length ? ['## Resolved', '', '| Id | Item | Note | Date |', '|---|---|---|---|', ...state.resolved.map(r => `| ${r.item} | ${esc(r.what)}${r.detail ? ` - ${esc(r.detail)}` : ''} | ${esc(r.note)} | ${r.date} |`), ''] : []),
     `<!-- kit-verify-data ${JSON.stringify(state).replace(/-->/g, '--\\u003e')} -->`, '',
   ];
   return L.join('\n');
@@ -280,7 +281,7 @@ export function runVerify({ dir, change, registry = loadRegistry(), run = defaul
   const findings = (prev?.items ?? []).filter(i => i.source === 'security' || i.source === 'code' || i.source === 'browser');
   const all = [...items, ...findings];
   const overrides = (prev?.overrides ?? []).filter(o => all.some(i => i.id === o.item));
-  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(earlier ? { earlier } : {}), ...(prev?.browser ? { browser: prev.browser } : {}), ...(prev?.docsSync ? { docsSync: prev.docsSync } : {}) });
+  return save(file, { change, date: today(), commit: git(dir, ['rev-parse', '--short', 'HEAD']) ?? 'none', type, tests, items: all, overrides, reviews: prev?.reviews ?? {}, ...(earlier ? { earlier } : {}), ...(prev?.browser ? { browser: prev.browser } : {}), ...(prev?.docsSync ? { docsSync: prev.docsSync } : {}), ...(prev?.resolved?.length ? { resolved: prev.resolved } : {}) });
 }
 
 export function setReview({ dir, change, source, how, note }) {
@@ -331,6 +332,20 @@ export function addOverride({ dir, change, item, reason }) {
   if (it.level !== 'HARD') throw new Error(`"${item}" is advisory; only HARD items need an override`);
   state.overrides = state.overrides.filter(o => o.item !== item);
   state.overrides.push({ item, reason: String(reason).trim(), date: today() });
+  return save(file, state);
+}
+
+/** A fixed advisory finding leaves the open list for "Resolved", with a note (kit-followups D2; spec: quality-gates). */
+export function resolveFinding({ dir, change, item, note }) {
+  if (!note || !String(note).trim()) throw new Error('--note is required: say how it was fixed (e.g. the commit)');
+  const file = reportPath(dir, change);
+  const state = readState(file);
+  if (!state) throw new Error('no report yet: run "verify.mjs run" first');
+  const it = state.items.find(i => i.id === item);
+  if (!it) throw new Error(`no item "${item}" in the report`);
+  if (it.level === 'HARD') throw new Error(`"${item}" is HARD: a HARD item needs a passing re-run or the user's override`);
+  state.items = state.items.filter(i => i.id !== item);
+  state.resolved = [...(state.resolved ?? []).filter(r => r.item !== item), { item, what: it.what, detail: it.detail ?? '', note: String(note).trim(), date: today() }];
   return save(file, state);
 }
 
@@ -386,6 +401,7 @@ function summary(s) {
   for (const t of s.tests) L.push(`  test     ${t.script.padEnd(18)} ${t.result}`);
   for (const i of hard) L.push(`  HARD     ${i.id}: ${i.what}${s.overrides.some(o => o.item === i.id) ? ' (overridden)' : ''}`);
   for (const i of [...reviewItems(s), ...s.items.filter(x => x.level === 'ADVISORY')]) L.push(`  advisory ${i.id}: ${i.what}${i.detail && i.source !== 'tests' ? ` - ${i.detail}` : ''}`);
+  for (const r of s.resolved ?? []) L.push(`  resolved ${r.item}: ${r.note}`);
   for (const src of ['security', 'code']) if (s.reviews?.[src]) L.push(`  review   ${src}: ${s.reviews[src].how}${s.reviews[src].note ? ` (${s.reviews[src].note})` : ''}`);
   return L.join('\n');
 }
@@ -399,11 +415,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     else if (o.cmd === 'browser') { const s = setBrowser({ ...o, result: o.result, shots: o.shots ?? [] }); out = o.json ? s : summary(s); }
     else if (o.cmd === 'reviewed') { const s = setReview(o); out = o.json ? s : summary(s); }
     else if (o.cmd === 'override') { const s = addOverride(o); out = o.json ? s : summary(s); }
+    else if (o.cmd === 'resolve') { const s = resolveFinding(o); out = o.json ? s : summary(s); }
     else if (o.cmd === 'docs-scan') { const s = docsScan(o); out = o.json ? s : docsScanText(s); }
     else if (o.cmd === 'docs-sync') { const s = setDocsSync({ ...o, leftOut: o['left-out'] }); out = o.json ? s : summary(s); }
     else if (o.cmd === 'status') { const s = verifyStatus(o); out = o.json ? s : `${s.change}: ${s.status}${s.hard?.length ? `\n  ${s.hard.join('\n  ')}` : ''}`; }
     else if (o.cmd === 'prepush' && o.install) { const r = installPrepush(o); out = o.json ? r : r.installed ? `installed ${r.path} (runs npm run ${r.script})` : `not installed: ${r.reason} (${r.path})`; }
-    else throw new Error('commands: run, finding, reviewed, browser, override, docs-scan, docs-sync, status, prepush --install');
+    else throw new Error('commands: run, finding, reviewed, browser, override, resolve, docs-scan, docs-sync, status, prepush --install');
     console.log(typeof out === 'string' ? out : JSON.stringify(out, null, 2));
     process.exitCode = code;
   } catch (e) {

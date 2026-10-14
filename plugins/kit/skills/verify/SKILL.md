@@ -59,7 +59,12 @@ If it prints `error:`, show it and stop.
       Count per receipt item: proposed + left out must cover every receipt item, or the script stops and says how many are missing. Re-run step 2 so the report shows open decisions. The docs sync never adds a HARD item.
 6. **Show the report:** **HARD items first**, each with what to do; then the advisory list (including the docs sync and any open decisions). Then:
    - Result `pass`: say the change can be archived (`/opsx:archive`).
-   - Result `fail`: offer to fix the HARD items, then re-run step 2. A fixed finding is cleared by re-running the review and not recording it again; for a stale one, say so.
+   - Result `fail`: offer to fix the HARD items, then re-run step 2.
+   - **After fixing an advisory finding** (only ones the user chose to fix), mark it resolved, naming the commit:
+     ```bash
+     node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" resolve --dir . --change <name> --item <id> --note "fixed in <commit>"
+     ```
+     It moves to the report's Resolved list. Findings the user decided to keep stay as they are. A HARD item is never resolved this way: it clears on a passing re-run, or with the user's override.
 
 ## Browser check (on request)
 

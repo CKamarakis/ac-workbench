@@ -402,3 +402,12 @@ test('project_types: unknown type, empty policy and bad missing_required are rej
   doc.project_types = { none: { tests: [{ script: 'test', required: false }], missing_required: 'advisory' } };
   assert.deepEqual(validate(doc).errors, []);
 });
+
+// kit-followups 2.2: install: none for tools with nothing to install
+test('install: none with a note passes; without a note it fails', () => {
+  const doc = validDoc();
+  Object.assign(tool(doc, 'openspec'), { install: 'none', install_note: 'part of Claude Code' });
+  assert.deepEqual(validate(doc).errors, []);
+  delete tool(doc, 'openspec').install_note;
+  assert.ok(validate(doc).errors.some((e) => e.includes('openspec.install_note')));
+});

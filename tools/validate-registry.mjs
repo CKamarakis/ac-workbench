@@ -133,7 +133,10 @@ export function validate(doc) {
       }
       if (isMissing(entry.check)) errors.push(`${id}.check: missing required field`);
       if (isMissing(entry.install)) errors.push(`${id}.install: missing required field`);
-      else if (!isMapping(entry.install)) errors.push(`${id}.install: must be a mapping`);
+      else if (entry.install === 'none') { // nothing to install (kit-followups D5); say why
+        if (isMissing(entry.install_note)) errors.push(`${id}.install_note: required when install is none`);
+      }
+      else if (!isMapping(entry.install)) errors.push(`${id}.install: must be a mapping or none`);
       else {
         // One command per platform, or `all` for every platform without its own key (kit-cross-platform D1).
         for (const k of Object.keys(entry.install)) {

@@ -326,8 +326,8 @@ tools:
     status: adopted
     scope: machine
     check: claude --version
-    install:
-      all: nothing to install - part of Claude Code
+    install: none
+    install_note: Part of Claude Code
     rubric:
       problem_fit: Reviews a diff for bugs and security issues at an effort level you choose
       overlap: None; the review phase had no owner
@@ -416,9 +416,8 @@ tools:
     status: trial
     scope: project
     check: node --version
-    install:
-      all: nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in)
-    install_note: Verified 2026-10-07 - lookups (ctx7 library, ctx7 docs) work logged out; only ctx7 setup forces a browser sign-in, even with -y, so the kit skips setup and uses a routing rule instead. Limits without a key are unverified; a limit-hit message and the optional sign-in are deferred (roadmap).
+    install: none
+    install_note: Nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in). Verified 2026-10-07 - lookups (ctx7 library, ctx7 docs) work logged out; only ctx7 setup forces a browser sign-in, even with -y, so the kit skips setup and uses a routing rule instead. Limits without a key are unverified; a limit-hit message and the optional sign-in are deferred (roadmap).
     rubric:
       problem_fit: Fewer stale API answers during build
       overlap: None; a docs source, not a phase owner

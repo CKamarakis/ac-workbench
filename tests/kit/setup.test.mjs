@@ -144,3 +144,16 @@ test('mac with Homebrew: runs the darwin command', () => {
   const jq = tool('jq', { install: { win32: 'install jq', darwin: 'install jq' } });
   assert.deepEqual(apply(registry([jq]), { deps: m.deps }).installed, ['jq']);
 });
+
+// kit-followups 2.2: install: none never runs, even when its check fails
+test('install: none -> nothing to install, no command run', () => {
+  const m = fakeDeps();
+  const builtins = tool('builtins', { install: 'none', install_note: 'part of Claude Code' });
+  const p = plan(registry([builtins]), m.deps);
+  assert.deepEqual(p.missing, []);
+  assert.match(p.skipped[0].reason, /nothing to install: part of Claude Code/);
+  const r = apply(registry([builtins]), { deps: m.deps });
+  assert.deepEqual(r.failed, []);
+  assert.ok(!m.calls.some(c => c.startsWith('install') || c.startsWith('none')), 'no install command run');
+  assert.equal(installFor(builtins, 'win32'), null);
+});

@@ -245,3 +245,10 @@ test('project tool with only an all command gets it on macOS', () => {
   assert.equal(p.tools[0].action, 'install');
   assert.equal(p.tools[0].command, 'npx -y skx install');
 });
+
+// kit-followups 2.2: a project tool with install: none is never installed
+test('project tool with install: none is present, never installed', () => {
+  const reg = { phases: [], tools: [{ name: 'ctx', tier: 'global', status: 'trial', scope: 'project', check: 'check ctx', install: 'none', install_note: 'runs through npx' }] };
+  const p = planProject({ dir: tmp(), registry: reg, version: '9.9.9', today: '2026-10-01', deps: { platform: 'win32', run: () => ({ status: 1, stdout: '', stderr: '' }) } });
+  assert.equal(p.tools[0].action, 'present');
+});

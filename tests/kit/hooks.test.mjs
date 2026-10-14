@@ -7,7 +7,6 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gate, reminder } from '../../plugins/kit/hooks/archive-gate.mjs';
 import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
-import { hint } from '../../plugins/kit/hooks/library-hint.mjs';
 import { runVerify, addFinding, addOverride } from '../../plugins/kit/scripts/verify.mjs';
 import { tmpDir } from '../../tools/test-root.mjs';
 
@@ -55,43 +54,6 @@ test('gate script end to end: deny JSON on stdout', () => {
   const out = JSON.parse(r.stdout);
   assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
   assert.match(out.hookSpecificOutput.permissionDecisionReason, /\/kit:verify/);
-});
-
-// 3.2 library hint
-const failed = (command, stderr, exit_code = 1) => ({ hook_event_name: 'PostToolUse', tool_name: 'Bash', tool_input: { command }, tool_response: { stdout: '', stderr, exit_code } });
-
-test('library API mismatch names the package', () => {
-  const d = kitProject();
-  assert.match(hint(failed('npm run build', "Attempted import error: 'revalidateTag' is not exported from 'next/cache'."), d), /from "next"[\s\S]*npx -y ctx7@latest library next/);
-  assert.match(hint(failed('npx tsc --noEmit', `src/a.ts(1,10): error TS2305: Module '"drizzle-orm/pg-core"' has no exported member 'pgTabel'.`), d), /"drizzle-orm"/);
-  assert.match(hint(failed('npm test', "Error: Cannot find module '@scope/pkg/sub'"), d), /"@scope\/pkg"/);
-  assert.match(hint(failed('npm test', 'TypeError: x.foo is not a function\n    at f (C:\\p\\node_modules\\zod\\lib\\index.js:1:1)'), d), /"zod"/);
-});
-
-test('no hint for own bugs, success, relative modules, non-build commands, or outside kit projects', () => {
-  const d = kitProject();
-  assert.equal(hint(failed('npm test', 'AssertionError: expected 2 to equal 3'), d), null);
-  assert.equal(hint(failed('npm run build', "is not exported from 'next/cache'", 0), d), null);
-  assert.equal(hint(failed('npm test', "Cannot find module './util'"), d), null);
-  assert.equal(hint(failed('git status', "is not exported from 'next/cache'"), d), null);
-  assert.equal(hint(failed('npm run build', "is not exported from 'next/cache'"), kitProject(false)), null);
-});
-
-test('hint script end to end: additionalContext on stdout', () => {
-  const d = kitProject();
-  const r = spawnSync(process.execPath, [path.join(hooks, 'library-hint.mjs')], { input: JSON.stringify(failed('npm run build', "'x' is not exported from 'next/cache'")), env: { ...process.env, CLAUDE_PROJECT_DIR: d }, encoding: 'utf8' });
-  const out = JSON.parse(r.stdout);
-  assert.equal(out.hookSpecificOutput.hookEventName, 'PostToolUse');
-  assert.match(out.hookSpecificOutput.additionalContext, /ctx7/);
-});
-
-test('failed command as PostToolUseFailure (real event shape, seen live): hint from the error string', () => {
-  const d = kitProject();
-  const ev = { hook_event_name: 'PostToolUseFailure', tool_name: 'Bash', tool_input: { command: 'npm run build' }, error: "Exit code 1\n\n> build\n\nAttempted import error: 'revalidateTagz' is not exported from 'next/cache'." };
-  assert.match(hint(ev, d), /"next"/);
-  const r = spawnSync(process.execPath, [path.join(hooks, 'library-hint.mjs')], { input: JSON.stringify(ev), env: { ...process.env, CLAUDE_PROJECT_DIR: d }, encoding: 'utf8' });
-  assert.equal(JSON.parse(r.stdout).hookSpecificOutput.hookEventName, 'PostToolUseFailure');
-  assert.equal(hint({ ...ev, error: 'Exit code 1\n\nAssertionError: expected 1 to be 2' }, d), null);
 });
 
 // build-readiness 5.4: reminder about open decisions on an allowed archive

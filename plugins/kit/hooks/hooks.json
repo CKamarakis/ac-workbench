@@ -1,5 +1,5 @@
 {
-  "description": "Kit quality gates (inert outside kit projects): archive gate and library-error hint.",
+  "description": "Kit quality gate (inert outside kit projects): archive gate.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,18 +8,6 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/archive-gate.mjs\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/library-hint.mjs\"",
             "timeout": 15
           }
         ]

@@ -18,9 +18,9 @@
 
 ## 4. Skill and checklist
 
-- [ ] 4.1 `skills/harness-review/checklist.md` (design D3): the 8 layers, 3-5 questions each, what OK / PARTIAL / GAP means, the built-in to point to. Verify by reading it against the spec's layer requirements
-- [ ] 4.2 `skills/harness-review/SKILL.md`: scan, map first, rate with the checklist, built-in pointers, kit checks only with the kit, scorecard and top 3 fixes, read-only, save as a note on a yes with user-level items as counts only; the short report for an almost empty setup (design D5). Verify the install check in `npm test` passes (frontmatter, name matches folder)
-- [ ] 4.3 Evals `evals/harness-review/cases.yaml`: script cases (scan output on fixtures, nothing written) and rubric cases (map first, 8 layers, at most 3 fixes with reasons, no kit mention without the kit, built-ins pointed to). Verify `npm run evals` for `harness-review` passes its script cases
+- [x] 4.1 `skills/harness-review/checklist.md` (design D3): the 8 layers, 3-5 questions each, what OK / PARTIAL / GAP means, the built-in to point to. Verify by reading it against the spec's layer requirements
+- [x] 4.2 `skills/harness-review/SKILL.md`: scan, map first, rate with the checklist, built-in pointers, kit checks only with the kit, scorecard and top 3 fixes, read-only, save as a note on a yes with user-level items as counts only; the short report for an almost empty setup (design D5). Verify the install check in `npm test` passes (frontmatter, name matches folder)
+- [x] 4.3 Evals `evals/harness-review/cases.yaml`: script cases (scan output on fixtures, nothing written) and rubric cases (map first, 8 layers, at most 3 fixes with reasons, no kit mention without the kit, built-ins pointed to). Verify `npm run evals` for `harness-review` passes its script cases
 
 ## 5. Trials
 

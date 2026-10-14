@@ -1,0 +1,120 @@
+# Eval cases for /kit:harness-review (spec: harness-review). Scripts run for real in the sandbox; the judgment
+# cases are prompt + rubric and stay pending until scored (--scores), as for the other skills.
+skill: harness-review
+vars:
+  h: '{{kit}}/scripts/harness.mjs'
+
+cases:
+  - id: scan-plain-project
+    description: A project without the kit lists its CLAUDE.md, skills and blocking hook, and says the kit isn't present
+    setup:
+      git_init: true
+      files:
+        CLAUDE.md: "# App\nRun npm test before you finish.\n"
+        .claude/skills/deploy/SKILL.md: "---\nname: deploy\ndescription: Deploy the app\n---\n"
+        .claude/settings.json: '{"permissions":{"deny":["Read(.env)"]},"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"node guard.mjs"}]}]}}'
+    checks:
+      - kind: command-exit
+        command: node "{{h}}" scan --dir .
+        stdout_match: 'instructions: CLAUDE\.md'
+      - kind: command-exit
+        command: node "{{h}}" scan --dir .
+        stdout_match: 'skills: 1 project \(deploy\)'
+      - kind: command-exit
+        command: node "{{h}}" scan --dir .
+        stdout_match: 'PreToolUse \[Bash\] \(can block\)  from \.claude/settings\.json'
+      - kind: command-exit
+        command: node "{{h}}" scan --dir .
+        stdout_match: 'kit: not present'
+
+  - id: scan-broken-settings
+    description: An unreadable settings file is reported and the scan still finishes
+    setup:
+      git_init: true
+      files:
+        CLAUDE.md: "x\n"
+        .claude/settings.json: "{ not json"
+    checks:
+      - kind: command-exit
+        command: node "{{h}}" scan --dir .
+        stdout_match: 'UNREADABLE \.claude/settings\.json'
+
+  - id: scan-writes-nothing
+    description: The scan leaves the project as it was (git sees no change)
+    setup:
+      git_init: true
+      files:
+        CLAUDE.md: "x\n"
+    checks:
+      - kind: command-exit
+        command: node "{{h}}" scan --dir . && git status --porcelain
+        stdout_match: 'harness scan'
+      - kind: command-exit
+        command: node -e "process.exitCode = require('fs').readdirSync('.').filter(f => f !== '.git' && f !== 'CLAUDE.md').length"
+
+  - id: skill-rules-in-text
+    description: The skill states the read-only rule, the built-in pointers, and the privacy rule for saved notes
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/harness-review/SKILL.md', pattern: 'Never create, change or delete a file' }
+      - { kind: content-match, path: '{{kit}}/skills/harness-review/SKILL.md', pattern: '/doctor prompt-audit' }
+      - { kind: content-match, path: '{{kit}}/skills/harness-review/SKILL.md', pattern: '/skill-doctor' }
+      - { kind: content-match, path: '{{kit}}/skills/harness-review/SKILL.md', pattern: 'appear as counts only' }
+      - { kind: content-match, path: '{{kit}}/skills/harness-review/checklist.md', pattern: 'steps for a recurring task belong in a skill' }
+
+  - id: review-format
+    description: A full review starts with the map and ends with the scorecard and at most three fixes
+    setup:
+      git_init: true
+      files:
+        CLAUDE.md: "# App\nRun npm test before you finish.\n"
+        package.json: '{"scripts":{"test":"node -e 0"}}'
+    input:
+      prompt: "/kit:harness-review"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: map-first
+            description: The first section is a plain-ASCII map of the setup
+          - name: eight-layers
+            description: All eight layers are rated OK, PARTIAL or GAP, each with a note naming its evidence
+          - name: max-three-fixes
+            description: At most three fixes, each naming its layer and why it matters
+          - name: builtins-pointed
+            description: Points to /doctor prompt-audit for instructions and /skill-doctor for skills instead of doing their work
+          - name: no-kit-mention
+            description: Doesn't mention the kit or suggest installing it (the project has no .claude/kit.json)
+          - name: read-only
+            description: Creates or changes no file
+
+  - id: empty-setup-short
+    description: An almost empty project gets a short report whose first fix is a CLAUDE.md
+    setup:
+      git_init: true
+      files:
+        README.md: "# Empty\n"
+    input:
+      prompt: "/kit:harness-review"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: short
+            description: The report is short; the map shows what's missing
+          - name: first-fix-claude-md
+            description: The first fix is writing a CLAUDE.md, saying what it should hold
+
+  - id: saved-note-private
+    description: On a yes, the saved note names project items and shows the user's personal setup as counts only
+    setup:
+      git_init: true
+      files:
+        CLAUDE.md: "# App\n"
+        knowledge/notes/.gitkeep: ""
+    input:
+      prompt: "/kit:harness-review  (answer yes to saving it)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: note-written
+            description: Writes the note with knowledge.mjs new-note only after the yes
+          - name: personal-as-counts
+            description: The note lists user-level skills, plugins and memory as counts, never by name

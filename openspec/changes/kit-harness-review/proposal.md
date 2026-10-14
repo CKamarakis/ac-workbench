@@ -38,5 +38,5 @@ A Claude Code setup grows piece by piece (CLAUDE.md, rules, skills, hooks, permi
 - New: `plugins/kit/scripts/harness.mjs`, `plugins/kit/skills/harness-review/SKILL.md` and `checklist.md`, `tests/kit/harness.test.mjs`, `evals/harness-review/cases.yaml`; `toolkit.yaml` (phases `assess` added, `kit-issues` rerouted; the `kit` entry's reason no longer lists `/kit:feedback`); `README.md` mentions of `/kit:feedback`.
 - `openspec/changes/kit-overview-feedback` moves to the archive without touching main specs.
 - Reads user-level files (`~/.claude`) and the project's auto memory: names, sizes, types and frontmatter only in the scan output, never memory text; nothing leaves the machine.
-- Unverified: whether a skill can run `/doctor prompt-audit` itself (the plan only tells the user which to run); what `/context` shows.
+- Checked 2026-10-14 (official docs): the memory folder location and its three overrides (design D2a); `/context` shows what fills the context window. Not documented: whether a skill can run `/doctor` or `/skill-doctor` itself, so the review tells the user which to run.
 - Kit version 0.10.0.

@@ -12,7 +12,7 @@
 
 ## 3. Scan script
 
-- [ ] 3.1 `plugins/kit/scripts/harness.mjs scan --dir . [--home <dir>] [--json]` (design D1, D2; spec "Setup scan"): instruction files, rules, skills, subagents, commands (project and user), hooks per event, permissions, MCP servers, enabled plugins, kit present, auto-memory files with type, size and shape signals; unreadable files reported. Verify with `tests/kit/harness.test.mjs` on fixture projects in the test area: plain project without the kit; kit project; broken `settings.json`; a memory file with numbered steps; no memory folder
+- [ ] 3.1 `plugins/kit/scripts/harness.mjs scan --dir . [--home <dir>] [--json]` (design D1, D2; spec "Setup scan"): instruction files, rules, skills, subagents, commands (project and user), hooks per event, permissions, MCP servers, enabled plugins, kit present, auto-memory files with type, size and shape signals, the memory folder found per design D2a (settings override, config dir, project-dir name, git root); unreadable files reported. Verify with `tests/kit/harness.test.mjs` on fixture projects in the test area: plain project without the kit; kit project; broken `settings.json`; a memory file with numbered steps; no memory folder; `autoMemoryDirectory` set; a subfolder of a git repo uses the root's memory folder
 - [ ] 3.2 Kit checks (design D4, spec "Kit checks only with the kit"): `laneMap` conflicts and routing-block status in the scan output when `.claude/kit.json` exists, absent otherwise. Verify with the same test file: overlap fixture reported; no kit fields without the kit
 - [ ] 3.3 Read-only check: run the scan on a fixture and compare the file tree and modified times before and after. Verify in the test
 

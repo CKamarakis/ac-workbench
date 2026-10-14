@@ -100,6 +100,7 @@ export function specTree(specs) {
 // Windows editors may save a UTF-8 BOM; it would hide frontmatter and the first heading.
 const read = f => { try { return fs.readFileSync(f, 'utf8').replace(/^﻿/, ''); } catch { return null; } };
 const list = d => { try { return fs.readdirSync(d, { withFileTypes: true }); } catch { return []; } };
+const byRel = (a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0);
 
 /** Section bodies of a Markdown file by `## ` heading. */
 function sections(text) {
@@ -270,16 +271,19 @@ export function pageStatus(dir) {
 export function undecided(dir, specPaths = findSpecs(dir).map(s => s.path), warnings = []) {
   const root = path.join(dir, 'openspec', 'changes');
   const out = [];
-  for (const e of list(root).filter(e => e.isDirectory() && e.name !== 'archive').sort((a, b) => a.name.localeCompare(b.name))) {
-    const file = path.join(root, e.name, 'decisions.md');
+  // Active changes first, then archived ones: a decision put off stays visible after its change is archived (kit-followups D3).
+  const active = list(root).filter(e => e.isDirectory() && e.name !== 'archive').map(e => ({ rel: e.name, change: e.name, archived: false }));
+  const archived = list(path.join(root, 'archive')).filter(e => e.isDirectory()).map(e => ({ rel: `archive/${e.name}`, change: e.name.replace(/^\d{4}-\d{2}-\d{2}-/, ''), archived: true }));
+  for (const c of [...active.sort(byRel), ...archived.sort(byRel)]) {
+    const file = path.join(root, c.rel, 'decisions.md');
     if (!fs.existsSync(file)) continue;
     const state = readDecisions(file);
-    if (!state) { warnings.push(`openspec/changes/${e.name}/decisions.md could not be read`); continue; }
+    if (!state) { warnings.push(`openspec/changes/${c.rel}/decisions.md could not be read`); continue; }
     for (const i of state.items ?? []) {
       if (i.status !== 'open' && i.status !== 'later') continue;
       const from = posix(String(i.from ?? ''));
       const specPath = specPaths.filter(sp => from.includes(`specs/${sp}/`)).sort((a, b) => b.length - a.length)[0] ?? null;
-      out.push({ change: e.name, id: i.id, text: i.text, date: i.dates?.later ?? i.dates?.opened ?? '', status: i.status, specPath });
+      out.push({ change: c.change, id: i.id, text: i.text, date: i.dates?.later ?? i.dates?.opened ?? '', status: i.status, specPath, ...(c.archived ? { archived: true } : {}) });
     }
   }
   return out;

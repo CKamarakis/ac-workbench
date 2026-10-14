@@ -19,9 +19,9 @@
 
 ## 4. Decisions after archive
 
-- [ ] 4.1 `decisions.mjs` finds an archived change by name (design D3, spec build-readiness "Decisions after archive"). Verify with a test: decide D2 of an archived change; the record shows the answer and date
-- [ ] 4.2 Docs page shows open/Later items from archived changes, labelled with their change (spec living-docs "Open decisions on the page"). Verify with `tests/kit/docs.test.mjs`: the "Later decision survives the archive" scenario; extend the smoke test so the page built after the archive still says "1 undecided"
-- [ ] 4.3 `/kit:next` line "N decisions still open in archived changes" (design D3, spec build-readiness). Verify with `tests/kit/next.test.mjs` and a smoke-test step after the archive
+- [x] 4.1 `decisions.mjs` finds an archived change by name (design D3, spec build-readiness "Decisions after archive"). Verify with a test: decide D2 of an archived change; the record shows the answer and date
+- [x] 4.2 Docs page shows open/Later items from archived changes, labelled with their change (spec living-docs "Open decisions on the page"). Verify with `tests/kit/docs.test.mjs`: the "Later decision survives the archive" scenario; extend the smoke test so the page built after the archive still says "1 undecided"
+- [x] 4.3 `/kit:next` line "N decisions still open in archived changes" (design D3, spec build-readiness). Verify with `tests/kit/next.test.mjs` and a smoke-test step after the archive
 
 ## 5. Docs page fixes
 

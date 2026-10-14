@@ -121,3 +121,20 @@ test('a decisions.md with broken data stops the next write; "-->" in a text roun
   assert.throws(() => addDecision({ dir: d, ...base, kind: 'gap', text: 'Third', from: 'spec' }), /can't be read/);
   assert.equal(fs.readFileSync(file(d), 'utf8'), broken);
 });
+
+// kit-followups 4.1 / 4.3: decisions after archive
+import { archivedOpen } from '../../plugins/kit/scripts/decisions.mjs';
+test('a Later item in an archived change can still be decided, found by its change name', () => {
+  const d = tmpDir('kit-decisions-arch-');
+  fs.mkdirSync(path.join(d, 'openspec/changes/storms-canvas'), { recursive: true });
+  addDecision({ dir: d, change: 'storms-canvas', kind: 'gap', text: 'Keep undo history?', from: 'design.md', options: 'Yes|No|Later' });
+  addDecision({ dir: d, change: 'storms-canvas', kind: 'gap', text: 'Empty board hint?', from: 'design.md', options: 'Yes|No|Later' });
+  later({ dir: d, change: 'storms-canvas', id: 'D2' });
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive'), { recursive: true });
+  fs.renameSync(path.join(d, 'openspec/changes/storms-canvas'), path.join(d, 'openspec/changes/archive/2026-10-12-storms-canvas'));
+  assert.deepEqual(archivedOpen(d), { open: 2, oldest: archivedOpen(d).oldest, changes: ['storms-canvas'] });
+  decide({ dir: d, change: 'storms-canvas', id: 'D2', answer: 'keep full undo history' });
+  const st = readDecisions(path.join(d, 'openspec/changes/archive/2026-10-12-storms-canvas/decisions.md'));
+  assert.equal(st.items.find(i => i.id === 'D2').answer, 'keep full undo history');
+  assert.equal(archivedOpen(d).open, 1);
+});

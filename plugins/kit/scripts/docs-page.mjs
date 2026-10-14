@@ -170,7 +170,8 @@ function treeItems(nodes) {
 }
 
 const linkCards = text => esc(text).replace(/\[\[([^\]]+)\]\]/g, (_, s) => `<a href="#foundations/${slugId(s)}">${s}</a>`);
-const undItem = u => `<div class="und">${esc(u.text)}<small>${esc(u.change)} · ${u.status === 'later' ? 'put off' : 'open'} since ${esc(u.date)}</small></div>`;
+const changeLabel = u => `${u.archived ? 'archived change ' : ''}${esc(u.change)}`;
+const undItem = u => `<div class="und">${esc(u.text)}<small>${changeLabel(u)} · ${u.status === 'later' ? 'put off' : 'open'} since ${esc(u.date)}</small></div>`;
 
 function story(sc, i) {
   const rows = sc.rows.map(r => `<div class="row"><span class="kw">${esc(r.kw)}</span><span>${esc(r.text)}</span></div>`).join('');
@@ -210,7 +211,7 @@ function overview(m) {
   const all = Object.entries(m.undecidedByChange ?? {}).flatMap(([, list]) => list);
   const pageUnd = Object.entries(m.pages).flatMap(([p, pg]) => pg.undecided.map(u => ({ ...u, path: p })));
   const count = all.length + pageUnd.length;
-  const list = pageUnd.map(u => `<div class="und"><a href="#spec/${esc(u.path)}">${esc(m.pages[u.path].title)}</a>: ${esc(u.text)}<small>${esc(u.change)} · since ${esc(u.date)}</small></div>`).join('')
+  const list = pageUnd.map(u => `<div class="und"><a href="#spec/${esc(u.path)}">${esc(m.pages[u.path].title)}</a>: ${esc(u.text)}<small>${changeLabel(u)} · since ${esc(u.date)}</small></div>`).join('')
     + all.map(undItem).join('');
   return `<section class="page wide" data-page="overview"><div class="main"><h2>${esc(m.title)}</h2>
 ${m.empty ? '<p class="purpose">No specs yet. Behaviors appear here once a change is archived.</p>' : `<p class="purpose">${plural(Object.keys(m.pages).length, 'sub-feature')}. Pick one on the left.</p>`}

@@ -23,8 +23,35 @@ const isOpen = i => i.status === 'open' || i.status === 'later';
 function changeFolder(dir, change) {
   if (!change || !/^[a-z0-9][a-z0-9-]*$/.test(change)) throw new Error('--change <name> is required (kebab-case)');
   const d = path.join(dir, 'openspec', 'changes', change);
-  if (!fs.existsSync(d)) throw new Error(`change not found: openspec/changes/${change}`);
-  return d;
+  if (fs.existsSync(d)) return d;
+  // An archived change is still found by its name: decisions left for Later stay decidable (kit-followups D3).
+  const arch = archivedFolders(dir).filter(a => a.change === change).at(-1);
+  if (arch) return arch.path;
+  throw new Error(`change not found: openspec/changes/${change} (or in the archive)`);
+}
+
+/** Archived change folders, oldest first: { folder, change, path }. */
+function archivedFolders(dir) {
+  const root = path.join(dir, 'openspec', 'changes', 'archive');
+  let names = [];
+  try { names = fs.readdirSync(root, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name); } catch { /* no archive */ }
+  return names.map(n => ({ folder: n, change: n.replace(/^\d{4}-\d{2}-\d{2}-/, ''), path: path.join(root, n) })).sort((a, b) => (a.folder < b.folder ? -1 : a.folder > b.folder ? 1 : 0));
+}
+
+/** Open and Later items left in archived changes, for the /kit:next reminder. */
+export function archivedOpen(dir) {
+  const items = [], changes = [];
+  for (const a of archivedFolders(dir)) {
+    const st = readDecisions(path.join(a.path, 'decisions.md'));
+    const open = (st?.items ?? []).filter(isOpen);
+    if (open.length) { items.push(...open); changes.push(a.change); }
+  }
+  return { open: items.length, oldest: items.length ? oldestOf(items) : null, changes };
+}
+
+/** One line for /kit:next, or null. */
+export function archivedLine(a) {
+  return a?.open ? `${a.open} decision${a.open === 1 ? '' : 's'} still open in archived changes (${a.changes.join(', ')})` : null;
 }
 const fileOf = (dir, change) => path.join(changeFolder(dir, change), 'decisions.md');
 

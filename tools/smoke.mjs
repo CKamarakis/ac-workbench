@@ -121,7 +121,10 @@ function main() {
     { name: 'openspec: archive', ...openspec(['archive', CHANGE, '-y']), expect: { line: /archived as/, file: 'openspec/specs/storms/stickies/spec.md' } },
     { name: 'archive: flat spec', ...local('check flat spec', () => { if (!fs.existsSync(path.join(proj, 'openspec/specs/board/spec.md'))) throw new Error('missing openspec/specs/board/spec.md'); }) },
     { name: 'next: explore', ...node('scripts/next.mjs', d), expect: { line: /Next: \/opsx:explore/ } },
-    { name: 'docs: build', ...node('scripts/docs.mjs', ['build', ...d]), expect: { line: /2 specs, 2 requirements/ } },
+    { name: 'next: archived decision', ...node('scripts/next.mjs', d), expect: { line: /1 decision still open in archived changes \(smoke-change\)/ } },
+    { name: 'docs: build', ...node('scripts/docs.mjs', ['build', ...d]), expect: { line: /2 specs, 2 requirements, .*1 undecided/ } },
+    { name: 'decisions: decide after archive', ...node('scripts/decisions.mjs', ['decide', ...c, '--id', 'D1', '--answer', 'Show a hint']), expect: { line: /decided D1/ } },
+    { name: 'docs: build (decided)', ...node('scripts/docs.mjs', ['build', ...d]), expect: { line: /0 undecided/ } },
     { name: 'docs: scan', ...node('scripts/docs.mjs', ['scan', ...d]), expect: { line: /page: up to date/ } },
   ];
 

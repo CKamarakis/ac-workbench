@@ -180,6 +180,7 @@ test('scan: cards found; page stale when built from an older archive', () => {
 
 // ---- Task 5: build (3.2-3.4)
 import { buildModel, build, undecided } from '../../plugins/kit/scripts/docs.mjs';
+import { renderPage } from '../../plugins/kit/scripts/docs-page.mjs';
 
 const decisionsFile = (items) => `# Decisions\n\n<!-- kit-decisions-data ${JSON.stringify({ change: 'x', next: items.length + 1, items, readyAt: null })} -->\n`;
 const item = (id, from, status = 'open') => ({ id, kind: 'gap', text: `Question ${id}?`, from, status, dates: { opened: '2026-10-12' } });
@@ -343,4 +344,15 @@ test('S1: a PRD path outside the project is ignored', () => {
   fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('knowledge/prds/storms-canvas.md', `../${path.basename(outside)}`));
   const prd = buildModel({ dir: d }).pages['storms/stickies'].prd;
   assert.equal(prd, null);
+});
+
+// kit-followups 4.2: a Later decision survives the archive on the page
+test('undecided items from archived changes stay on the page, labelled with their change', () => {
+  const d = project();
+  w(d, 'openspec/changes/archive/2026-10-12-b/decisions.md', decisionsFile([item('D7', 'openspec/changes/b/specs/storms/stickies/spec.md:5', 'later'), { ...item('D8', 'design.md:1'), status: 'decided' }]));
+  const u = undecided(d).filter(x => x.archived);
+  assert.deepEqual(u.map(x => [x.id, x.change, x.specPath, x.status]), [['D7', 'b', 'storms/stickies', 'later']]);
+  const m = buildModel({ dir: d });
+  assert.equal(m.pages['storms/stickies'].undecided.length, 1);
+  assert.match(renderPage(m), /archived change b/);
 });

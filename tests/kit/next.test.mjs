@@ -306,3 +306,12 @@ test('Ready PRD waits for the active change: suggestion stays on the change, wit
   assert.match(s.waiting, /PRD gift-cards is Ready; it waits until storms-canvas is done/);
   assert.match(format(s), /PRD gift-cards is Ready; it waits until storms-canvas is done/);
 });
+
+// kit-followups 4.3: decisions left open in archived changes ride along, never replacing the step
+test('archived open decisions add one line; the suggested step is unchanged', () => {
+  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map, archived: { open: 2, oldest: '2026-10-12', changes: ['storms-canvas'] } });
+  assert.match(s.reason, /No active change/);
+  assert.match(s.archived, /^2 decisions still open in archived changes \(storms-canvas\)/);
+  assert.match(format(s), /2 decisions still open in archived changes/);
+  assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).archived, undefined);
+});

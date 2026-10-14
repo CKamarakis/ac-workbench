@@ -12,7 +12,7 @@ import { locate, pathWith } from './locate.mjs';
 import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
 import { pageStatus } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
-import { decisionStatus, openLine } from './decisions.mjs';
+import { decisionStatus, openLine, archivedOpen, archivedLine } from './decisions.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 
@@ -96,7 +96,7 @@ export function docsLine(page) {
   return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
 }
 
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -105,7 +105,7 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
   const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: active[0]?.name, changedSince });
   const questions = questionsLine(knowledge);
-  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(warnings.length ? { warnings } : {}) });
+  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
   if (suggestion) return withWarnings(suggestion);
   return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
 }
@@ -161,6 +161,7 @@ export function format(s) {
   if (s.open) lines.push(`  open:  ${s.open}`);
   if (s.questions) lines.push(`  later: ${s.questions}`);
   if (s.waiting) lines.push(`  waiting: ${s.waiting}`);
+  if (s.archived) lines.push(`  archived: ${s.archived}`);
   if (s.docs) lines.push(`  docs:  ${s.docs}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
@@ -269,6 +270,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir) });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

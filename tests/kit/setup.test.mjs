@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { plan, apply, formatPlan, formatResult } from '../../plugins/kit/scripts/setup.mjs';
 
 const tool = (name, extra = {}) => ({
@@ -110,6 +111,22 @@ test('warns when a project-scope plugin is enabled in user settings', () => {
   const p = plan(registry([tool('superpowers', { scope: 'project', status: 'trial' })]), m.deps);
   assert.equal(p.warnings.length, 1);
   assert.match(p.warnings[0], /superpowers@superpowers-marketplace.*user scope/);
+});
+
+// kit-per-project 2.1 (spec tool-setup "Kit found installed at user level", "Fresh machine gets the marketplace, not the kit")
+test('kit at user level: warning gives the safe order (per project first, then uninstall the user-level kit)', () => {
+  const m = fakeDeps({ userPlugins: { 'kit@ac-workbench': true } });
+  const p = plan(registry([tool('kit', { scope: 'project', plugin: 'kit@ac-workbench' })]), m.deps);
+  assert.equal(p.warnings.length, 1);
+  assert.match(p.warnings[0], /first install it per project.*kit@ac-workbench --scope project.*then.*claude plugin uninstall kit@ac-workbench --scope user/s);
+});
+
+test('real registry, fresh machine: the kit marketplace is missing; the kit itself is skipped as project scope', () => {
+  const real = JSON.parse(fs.readFileSync(new URL('../../plugins/kit/data/toolkit.json', import.meta.url), 'utf8'));
+  const p = plan(real, fakeDeps().deps);
+  assert.ok(p.missing.some(x => x.name === 'ac-workbench-marketplace'));
+  assert.match(p.skipped.find(x => x.name === 'kit').reason, /project scope/);
+  assert.ok(!p.missing.some(x => x.name === 'kit'));
 });
 
 // kit-cross-platform 2.2, 2.3: install command per platform; missing Homebrew

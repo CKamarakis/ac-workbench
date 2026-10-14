@@ -401,22 +401,24 @@
       "name": "kit",
       "source": "github:CKamarakis/ac-workbench",
       "tier": "global",
-      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:ready, /kit:verify, /kit:docs, /kit:harness-review; the only plugin enabled for every session",
+      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:ready, /kit:verify, /kit:docs, /kit:harness-review; enabled per project, like every other tool (user, 2026-10-14)",
       "cost": "free",
       "status": "adopted",
-      "scope": "machine",
+      "scope": "project",
+      "plugin": "kit@ac-workbench",
       "check": "claude plugin list --json",
-      "check_match": "\"kit@ac-workbench\"",
+      "check_match": "\"id\": \"kit@ac-workbench\"[^}]*\"projectEnabled\": true",
       "install": {
-        "all": "claude plugin marketplace add CKamarakis/ac-workbench && claude plugin install kit@ac-workbench --scope user"
+        "all": "claude plugin install kit@ac-workbench --scope project --json"
       },
+      "install_why": "this project used your user-level kit; once every kit project has its own, remove that one with `claude plugin uninstall kit@ac-workbench --scope user`",
       "rubric": {
         "problem_fit": "Bootstraps and routes everything else",
         "overlap": "None",
         "context_cost": "Low; a few skills",
         "run_cost": "Free",
         "trust": "Own code, public repo, gitleaks-checked",
-        "reversibility": "claude plugin uninstall kit@ac-workbench",
+        "reversibility": "claude plugin uninstall kit@ac-workbench --scope project",
         "license": "Own work"
       },
       "reviewed_version": "0.1.0",
@@ -482,6 +484,38 @@
           "status": "adopted",
           "rationale": "Built in, no install; owner of the review phase and an input to /kit:verify (quality-gates)",
           "evidence": "openspec/changes/quality-gates/design.md"
+        }
+      ]
+    },
+    {
+      "name": "ac-workbench-marketplace",
+      "source": "github:CKamarakis/ac-workbench",
+      "tier": "global",
+      "reason": "Makes the kit available to install per project; registering a marketplace enables nothing by itself",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "claude plugin marketplace list --json",
+      "check_match": "\"ac-workbench\"",
+      "install": {
+        "all": "claude plugin marketplace add CKamarakis/ac-workbench"
+      },
+      "rubric": {
+        "problem_fit": "Needed for per-project kit installs",
+        "overlap": "None",
+        "context_cost": "None until the kit is enabled in a project",
+        "run_cost": "Free",
+        "trust": "Own repo, public, gitleaks-checked",
+        "reversibility": "claude plugin marketplace remove ac-workbench (also uninstalls the kit everywhere)",
+        "license": "Own work"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-14",
+      "verdicts": [
+        {
+          "date": "2026-10-14",
+          "status": "adopted",
+          "rationale": "Split from the kit entry when the kit moved to per-project installs (change kit-per-project)"
         }
       ]
     },

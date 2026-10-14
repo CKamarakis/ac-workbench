@@ -94,6 +94,7 @@ function main() {
   const steps = [
     { name: 'test project', ...local('write package.json', () => fs.writeFileSync(path.join(proj, 'package.json'), JSON.stringify({ name: 'smoke', private: true, scripts: { test: 'node -e 0' } }, null, 2))) },
     { name: 'start: plan', ...node('scripts/start-plan.mjs', [...d, '--type', 'none']), expect: { line: /change\(s\) to apply/ } },
+    { name: 'start: kit per project', ...node('scripts/start-plan.mjs', [...d, '--type', 'none']), expect: { line: /claude plugin install kit@ac-workbench --scope project/ } },
     { name: 'start: apply', ...node('scripts/start-apply.mjs', [...d, '--type', 'none', '--accept', 'all', '--home', home]), expect: { line: /ran\s+openspec init/, noLine: /ERROR/, file: '.claude/kit.json' } },
     { name: 'start: files', ...local('check files', () => { for (const f of ['CLAUDE.md', 'knowledge/notes', 'openspec/config.yaml']) if (!fs.existsSync(path.join(proj, f))) throw new Error(`missing ${f}`); }) },
     { name: 'capture: note', ...node('scripts/knowledge.mjs', ['new-note', ...d, '--title', 'Sticky notes on a board', '--body', 'Users want sticky notes they can drag.', '--date', '2026-01-01']), expect: { line: /created notes\/2026-01-01-sticky-notes-on-a-board\.md/ } },

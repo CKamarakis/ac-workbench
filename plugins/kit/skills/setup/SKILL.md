@@ -7,7 +7,7 @@ description: Install the kit's machine toolset (git, gh, jq, gitleaks, openspec,
 
 Brings this machine up to the kit's toolset from the registry. It is safe to re-run: present tools are never reinstalled.
 
-**Scope rule:** this skill installs machine-scope tools only (CLIs, the kit plugin, plugin marketplaces). It never enables workflow plugins such as Superpowers for the whole machine; `/kit:start` enables those per project.
+**Scope rule:** this skill installs machine-scope tools only (CLIs and plugin marketplaces, including the kit's own). Plugins, the kit included, are never enabled for the whole machine: the kit is installed in each project (`claude plugin install kit@ac-workbench --scope project` in its folder), and `/kit:start` enables the other tools per project.
 
 ## Steps
 
@@ -16,7 +16,7 @@ Brings this machine up to the kit's toolset from the registry. It is safe to re-
    node "${CLAUDE_PLUGIN_ROOT}/scripts/setup.mjs" plan
    ```
    - It ends with "Nothing to do": tell the user everything is present and stop.
-   - It shows `WARNING` lines (a project-scope plugin enabled for every session): explain them and ask whether to move the plugin to per-project. Do not change settings without a yes.
+   - It shows `WARNING` lines (a project-scope plugin enabled for every session): explain them and ask whether to move the plugin to per-project. Do not change settings without a yes. For the kit itself, keep the warning's order: per project first, the user-level uninstall last.
 
 2. **Confirm.** List the `MISSING` tools with their install commands. Ask the user to confirm: all of them, some of them, or none. Install nothing before they answer.
 

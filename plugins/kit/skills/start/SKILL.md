@@ -5,7 +5,7 @@ description: Set up or re-sync the current project with the kit - git, .gitignor
 
 # Kit start
 
-Sets up **this folder** as a kit project, or re-syncs one. Run it once per project (and again only to re-sync after a kit update). **It asks one question: the project type.** It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session.
+Sets up **this folder** as a kit project, or re-syncs one. Run it once per project (and again only to re-sync after a kit update). **It asks one question: the project type.** It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session. That includes the kit itself: a project that still runs on a user-level kit gets its own install in the plan.
 
 Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project folder (`--dir .`).
 

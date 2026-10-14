@@ -261,3 +261,23 @@ test('Later lists /kit:docs until the project has knowledge/docs', () => {
   fs.mkdirSync(path.join(d, 'knowledge', 'docs'), { recursive: true });
   assert.doesNotMatch(formatPlan(plan(d)), /kit:docs/);
 });
+
+// kit-per-project 2.2 (design D2; spec project-starter "Kit installed per project")
+test('the kit is a per-project tool: present when project-enabled, installed --scope project when only a user-level install serves it', () => {
+  const real = JSON.parse(fs.readFileSync(new URL('../../plugins/kit/data/toolkit.json', import.meta.url), 'utf8'));
+  const list = projectEnabled => ({ platform: 'win32', run: cmd => (cmd === 'claude plugin list --json'
+    ? { status: 0, stdout: JSON.stringify([{ id: 'kit@ac-workbench', scope: projectEnabled ? 'project' : 'user', enabled: true, projectEnabled }], null, 2), stderr: '' }
+    : { status: 1, stdout: '', stderr: '' }) });
+  const run = projectEnabled => planProject({ dir: tmp(), registry: real, version: '9.9.9', today: '2026-10-01', deps: list(projectEnabled) });
+
+  const own = run(true);
+  assert.equal(own.tools.find(t => t.name === 'kit').action, 'present');
+  assert.doesNotMatch(formatPlan(own), /uninstall kit@ac-workbench --scope user/);
+
+  const moved = run(false);
+  const kit = moved.tools.find(t => t.name === 'kit');
+  assert.equal(kit.action, 'install');
+  assert.equal(kit.command, 'claude plugin install kit@ac-workbench --scope project --json');
+  assert.match(kit.why, /global tier/);
+  assert.match(formatPlan(moved), /once every kit project has its own[^\n]*claude plugin uninstall kit@ac-workbench --scope user/);
+});

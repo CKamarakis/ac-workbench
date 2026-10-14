@@ -27,18 +27,25 @@ The repo is a Claude Code plugin marketplace with one plugin, `kit`.
 
 ## Install
 
-Needs Node and Claude Code. Once per machine:
+Needs Node and Claude Code. Once per machine, add the kit's marketplace (this enables nothing by itself):
 
 ```bash
 claude plugin marketplace add CKamarakis/ac-workbench
-claude plugin install kit@ac-workbench --scope user
 ```
 
-Then, in any Claude Code session, run `/kit:setup`. It installs the machine tools (git, gh, jq, gitleaks, OpenSpec) and asks before installing anything. Details: [`docs/setup.md`](docs/setup.md).
+The kit is installed **per project**, never for the whole machine, so it stays out of repos that aren't set up with it. In each project folder:
+
+```bash
+claude plugin install kit@ac-workbench --scope project
+```
+
+The first time on a machine, run `/kit:setup` in a session there. It installs the machine tools (git, gh, jq, gitleaks, OpenSpec) and asks before installing anything. Details: [`docs/setup.md`](docs/setup.md).
+
+The install is recorded in the project's `.claude/settings.json`. Someone who clones the project runs the same install command; until then Claude Code tells them the kit isn't installed there.
 
 ## Use it in a project
 
-Run `/kit:start` once in the project folder (again only to re-sync after a kit update).
+After the install above, run `/kit:start` once in the project folder (again only to re-sync after a kit update).
 - It asks **one question**: the project type. For a Next.js app it recommends `web-ui`.
 - It sets up git, OpenSpec, the `CLAUDE.md` workflow rules, a project context doc, the `knowledge/` folder, and the tools for that type, all for this project only.
 - Changes to files you already have are shown as diffs and need your yes.
@@ -96,7 +103,7 @@ Plain skills cost little while idle: only their name and one line sit in context
 
 | Tool | Installed | When it loads or runs |
 |---|---|---|
-| **kit** (this plugin) | once per machine, for every session | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions); the other adds a "look up the docs" hint when a build or test fails on a library |
+| **kit** (this plugin) | per project (`--scope project`); its marketplace once per machine | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions); the other adds a "look up the docs" hint when a build or test fails on a library |
 | **OpenSpec** | CLI once per machine; its `/opsx:…` skills per project (by `/kit:start`) | When you plan or build: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` |
 | **git, gh, jq** | once per machine (`/kit:setup`) | Only when a command calls them |
 | **gitleaks** | once per machine | On every `git commit`, in repos with the pre-commit hook enabled |

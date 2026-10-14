@@ -227,3 +227,75 @@ test('C9: block descriptions keep their paragraphs; quotes are stripped only as 
   const d = Object.fromEntries(scan(m.opts).skills.map(x => [x.name, x.description]));
   assert.deepEqual(d, { a: 'First part. Second part.', b: "It's fine'", c: '"a" and "b"', d: 'quoted whole' });
 });
+
+// kit-per-project re-verify findings on 598a7c1
+test('program name skips leading NAME=value assignments and env', () => {
+  const m = machine();
+  const h = c => ({ hooks: [{ type: 'command', command: c }] });
+  w(m.dir, '.claude/settings.json', JSON.stringify({ hooks: { Stop: [h('API_TOKEN=abc123 node notify.mjs')], SessionStart: [h('env SLACK=https://x/T0/B0/SECRET99 bash run.sh')] } }));
+  const s = scan(m.opts);
+  assert.deepEqual(s.hooks.map(x => x.program), ['node', 'bash']);
+  assert.ok(!/abc123|SECRET99/.test(JSON.stringify(s)));
+});
+
+test('in a git worktree, the main repo\'s project install of a plugin is used', () => {
+  const m = machine();
+  const g = (...a) => assert.equal(spawnSync(GIT, ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: m.dir }).status, 0, a.join(' '));
+  g('commit', '--allow-empty', '-qm', 'x');
+  const wt = tmpDir('kit-harness-wt-');
+  g('worktree', 'add', '-q', wt);
+  const pd = tmpDir('kit-harness-plugin-');
+  w(pd, 'skills/x/SKILL.md', skill('x', 'x'));
+  w(wt, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'p@m': true } }));
+  w(m.home, '.claude/plugins/installed_plugins.json', JSON.stringify({ plugins: { 'p@m': [{ scope: 'project', projectPath: m.dir, installPath: pd }] } }));
+  assert.deepEqual(scan({ ...m.opts, dir: wt }).plugins.map(p => [p.id, p.inspected]), [['p@m', true]]);
+});
+
+test('PermissionRequest hooks can block (they can deny)', () => {
+  const m = machine();
+  w(m.dir, '.claude/settings.json', JSON.stringify({ hooks: { PermissionRequest: [{ hooks: [{ type: 'command', command: 'node deny.mjs' }] }] } }));
+  assert.equal(scan(m.opts).hooks[0].blocking, true);
+});
+
+test('plugin hook files: the standard file counts once; a path outside the plugin is refused', () => {
+  const m = machine();
+  const pd = tmpDir('kit-harness-plugin-');
+  const stop = { hooks: { Stop: [{ hooks: [{ type: 'command', command: 'node s.mjs' }] }] } };
+  w(pd, 'hooks/hooks.json', JSON.stringify(stop));
+  w(pd, '.claude-plugin/plugin.json', JSON.stringify({ name: 'p', hooks: ['./hooks/hooks.json', '../outside.json'] }));
+  w(path.dirname(pd), 'outside.json', JSON.stringify({ hooks: { PreToolUse: [{ hooks: [{ type: 'command', command: 'node o.mjs' }] }] } }));
+  w(m.home, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'p@m': true } }));
+  w(m.home, '.claude/plugins/installed_plugins.json', JSON.stringify({ plugins: { 'p@m': [{ scope: 'user', installPath: pd }] } }));
+  const s = scan(m.opts);
+  assert.deepEqual(s.plugins[0].hooks, ['Stop']);
+  assert.ok(s.unreadable.some(u => /outside\.json/.test(u.file) && /outside the plugin/.test(u.error)));
+  fs.rmSync(path.join(path.dirname(pd), 'outside.json'), { force: true });
+});
+
+test('plugin MCP servers given as a file path or a list of paths are counted', () => {
+  const m = machine();
+  const pd = tmpDir('kit-harness-plugin-');
+  w(pd, '.claude-plugin/plugin.json', JSON.stringify({ name: 'p', mcpServers: ['./config/a.json', { inline: {} }] }));
+  w(pd, 'config/a.json', JSON.stringify({ mcpServers: { fromA: {} } }));
+  w(m.home, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'p@m': true } }));
+  w(m.home, '.claude/plugins/installed_plugins.json', JSON.stringify({ plugins: { 'p@m': [{ scope: 'user', installPath: pd }] } }));
+  assert.deepEqual(scan(m.opts).mcp.filter(x => x.source === 'plugin:p@m').map(x => x.name).sort(), ['fromA', 'inline']);
+});
+
+test('--home wins over CLAUDE_CONFIG_DIR from the environment', () => {
+  const m = machine();
+  w(m.home, '.claude/skills/mine/SKILL.md', skill('mine', 'mine'));
+  const cfg = tmpDir('kit-harness-cfg-');
+  w(cfg, 'skills/other/SKILL.md', skill('other', 'other'));
+  const r = spawnSync(process.execPath, [path.join(KIT, 'scripts', 'harness.mjs'), 'scan', '--dir', m.dir, '--home', m.home, '--json'], { encoding: 'utf8', env: { ...process.env, CLAUDE_CONFIG_DIR: cfg } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout).skills.filter(x => x.scope === 'user').map(x => x.name), ['mine']);
+});
+
+test('YAML-escaped quotes are unescaped', () => {
+  const m = machine();
+  w(m.dir, '.claude/skills/e/SKILL.md', "---\nname: e\ndescription: 'Don''t run in prod'\n---\n");
+  w(m.dir, '.claude/skills/f/SKILL.md', '---\nname: f\ndescription: "say \\"hi\\""\n---\n');
+  const d = Object.fromEntries(scan(m.opts).skills.map(x => [x.name, x.description]));
+  assert.deepEqual(d, { e: "Don't run in prod", f: 'say "hi"' });
+});

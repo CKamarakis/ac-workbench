@@ -1,7 +1,8 @@
 // /kit:harness-review scan: lists a project's Claude Code setup at no token cost (kit-harness-review design D1, D2,
 // D2a, D2b, D4; spec: harness-review "Setup scan"). Read-only. Memory files: name, type, size and shape only, never
 // their text. Plugins: what they turn on (hooks, skills), never a judgment of their code. Zero dependencies.
-// Usage: node harness.mjs scan [--dir <project>] [--json]
+// Usage: node harness.mjs scan [--dir <project>] [--home <dir>] [--json]
+//   --home: read that folder's .claude instead of the user's (CLAUDE_CONFIG_DIR is then ignored)
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,10 +22,27 @@ const dirs = d => { try { return fs.readdirSync(d, { withFileTypes: true }).filt
 const files = (d, re = /\.md$/i) => { try { return fs.readdirSync(d, { withFileTypes: true }).filter(e => e.isFile() && re.test(e.name)).map(e => e.name).sort(); } catch { return []; } };
 const walkMd = d => { const out = []; const go = x => { for (const n of dirs(x)) go(path.join(x, n)); for (const f of files(x)) out.push(path.join(x, f)); }; go(d); return out.sort(); };
 
-/** Hook events whose hook can stop the action (hooks reference, "exit code 2 behavior per event", read 2026-10-14). */
-export const BLOCKING_EVENTS = new Set(['PreToolUse', 'UserPromptSubmit', 'UserPromptExpansion', 'Stop', 'SubagentStop', 'TeammateIdle',
-  'TaskCreated', 'TaskCompleted', 'ConfigChange', 'PostToolBatch', 'PreCompact', 'PreModelSwitch', 'Elicitation', 'ElicitationResult',
-  'WorktreeCreate', 'WorktreeRemove']);
+/**
+ * Hook events whose hook can stop the action (hooks reference, read 2026-10-14): the "exit code 2 behavior per event"
+ * table, plus PermissionRequest, which denies through its decision control instead of exit 2.
+ */
+export const BLOCKING_EVENTS = new Set(['PreToolUse', 'PermissionRequest', 'UserPromptSubmit', 'UserPromptExpansion', 'Stop', 'SubagentStop',
+  'TeammateIdle', 'TaskCreated', 'TaskCompleted', 'ConfigChange', 'PostToolBatch', 'PreCompact', 'PreModelSwitch', 'Elicitation',
+  'ElicitationResult', 'WorktreeCreate', 'WorktreeRemove']);
+
+/** The program a hook command runs: skips leading NAME=value assignments and `env`, keeps only the file name. */
+export function hookProgram(command) {
+  const tokens = String(command ?? '').trim().match(/"[^"]*"|'[^']*'|\S+/g) ?? [];
+  const t = tokens.find(x => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(x) && x !== 'env') ?? '';
+  return t.replace(/^["']|["']$/g, '').split(/[\\/]/).pop();
+}
+
+/** A YAML scalar's value: a quoted one unquoted and unescaped ('' in single quotes, \" and \\ in double quotes). */
+function unquote(v) {
+  if (/^'.*'$/.test(v) && v.length > 1) { const inner = v.slice(1, -1); return /(^|[^'])'([^']|$)/.test(inner) ? v : inner.replace(/''/g, "'"); }
+  if (/^".*"$/.test(v) && v.length > 1) { const inner = v.slice(1, -1); return /(^|[^\\])"/.test(inner) ? v : inner.replace(/\\(["\\])/g, '$1'); }
+  return v;
+}
 
 /** Frontmatter fields we need (name, description, type or metadata.type); no YAML parser needed. */
 function frontmatter(text) {
@@ -41,8 +59,7 @@ function frontmatter(text) {
       while (i + 1 < lines.length && inBlock(lines[i + 1])) { const l = lines[++i].trim(); if (l) more.push(l); }
       v = more.join(' ');
     }
-    const q = /^(["'])(.*)\1$/.exec(v); // a matching pair only
-    if (q && !q[2].includes(q[1])) v = q[2];
+    v = unquote(v);
     if (!(kv[2] in out)) out[kv[2]] = v;
   }
   return out;
@@ -123,10 +140,9 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
   // Hooks and permissions from settings
   const hooks = [];
   // Only the program a hook runs, never its full command line, which can hold a token (M11 verify S1).
-  const program = x => (x.command ? (/^\s*"([^"]+)"|^\s*(\S+)/.exec(String(x.command)) ?? []).slice(1).find(Boolean)?.split(/[\\/]/).pop() ?? '' : String(x.type ?? ''));
   const addHooks = (h, source) => {
     for (const [event, groups] of Object.entries(h ?? {})) for (const g of Array.isArray(groups) ? groups : []) for (const x of g.hooks ?? []) {
-      hooks.push({ event, matcher: g.matcher ?? '', program: program(x), source, blocking: BLOCKING_EVENTS.has(event) });
+      hooks.push({ event, matcher: g.matcher ?? '', program: x.command ? hookProgram(x.command) : String(x.type ?? ''), source, blocking: BLOCKING_EVENTS.has(event) });
     }
   };
   const permissions = { allow: 0, deny: 0, ask: 0, defaultMode: null, files: [] };
@@ -160,22 +176,32 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
   const plugins = [];
   for (const id of Object.keys(enabled).filter(k => enabled[k] === true).sort()) {
     const entries = Array.isArray(installed[id]) ? installed[id] : [];
-    // This project's install, else a machine-wide one; never another project's copy (M11 verify C7).
-    const entry = entries.find(e => e.projectPath && path.resolve(e.projectPath).toLowerCase() === root.toLowerCase()) ?? entries.find(e => ['user', 'managed'].includes(e.scope));
+    // This project's install (a worktree's main repo counts), else a machine-wide one; never another project's copy.
+    const here = [root, roots?.shared].filter(Boolean).map(p => path.resolve(p).toLowerCase());
+    const entry = entries.find(e => e.projectPath && here.includes(path.resolve(e.projectPath).toLowerCase())) ?? entries.find(e => ['user', 'managed'].includes(e.scope));
     const dirOf = entry?.installPath;
     if (!dirOf || !fs.existsSync(dirOf)) { plugins.push({ id, inspected: false, skills: [], hooks: [] }); continue; }
     const before = hooks.length;
-    // Hooks from hooks/hooks.json plus what plugin.json declares, inline or as files (plugin manifest reference; M11 verify C8).
+    // A file a plugin names: inside its folder only (Claude Code rejects paths that escape it), each file read once.
+    const seen = new Set();
+    const pluginFile = rel => {
+      const p = path.resolve(dirOf, rel), label = `plugin:${id}/${posix(rel).replace(/^\.\//, '')}`;
+      if (path.relative(dirOf, p).startsWith('..') || path.isAbsolute(path.relative(dirOf, p))) { unreadable.push({ file: label, error: 'path is outside the plugin folder; not read' }); return null; }
+      if (seen.has(p.toLowerCase())) return null;
+      seen.add(p.toLowerCase());
+      return json(p, label);
+    };
+    // Hooks: hooks/hooks.json plus what plugin.json declares, inline or as files (plugin manifest reference).
     const manifest = json(path.join(dirOf, '.claude-plugin', 'plugin.json'), `plugin:${id}/.claude-plugin/plugin.json`) ?? {};
-    addHooks(json(path.join(dirOf, 'hooks', 'hooks.json'), `plugin:${id}/hooks/hooks.json`)?.hooks, `plugin:${id}`);
-    for (const h of [manifest.hooks].flat().filter(Boolean)) {
-      if (typeof h === 'string') addHooks(json(path.join(dirOf, h), `plugin:${id}/${h}`)?.hooks, `plugin:${id}`);
-      else addHooks(h, `plugin:${id}`);
+    addHooks(pluginFile('hooks/hooks.json')?.hooks, `plugin:${id}`);
+    for (const h of [manifest.hooks].flat().filter(Boolean)) addHooks(typeof h === 'string' ? pluginFile(h)?.hooks : h, `plugin:${id}`);
+    // MCP server names only: .mcp.json plus plugin.json mcpServers (a file path, an inline map, or a list of either).
+    const names = new Set(Object.keys((m => m?.mcpServers ?? m ?? {})(pluginFile('.mcp.json'))));
+    for (const s of [manifest.mcpServers].flat().filter(Boolean)) {
+      const map = typeof s === 'string' ? (/\.json$/i.test(s) ? (m => m?.mcpServers ?? m ?? {})(pluginFile(s)) : {}) : s;
+      for (const n of Object.keys(map ?? {})) names.add(n);
     }
-    // MCP server names only: the plugin's .mcp.json and inline mcpServers.
-    const fileMcp = json(path.join(dirOf, '.mcp.json'), `plugin:${id}/.mcp.json`);
-    const inlineMcp = manifest.mcpServers && typeof manifest.mcpServers === 'object' && !Array.isArray(manifest.mcpServers) ? manifest.mcpServers : {};
-    for (const n of new Set([...Object.keys(fileMcp?.mcpServers ?? fileMcp ?? {}), ...Object.keys(inlineMcp)])) mcp.push({ name: n, source: `plugin:${id}` });
+    for (const n of names) mcp.push({ name: n, source: `plugin:${id}` });
     const pskills = dirs(path.join(dirOf, 'skills')).filter(n => fs.existsSync(path.join(dirOf, 'skills', n, 'SKILL.md')));
     plugins.push({ id, inspected: true, version: entry.version ?? null, skills: pskills, hooks: hooks.slice(before).map(h => h.event) });
   }
@@ -256,7 +282,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const opt = k => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
   try {
     if (cmd !== 'scan') throw new Error('usage: harness.mjs scan [--dir <project>] [--home <dir>] [--json]');
-    const s = scan({ dir: opt('--dir') ?? process.cwd(), ...(opt('--home') ? { home: path.resolve(opt('--home')) } : {}) });
+    // --home stands in for the user's home, so the environment's config-dir overrides don't apply then.
+    const home = opt('--home') ? path.resolve(opt('--home')) : undefined;
+    const env = home ? { ...process.env, CLAUDE_CONFIG_DIR: '', CLAUDE_CODE_PROJECT_DIR_NAME: '' } : process.env;
+    const s = scan({ dir: opt('--dir') ?? process.cwd(), env, ...(home ? { home } : {}) });
     console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : formatScan(s));
   } catch (e) {
     console.error(`error: ${e.message}`);

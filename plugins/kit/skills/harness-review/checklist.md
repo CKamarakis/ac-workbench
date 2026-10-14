@@ -38,7 +38,7 @@ Eight layers. For each: the questions to ask, what the ratings mean, and where C
 
 ## 6. Guardrails: what stops a harmful step
 - Are there permission rules (deny for secrets like `.env`, ask for risky commands)?
-- Are there blocking hooks (PreToolUse) for steps that must not happen, such as archiving unverified work or committing secrets? Count hooks from plugins too.
+- Are there hooks the scan marks "(can block)" (e.g. PreToolUse, PermissionRequest, Stop) for steps that must not happen, such as archiving unverified work or committing secrets? Count hooks from plugins too.
 - Is there secret scanning before commits?
 - **OK:** deny rules for sensitive files plus at least one blocking check. **PARTIAL:** one of them. **GAP:** none.
 

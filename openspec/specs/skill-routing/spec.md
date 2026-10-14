@@ -83,15 +83,23 @@ The registry SHALL define the phases `capture` and `prd`. The lane map SHALL sho
 ### Requirement: Next-step suggestion uses PRD status
 Before falling back to the OpenSpec-based suggestion, the next-step skill SHALL check the project's PRDs and SHALL suggest, with a one-line reason:
 - the `prd` phase owner, when notes exist but no PRD does, and there is no active change;
-- the `artifacts` phase owner (e.g. `/opsx:propose`), naming the PRD, when a PRD is `Ready` and no change uses it;
+- the `artifacts` phase owner (e.g. `/opsx:propose`), naming the PRD, when a PRD is `Ready`, no change uses it, and no change is active;
 - reviewing the plan, when a `Building` PRD's file changed after the commit its change recorded;
 - marking the PRD `Shipped`, when the change named in a `Building` PRD is archived.
+
+While a change is active, a `Ready` PRD without a change SHALL NOT replace the suggestion for the active change; the suggestion SHALL carry one line saying the PRD is waiting until the active change is done.
 
 When none of these apply, the existing OpenSpec-based suggestion SHALL be unchanged. Invalid PRDs SHALL be reported, not guessed.
 
 #### Scenario: Ready PRD without a change
-- **WHEN** `prds/gift-cards.md` is `Ready` and no change names it
+- **WHEN** `prds/gift-cards.md` is `Ready`, no change names it, and no change is active
 - **THEN** the suggestion is `/opsx:propose`, naming `gift-cards`
+
+#### Scenario: Ready PRD waits for the active change
+- **GIVEN** an active change `storms-canvas` with open tasks
+- **AND** `prds/gift-cards.md` is `Ready` and no change names it
+- **WHEN** the user runs `/kit:next`
+- **THEN** the suggestion is `/opsx:apply` for `storms-canvas`, with the line "PRD gift-cards is Ready; it waits until storms-canvas is done"
 
 #### Scenario: PRD changed since planning
 - **WHEN** a `Building` PRD has commits after the commit its change recorded
@@ -126,17 +134,6 @@ The routing rules SHALL tell the agent to look up current library documentation 
 #### Scenario: No sign-in step
 - **WHEN** the starter sets up any project
 - **THEN** no context7 step appears under "Needs you"
-
-### Requirement: Library-error hook
-In a kit project, after a shell command that builds, type-checks or tests the project fails with an error that comes from a library (for example "is not exported", "has no exported member", "Cannot find module", or "is not a function" on an imported name), the kit SHALL add one line of context for the agent: look up the library's current docs with `npx -y ctx7@latest` before trying another fix. It SHALL add nothing when the command succeeds, or when the error doesn't match a library pattern. Outside kit projects, it SHALL do nothing.
-
-#### Scenario: Library API mismatch
-- **WHEN** `npm run build` exits non-zero with "'revalidateTag' is not exported from 'next/cache'"
-- **THEN** the agent receives the docs-lookup hint naming `next`
-
-#### Scenario: Own bug
-- **WHEN** `npm test` fails with an assertion error in the project's own code
-- **THEN** no hint is added
 
 ### Requirement: Ready phase in the lane map
 The registry SHALL define a `ready` phase between `plan` and `build`. The kit SHALL own it, with the skill `/kit:ready`, by the same owner rules as every other phase. The routing rules SHALL say to run `/kit:ready` after planning is complete and before `/opsx:apply`, and that it warns and never blocks.

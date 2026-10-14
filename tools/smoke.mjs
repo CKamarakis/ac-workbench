@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { locate } from '../plugins/kit/scripts/locate.mjs';
+import { testRoot } from './test-root.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KIT = path.join(REPO, 'plugins', 'kit');
@@ -14,9 +15,6 @@ const FIXTURES = path.join(REPO, 'tools', 'smoke', 'fixtures');
 export const TESTED_OPENSPEC = '1.13.2';
 export const RECORD = path.join(REPO, '.smoke-pass.json');
 const CHANGE = 'smoke-change';
-// Throwaway folders go next to the repo in ../temp when it exists (the maintainer's test area), else the system temp.
-// KIT_TEST_DIR overrides both.
-export const testRoot = () => process.env.KIT_TEST_DIR || (fs.existsSync(path.join(REPO, '..', 'temp')) ? path.join(REPO, '..', 'temp') : os.tmpdir());
 
 /**
  * Run steps in order; stop at the first failure.

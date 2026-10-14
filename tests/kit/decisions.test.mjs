@@ -5,10 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { addDecision, decide, later, readyDone, listDecisions, decisionStatus, openLine, readDecisions } from '../../plugins/kit/scripts/decisions.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 const SCRIPT = path.resolve('plugins/kit/scripts/decisions.mjs');
 function project() {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-decisions-'));
+  const d = tmpDir('kit-decisions-');
   fs.mkdirSync(path.join(d, 'openspec/changes/add-x'), { recursive: true });
   return d;
 }

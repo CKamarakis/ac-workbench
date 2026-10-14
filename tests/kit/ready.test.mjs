@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { scan, vagueHits, requirements } from '../../plugins/kit/scripts/ready.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 const w = (d, rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
 const SPEC = [
@@ -17,7 +18,7 @@ const SPEC = [
 ].join('\n');
 
 function project({ tasks = true, pkg = { dependencies: { '@dnd-kit/core': '^6' }, devDependencies: { vitest: '^3' } }, prd = true } = {}) {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-ready-'));
+  const d = tmpDir('kit-ready-');
   w(d, 'openspec/changes/add-x/proposal.md', `# Proposal\n\nPRD: knowledge/prds/upload.md @ abc1234\n\nUse \`TBD\` in code, it's fine.\n`);
   w(d, 'openspec/changes/add-x/specs/upload/spec.md', SPEC);
   w(d, 'openspec/changes/add-x/design.md', '# Design\n\nKeep it fast.\n\n```\nTODO inside a fence\n```\n');

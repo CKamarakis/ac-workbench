@@ -7,6 +7,7 @@ import YAML from 'yaml';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { validate, compareVersions } from './validate-registry.mjs';
+import { tmpDir } from '../tools/test-root.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -246,7 +247,7 @@ test('same version no warning', () => {
 const cli = (...args) => spawnSync(process.execPath, ['tools/validate-registry.mjs', ...args], { cwd: root, encoding: 'utf8' });
 const fx = (name) => `evals/registry/fixtures/${name}.yaml`;
 function withTmp(fn) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'reg-'));
+  const dir = tmpDir('reg-');
   try {
     fn(path.join(dir, 'toolkit.json'));
   } finally {

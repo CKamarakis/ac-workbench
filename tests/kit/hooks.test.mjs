@@ -9,11 +9,12 @@ import { gate, reminder } from '../../plugins/kit/hooks/archive-gate.mjs';
 import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
 import { hint } from '../../plugins/kit/hooks/library-hint.mjs';
 import { runVerify, addFinding, addOverride } from '../../plugins/kit/scripts/verify.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 const hooks = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'plugins', 'kit', 'hooks');
 const w = (d, rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
 function kitProject(kit = true) {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-hooks-'));
+  const d = tmpDir('kit-hooks-');
   if (kit) w(d, '.claude/kit.json', '{"project_type":"none"}');
   w(d, 'openspec/changes/add-x/proposal.md', '# P\n');
   w(d, 'package.json', '{"scripts":{}}');

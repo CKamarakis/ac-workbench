@@ -8,7 +8,7 @@ import {
   sectionGet, sectionSet, readPrd, openQuestions,
 } from '../../plugins/kit/scripts/knowledge.mjs';
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-knowledge-'));
+const tmp = () => tmpDir('kit-knowledge-');
 const put = (root, rel, text) => { fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true }); fs.writeFileSync(path.join(root, rel), text); };
 const files = dir => fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter(e => e.isFile()).length;
 const prd = (sources, extra = '') => `---\ntitle: Gift cards\nstatus: Draft\nsources:\n${sources.map(s => `  - ${s}`).join('\n')}\n${extra}---\n\n## Problem\n\nP\n\n## Scope\n\nS\n`;
@@ -235,6 +235,7 @@ test('set-field: valid status and change only; body untouched', async () => {
 // ---------- prd-pipeline-followups 2.1-2.3 ----------
 import { spawnSync as sp } from 'node:child_process';
 import { importNote, gitUpdatedOf } from '../../plugins/kit/scripts/knowledge.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 test('2.1 PRDs sorted newest-updated first (injected), ties by slug', () => {
   const r = tmp();
@@ -315,7 +316,7 @@ test('openQuestions lists the section items; None and N/A do not count; readPrd 
   assert.deepEqual(openQuestions(body), ['Is a shortcut wanted?', 'Where does the icon go?']);
   assert.deepEqual(openQuestions('## Open questions\n\n- None.\n'), []);
   assert.deepEqual(openQuestions('## Problem\n\nx\n'), []);
-  const r = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-oq-'));
+  const r = tmpDir('kit-oq-');
   fs.mkdirSync(path.join(r, 'prds'));
   fs.writeFileSync(path.join(r, 'prds/side.md'), '---\ntitle: Side\nstatus: Draft\n---\n\n' + body);
   assert.equal(readPrd(r, path.join(r, 'prds/side.md')).openQuestions, 2);

@@ -2,8 +2,8 @@
 
 ## 1. Setup
 
-- [ ] 1.1 Bump the kit to `0.9.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
-- [ ] 1.2 Test-folder helper (design D6): `tests/helpers/tmp.mjs` with `tmpDir(prefix)` and cleanup after each test file; `testRoot()` shared with `tools/smoke.mjs`. Switch all 20 `mkdtempSync(os.tmpdir())` calls in tests and tools to it. Verify: count `kit-*` folders in `../temp` and `%TEMP%` before and after `npm test`; none added, all tests pass
+- [x] 1.1 Bump the kit to `0.9.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.2 Test-folder helper (design D6): `tests/helpers/tmp.mjs` with `tmpDir(prefix)` and cleanup after each test file; `testRoot()` shared with `tools/smoke.mjs`. Switch all 20 `mkdtempSync(os.tmpdir())` calls in tests and tools to it. Verify: count `kit-*` folders in `../temp` and `%TEMP%` before and after `npm test`; none added, all tests pass
 
 ## 2. Small fixes
 

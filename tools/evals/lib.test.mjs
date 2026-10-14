@@ -4,13 +4,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpDir, cleanupLater } from '../../tools/test-root.mjs';
+const sandbox = setup => cleanupLater(makeSandbox(setup));
 import {
   loadCases, findMissingEvals, makeSandbox, runCheck, scoreRubric,
   runCase, runSkill, writeRun, compareRuns, formatComparison, expand,
 } from './lib.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-evaltest-'));
+const tmp = () => tmpDir('kit-evaltest-');
 const write = (dir, rel, content) => {
   const p = path.join(dir, rel);
   fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -57,13 +59,13 @@ test('loadCases rejects unknown check kinds, duplicate ids and empty checks', ()
 // ---- 3.2 deterministic checks ----
 
 test('file-exists', () => {
-  const d = makeSandbox({ files: { 'x/y.txt': '1' } });
+  const d = sandbox({ files: { 'x/y.txt': '1' } });
   assert.equal(runCheck({ kind: 'file-exists', path: 'x/y.txt' }, d).pass, true);
   assert.equal(runCheck({ kind: 'file-exists', path: 'nope' }, d).pass, false);
 });
 
 test('command-exit with expected code and stdout match', () => {
-  const d = makeSandbox({});
+  const d = sandbox({});
   write(d, 'say.js', 'console.log(process.argv[2]);');
   assert.equal(runCheck({ kind: 'command-exit', command: exitWith(0) }, d).pass, true);
   assert.equal(runCheck({ kind: 'command-exit', command: exitWith(3), expect: 3 }, d).pass, true);
@@ -73,13 +75,13 @@ test('command-exit with expected code and stdout match', () => {
 });
 
 test('git-ignored uses the sandbox .gitignore (licensed folder pattern)', () => {
-  const d = makeSandbox({ git_init: true, files: { '.gitignore': 'private/\n', 'private/a.md': 'x', 'src/a.js': 'x' } });
+  const d = sandbox({ git_init: true, files: { '.gitignore': 'private/\n', 'private/a.md': 'x', 'src/a.js': 'x' } });
   assert.equal(runCheck({ kind: 'git-ignored', path: 'private/a.md' }, d).pass, true);
   assert.equal(runCheck({ kind: 'git-ignored', path: 'src/a.js' }, d).pass, false);
 });
 
 test('content-match and negate', () => {
-  const d = makeSandbox({ files: { 'CLAUDE.md': '<!-- kit:routing:start -->\nx\n' } });
+  const d = sandbox({ files: { 'CLAUDE.md': '<!-- kit:routing:start -->\nx\n' } });
   assert.equal(runCheck({ kind: 'content-match', path: 'CLAUDE.md', pattern: 'kit:routing:start' }, d).pass, true);
   assert.equal(runCheck({ kind: 'content-match', path: 'CLAUDE.md', pattern: 'sk-[A-Za-z0-9]{20}', negate: true }, d).pass, true);
   assert.equal(runCheck({ kind: 'content-match', path: 'missing.md', pattern: 'x' }, d).pass, false);
@@ -87,7 +89,7 @@ test('content-match and negate', () => {
 
 test('placeholders expand; unknown ones are left alone', () => {
   assert.equal(expand('{{kit}}/scripts/a.mjs {{nope}}', { kit: '/k' }), '/k/scripts/a.mjs {{nope}}');
-  const d = makeSandbox({ files: { 'a.txt': '1' } });
+  const d = sandbox({ files: { 'a.txt': '1' } });
   assert.equal(runCheck({ kind: 'file-exists', path: '{{sandbox}}/a.txt' }, d).pass, true);
 });
 
@@ -136,6 +138,7 @@ test('runCase outcomes: pass, fail, pending, and sandbox cleanup', () => {
   assert.equal(scored.rubric[0].reason, 'no diagram');
   const kept = runCase({ id: 'k', checks: [{ kind: 'file-exists', path: '.' }] }, { keep: true });
   assert.ok(fs.existsSync(kept.sandbox));
+  cleanupLater(kept.sandbox);
 });
 
 // ---- 3.3 run records ----

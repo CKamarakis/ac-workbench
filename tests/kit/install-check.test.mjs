@@ -5,12 +5,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkInstall } from '../../tools/install-check.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 // kit-cross-platform 6.1: the plugin as Claude Code loads it (spec: kit-self-test "Install check")
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function copy() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-install-'));
+  const dir = tmpDir('kit-install-');
   fs.cpSync(path.join(REPO, '.claude-plugin'), path.join(dir, '.claude-plugin'), { recursive: true });
   fs.cpSync(path.join(REPO, 'plugins', 'kit'), path.join(dir, 'plugins', 'kit'), { recursive: true });
   return dir;

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { testRoot } from '../test-root.mjs';
 
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CHECK_KINDS = ['file-exists', 'command-exit', 'git-ignored', 'content-match', 'rubric'];
@@ -47,7 +48,7 @@ export function expand(str, vars) {
 }
 
 export function makeSandbox(setup = {}, { repo = REPO } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-eval-'));
+  const dir = fs.mkdtempSync(path.join(testRoot(), 'kit-eval-'));
   if (setup.git_init) {
     const r = spawnSync('git', ['init', '-q'], { cwd: dir, encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`git init failed in sandbox: ${r.stderr || r.error}`);

@@ -6,8 +6,9 @@ import path from 'node:path';
 import { applyProject, enablePluginInSettings, registerProject, formatResult } from '../../plugins/kit/scripts/start-apply.mjs';
 import { planProject } from '../../plugins/kit/scripts/start-plan.mjs';
 import { registry } from './fixtures/start-registry.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
-const tmp = p => fs.mkdtempSync(path.join(os.tmpdir(), p));
+const tmp = p => tmpDir(p);
 
 // Fake machine: git/openspec init create their folders; installs make checks pass unless broken.
 function fakeDeps(dir, { broken = [] } = {}) {

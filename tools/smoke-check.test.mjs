@@ -5,10 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { check, isKitFile, format } from './smoke-check.mjs';
+import { tmpDir } from '../tools/test-root.mjs';
 
 // kit-cross-platform 5.1: a throwaway git repo shaped like this one
 function repo() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-smokecheck-'));
+  const dir = tmpDir('kit-smokecheck-');
   const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
   git('init', '-q');
   git('config', 'user.email', 't@example.com');

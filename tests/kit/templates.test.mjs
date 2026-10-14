@@ -5,11 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 const templates = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'plugins', 'kit', 'templates');
 
 function repoWith(files) {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-tpl-'));
+  const d = tmpDir('kit-tpl-');
   spawnSync('git', ['init', '-q'], { cwd: d });
   fs.writeFileSync(path.join(d, '.gitignore'), fs.readFileSync(path.join(templates, 'gitignore-block.txt')));
   for (const f of files) { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.writeFileSync(path.join(d, f), 'x'); }

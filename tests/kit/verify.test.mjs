@@ -15,7 +15,7 @@ const registry = {
 const g = (d, ...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
 const w = (d, rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
 function project({ type = 'web-ui', scripts = { test: 'x' } } = {}) {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-verify-'));
+  const d = tmpDir('kit-verify-');
   w(d, '.claude/kit.json', JSON.stringify({ project_type: type }));
   w(d, 'package.json', JSON.stringify({ scripts }));
   w(d, 'openspec/changes/add-x/proposal.md', '# P\n');
@@ -188,6 +188,7 @@ test('browser check: pass, issues (advisory, ordered), shots, replaced on re-run
 // build-readiness 4.1: docs-scan
 import { docsScan, receiptItems, setDocsSync, namedIn } from '../../plugins/kit/scripts/verify.mjs';
 import { addDecision, later } from '../../plugins/kit/scripts/decisions.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 function docsProject() {
   const d = project();
@@ -259,7 +260,7 @@ test('docs-sync section appears with its counts; open decisions are advisory and
 });
 
 test('docs-scan: no base commit to compare with -> deps unknown (null), not "everything added"', () => {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-verify-nobase-'));
+  const d = tmpDir('kit-verify-nobase-');
   w(d, 'package.json', JSON.stringify({ dependencies: { react: '^19' } }));
   g(d, 'init', '-q', '-b', 'dev'); g(d, 'add', '.'); g(d, 'commit', '-qm', 'base');
   w(d, 'openspec/changes/add-x/proposal.md', '# P\n');

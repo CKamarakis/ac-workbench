@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { locate, locateAll, pathWith } from '../../plugins/kit/scripts/locate.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 // A fake Windows machine laid out in a temp folder; env vars point into it.
 function machine(files) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-locate-'));
+  const root = tmpDir('kit-locate-');
   for (const rel of files) {
     const p = path.join(root, rel);
     fs.mkdirSync(path.dirname(p), { recursive: true });

@@ -8,7 +8,7 @@ import { BLOCK_START, BLOCK_END } from '../../plugins/kit/scripts/lanes.mjs';
 
 import { registry } from './fixtures/start-registry.mjs';
 const deps = (present = []) => ({ platform: 'win32', run: cmd => (present.includes(cmd.split(' ')[1]) ? { status: 0, stdout: 'ok', stderr: '' } : { status: 1, stdout: '', stderr: '' }) });
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-start-'));
+const tmp = () => tmpDir('kit-start-');
 const plan = (dir, o = {}) => planProject({ dir, registry, version: '9.9.9', today: '2026-10-01', deps: deps(o.present), ...o });
 const act = (p, id) => p.actions.find(a => a.id === id);
 
@@ -164,6 +164,7 @@ test('re-sync of an older routing block shows the knowledge section as a CHANGE 
 
 // ---------- prd-pipeline-followups 5.1: question context ----------
 import { typeOptions, offeredTools, DEFAULT_RECOMMEND } from '../../plugins/kit/scripts/start-plan.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 
 const ctxRegistry = {
   phases: [],

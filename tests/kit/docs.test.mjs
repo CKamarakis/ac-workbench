@@ -10,7 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const FIX = path.join(here, 'fixtures', 'docs');
 const DOCS_SYNC = fs.readFileSync(path.join(FIX, 'docs-sync.spec.md'), 'utf8').replace(/\r\n/g, '\n');
 const w = (d, rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'kit-docs-'));
+const tmp = () => tmpDir('kit-docs-');
 const SPEC = name => `# ${name}\n\n## Purpose\nP.\n\n## Requirements\n\n### Requirement: R\nThe app SHALL r.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n`;
 const kinds = sc => sc.rows.map(r => r.kw);
 
@@ -297,6 +297,7 @@ test('final: a spec with a Requirements section but no readable requirement gets
 // Verify advisory fixes (code review C1, C4, C6, C9, C2; security S1)
 import { pageStatus } from '../../plugins/kit/scripts/docs.mjs';
 import { PAGE_MARK as PAGE_MARK_TEMPLATE } from '../../plugins/kit/scripts/docs-page.mjs';
+import { tmpDir, cleanupLater } from '../../tools/test-root.mjs';
 const gitAt = (d, date, ...a) => spawnSync('git', a, { cwd: d, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date } });
 
 test('C1: a committed note refreshed but not yet committed is not stale', () => {
@@ -335,7 +336,7 @@ test('C9: the page mark is one shared constant', () => {
 
 test('S1: a PRD path outside the project is ignored', () => {
   const d = project();
-  const outside = path.join(path.dirname(d), `${path.basename(d)}-secret.md`);
+  const outside = cleanupLater(path.join(path.dirname(d), `${path.basename(d)}-secret.md`));
   fs.writeFileSync(outside, '---\ntitle: Secret title\nstatus: Shipped\n---\n');
   fs.appendFileSync(path.join(d, 'openspec/changes/archive/2026-10-12-b/proposal.md'), '');
   const p = path.join(d, 'openspec/changes/archive/2026-10-12-b/proposal.md');

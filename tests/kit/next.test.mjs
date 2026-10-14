@@ -155,7 +155,7 @@ test('6.2 readKnowledge + gitChangedSince on a real temp repo', async () => {
   const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
   const { spawnSync } = await import('node:child_process');
   const { readKnowledge, gitChangedSince } = await import('../../plugins/kit/scripts/next.mjs');
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-next-'));
+  const d = tmpDir('kit-next-');
   const w = (rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
   const g = (...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
   w('knowledge/prds/gift-cards.md', '---\ntitle: G\nstatus: Building\nsources: []\nchange: gift-cards\n---\n\n## Scope\n\nS\n');
@@ -180,7 +180,7 @@ test('followups 4.3: two Ready PRDs on a real repo -> the newer one is named, th
   const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
   const { spawnSync } = await import('node:child_process');
   const { readKnowledge } = await import('../../plugins/kit/scripts/next.mjs');
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-next-order-'));
+  const d = tmpDir('kit-next-order-');
   const w = (rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
   const ready = '---\ntitle: T\nstatus: Ready\nsources: []\n---\n';
   w('knowledge/prds/alpha.md', ready);
@@ -283,6 +283,7 @@ test('6.2: a Draft PRD with open questions adds a reminder to any suggestion; Re
 
 // kit-docs 5.2: stale docs page reminder (never the next step)
 import { docsLine } from '../../plugins/kit/scripts/next.mjs';
+import { tmpDir } from '../../tools/test-root.mjs';
 test('kit-docs: a stale docs page adds a reminder line; no page -> none; the step is unchanged', () => {
   assert.equal(docsLine({ exists: true, stale: true }), 'docs page is older than the last archive; run /kit:docs');
   assert.equal(docsLine({ exists: true, stale: false }), null);

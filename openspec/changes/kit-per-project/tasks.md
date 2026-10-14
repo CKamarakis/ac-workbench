@@ -3,7 +3,7 @@
 ## 1. Registry
 
 - [x] 1.1 Bump the kit to `0.11.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
-- [x] 1.2 `toolkit.yaml` (design D1): add `ac-workbench-marketplace` (scope `machine`, tier `global`, check and install as in D1); change `kit` to scope `project`, tier `global`, `plugin: kit@ac-workbench`, `check_match` on `projectEnabled`, install `--scope project --json`; update its `reason` ("enabled per project"). Run `npm run registry`. Verify `npm run registry:check` passes and the lane map still gives the kit its phases (`tests/kit/lanes.test.mjs`)
+- [x] 1.2 `toolkit.yaml` (design D1): add `ac-workbench-marketplace` (scope `machine`, tier `global`, check and install as in D1); change `kit` to scope `project`, tier `global`, `plugin: kit@ac-workbench`, check on the project's `.claude/settings.json` (design D1), install `--scope project --json`; update its `reason` ("enabled per project"). Run `npm run registry`. Verify `npm run registry:check` passes and the lane map still gives the kit its phases (`tests/kit/lanes.test.mjs`)
 
 ## 2. Setup and start
 

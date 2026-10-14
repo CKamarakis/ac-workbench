@@ -28,3 +28,10 @@ Also seen on this machine (real config, read only): the user-level kit reports `
 - `npm run smoke`: 38 steps pass (new: `start: kit per project` - the plan installs the kit with `--scope project`).
 - `npm run smoke:check`: asks for a run because the files aren't committed yet; the smoke run above covers them.
 - No leftover test folders in `../temp` or `%TEMP%`.
+
+## 5.1 Migration, first part (2026-10-14, real config)
+
+- `claude plugin install kit@ac-workbench --scope project` in ac-workbench (new `.claude/settings.json`) and the Toughbubble copy: both `"outcome":"ok"`, `projectEnabled: true`.
+- **Found:** `claude plugin list --json` showed 18 more project installs of the kit, all in deleted `../temp/kit-eval-*` folders. `npm run evals` ran `/kit:start` in its sandboxes with the real Claude config, and since 1.2 the kit is a tool every kit project gets, so each run really installed it. Fixed: eval commands run with a throwaway `CLAUDE_CONFIG_DIR` and `CLAUDE_CODE_PLUGIN_CACHE_DIR` (`tools/evals/lib.mjs`, test in `lib.test.mjs`); the kit's registry check now reads the project's `.claude/settings.json` instead of the CLI (design D1), so the `start / idempotent-rerun` case passes for the right reason.
+- Stale records removed with the user's OK: for each gone folder, recreate it empty, `claude plugin uninstall kit@ac-workbench --scope project` there, delete it (tried on one first). Left: user, ac-workbench, Toughbubble copy.
+- After the fix: `npm test` 360 pass, `npm run evals` no failures (start 14), smoke 38 steps; an eval run left the real config's kit records unchanged. `start-plan` reads `ok kit` in ac-workbench and the copy, `INSTALL kit` in the real Toughbubble (not migrated yet, by the user's choice).

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import { testRoot } from '../test-root.mjs';
+import { testRoot, tmpDir } from '../test-root.mjs';
 
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CHECK_KINDS = ['file-exists', 'command-exit', 'git-ignored', 'content-match', 'rubric'];
@@ -64,8 +64,16 @@ export function makeSandbox(setup = {}, { repo = REPO } = {}) {
   return dir;
 }
 
+// A throwaway Claude config for every eval command: start-apply runs `claude plugin install --scope project`, which
+// would otherwise record installs for deleted sandboxes in the user's real config (kit-per-project trial 5.1).
+let claudeHome = null;
+function evalEnv() {
+  claudeHome ??= tmpDir('kit-eval-claude-');
+  return { ...process.env, CLAUDE_CONFIG_DIR: claudeHome, CLAUDE_CODE_PLUGIN_CACHE_DIR: path.join(claudeHome, 'plugins') };
+}
+
 function sh(command, cwd) {
-  const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8' });
+  const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8', env: evalEnv() });
   return { status: r.status ?? -1, stdout: r.stdout ?? '', stderr: r.stderr ?? String(r.error ?? '') };
 }
 

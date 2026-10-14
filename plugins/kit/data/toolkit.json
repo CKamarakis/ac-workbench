@@ -406,8 +406,8 @@
       "status": "adopted",
       "scope": "project",
       "plugin": "kit@ac-workbench",
-      "check": "claude plugin list --json",
-      "check_match": "\"id\": \"kit@ac-workbench\"[^}]*\"projectEnabled\": true",
+      "check": "node -e \"process.stdout.write(require('fs').readFileSync('.claude/settings.json','utf8'))\"",
+      "check_match": "\"kit@ac-workbench\":\\s*true",
       "install": {
         "all": "claude plugin install kit@ac-workbench --scope project --json"
       },

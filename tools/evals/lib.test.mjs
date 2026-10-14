@@ -191,3 +191,14 @@ test('compareRuns shows per-case outcomes, time and interventions for both setup
   assert.match(text, /eval run \(s\)\s+5400\.0\s+4200\.0/);
   assert.match(text, /session \(min\)\s+-\s+-/);
 });
+
+// kit-per-project: eval commands never reach the user's real Claude config (start-apply runs `claude plugin install`)
+test('eval commands run with a throwaway Claude config, not the real one', () => {
+  const show = `node -e "require('fs').writeFileSync('env.txt', [process.env.CLAUDE_CONFIG_DIR, process.env.CLAUDE_CODE_PLUGIN_CACHE_DIR].join('|'))"`;
+  const r = runCase({ id: 'iso', input: { run: show }, checks: [{ kind: 'content-match', path: 'env.txt', pattern: 'kit-eval-claude-[^|]+\|.*kit-eval-claude-' }] }, { keep: true });
+  assert.equal(r.outcome, 'pass', JSON.stringify(r.checks));
+  const home = path.join(os.homedir(), '.claude');
+  const [cfg] = fs.readFileSync(path.join(r.sandbox, 'env.txt'), 'utf8').split('|');
+  assert.ok(!path.resolve(cfg).startsWith(path.resolve(home)));
+  cleanupLater(r.sandbox);
+});

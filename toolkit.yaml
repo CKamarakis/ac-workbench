@@ -294,8 +294,10 @@ tools:
     status: adopted
     scope: project
     plugin: kit@ac-workbench
-    check: claude plugin list --json
-    check_match: '"id": "kit@ac-workbench"[^}]*"projectEnabled": true'
+    # /kit:start only runs where the kit is loaded, so "installed" is given; the question is whether this project's
+    # shared settings enable it (design D1). No claude CLI call: works in eval sandboxes and without the CLI.
+    check: node -e "process.stdout.write(require('fs').readFileSync('.claude/settings.json','utf8'))"
+    check_match: '"kit@ac-workbench":\s*true'
     install:
       all: claude plugin install kit@ac-workbench --scope project --json
     install_why: this project used your user-level kit; once every kit project has its own, remove that one with `claude plugin uninstall kit@ac-workbench --scope user`

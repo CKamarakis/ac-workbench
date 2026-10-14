@@ -7,6 +7,7 @@ import { planProject, selectTools, managedBlock, lineDiff, configAction, formatP
 import { BLOCK_START, BLOCK_END } from '../../plugins/kit/scripts/lanes.mjs';
 
 import { registry } from './fixtures/start-registry.mjs';
+import { defaultDeps } from '../../plugins/kit/scripts/setup.mjs';
 const deps = (present = []) => ({ platform: 'win32', run: cmd => (present.includes(cmd.split(' ')[1]) ? { status: 0, stdout: 'ok', stderr: '' } : { status: 1, stdout: '', stderr: '' }) });
 const tmp = () => tmpDir('kit-start-');
 const plan = (dir, o = {}) => planProject({ dir, registry, version: '9.9.9', today: '2026-10-01', deps: deps(o.present), ...o });
@@ -262,22 +263,29 @@ test('Later lists /kit:docs until the project has knowledge/docs', () => {
   assert.doesNotMatch(formatPlan(plan(d)), /kit:docs/);
 });
 
-// kit-per-project 2.2 (design D2; spec project-starter "Kit installed per project")
-test('the kit is a per-project tool: present when project-enabled, installed --scope project when only a user-level install serves it', () => {
+// kit-per-project 2.2 (design D1, D2; spec project-starter "Kit installed per project")
+// The kit is present when this project's .claude/settings.json enables it: /kit:start only runs where the kit is loaded,
+// so the settings file is the whole question (no claude CLI call). The real shell runs the registry's check.
+test('the kit is a per-project tool: present when the project settings enable it, else installed --scope project', () => {
   const real = JSON.parse(fs.readFileSync(new URL('../../plugins/kit/data/toolkit.json', import.meta.url), 'utf8'));
-  const list = projectEnabled => ({ platform: 'win32', run: cmd => (cmd === 'claude plugin list --json'
-    ? { status: 0, stdout: JSON.stringify([{ id: 'kit@ac-workbench', scope: projectEnabled ? 'project' : 'user', enabled: true, projectEnabled }], null, 2), stderr: '' }
-    : { status: 1, stdout: '', stderr: '' }) });
-  const run = projectEnabled => planProject({ dir: tmp(), registry: real, version: '9.9.9', today: '2026-10-01', deps: list(projectEnabled) });
+  const run = settings => {
+    const dir = tmp();
+    if (settings) { fs.mkdirSync(path.join(dir, '.claude')); fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), JSON.stringify(settings, null, 2)); }
+    const real_ = defaultDeps();
+    const noClaude = { ...real_, run: (cmd, o) => (/^claude\b/.test(cmd) ? { status: 127, stdout: '', stderr: 'claude: not here' } : real_.run(cmd, o)) };
+    return planProject({ dir, registry: real, version: '9.9.9', today: '2026-10-01', deps: noClaude });
+  };
 
-  const own = run(true);
+  const own = run({ enabledPlugins: { 'superpowers@superpowers-marketplace': true, 'kit@ac-workbench': true } });
   assert.equal(own.tools.find(t => t.name === 'kit').action, 'present');
   assert.doesNotMatch(formatPlan(own), /uninstall kit@ac-workbench --scope user/);
 
-  const moved = run(false);
-  const kit = moved.tools.find(t => t.name === 'kit');
-  assert.equal(kit.action, 'install');
-  assert.equal(kit.command, 'claude plugin install kit@ac-workbench --scope project --json');
-  assert.match(kit.why, /global tier/);
-  assert.match(formatPlan(moved), /once every kit project has its own[^\n]*claude plugin uninstall kit@ac-workbench --scope user/);
+  for (const settings of [null, { enabledPlugins: { 'kit@ac-workbench': false } }]) {
+    const moved = run(settings);
+    const kit = moved.tools.find(t => t.name === 'kit');
+    assert.equal(kit.action, 'install', JSON.stringify(settings));
+    assert.equal(kit.command, 'claude plugin install kit@ac-workbench --scope project --json');
+    assert.match(kit.why, /global tier/);
+    assert.match(formatPlan(moved), /once every kit project has its own[^\n]*claude plugin uninstall kit@ac-workbench --scope user/);
+  }
 });

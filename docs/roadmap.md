@@ -60,7 +60,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
    - **v1 means:** someone who isn't the user installs the kit on a clean machine, goes from an idea to an archived change with a docs page, and knows where to send feedback.
    - **Target user:** a solo product builder (designer, PM, founder) who builds web apps with Claude Code, from prototypes to shipped products, and stays in the decision seat.
    - **v1 supports:** JS/TS web apps; Windows (tested here), macOS (checked by the Mac tester), Linux (install commands only, untested); the planning and docs parts work with any stack.
-   - **Order:** M9 (`kit-cross-platform` archived 2026-10-13; next: `/opsx:propose kit-followups`, triaged 2026-10-14) → M10 and M11 → M12 → M13 → M14.
+   - **Order:** M9 (`kit-cross-platform` archived 2026-10-13; `kit-followups` proposed 2026-10-14: review it, then `/kit:ready` and `/opsx:apply`) → M10 and M11 → M12 → M13 → M14.
    - **After v1 ("coming next"):** Python, a Node backend type, native mobile testing, the cockpit, backfill from code, deploys beyond the share link, GitHub CI on three systems, a "what's waiting" list in `/kit:next`, small teams (2+ people in one repo: `decisions.md` and the committed docs page conflict across branches; `/kit:next` assumes one person; untested).
    - Earlier plan for reference: the follow-up change from M6 is now part of M9.
    - **M8 scope, decided by the user 2026-10-12 before `/opsx:propose`** (on branch `kit-docs`):

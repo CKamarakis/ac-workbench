@@ -49,7 +49,7 @@ If it prints `error:`, show it and stop.
       - **Keep it** → document it as is.
       - **Change it** → record it as open (`decisions.mjs add --kind confirm`, then `later`), and don't document it as final.
    4. **Unplanned dependencies:** for each `deps.added` entry with `planned: false`, ask whether to keep it. A kept one gets its reason in `design.md`.
-   5. **Ask in one go** with the **AskUserQuestion** tool (up to 4 questions per call): the flags first, then the proposed updates. For each update, show the text and where it goes. **Write only on a yes.**
+   5. **Ask in one go** with the **AskUserQuestion** tool (up to 4 questions per call): the flags first, then the proposed updates. Show each update's full text and where it goes in your message first, numbered; the questions name them by number. Never put the text in an option preview: the box cuts long text off. **Write only on a yes.**
       - If the requirement isn't in the delta yet, copy the **whole** requirement block from `openspec/specs/<capability>/spec.md` under `## MODIFIED Requirements`, then add the scenario.
       - Run `openspec validate <name> --strict` after edits.
    6. **Record** each item through `decisions.mjs` (`add` with kind `behavior`, `decision` or `unplanned-tool`, then `decide --answer "documented" --written <path>`, or `--answer "not documented"` on a no). Then store the summary:

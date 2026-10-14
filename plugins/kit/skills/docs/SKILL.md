@@ -58,7 +58,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/docs.mjs" build --dir .
      ## History
      ```
      A card that a newer choice replaces stays: set `status: replaced` and `replaced_by: <slug>`, and add a History line.
-5. **Show the list first:** "N drafts for you", one line each with its kind and the path it will be written to. Then ask with the **AskUserQuestion** tool, up to 4 per call, calls back to back until all are asked. Options: **Yes** (write it), **Change** (the user says what; redraft and ask again), **Skip**. Show the draft text in the option preview or the question.
+5. **Show the list first:** "N drafts for you", one line each with its kind and the path it will be written to. Then ask with the **AskUserQuestion** tool, up to 4 per call, calls back to back until all are asked. Options: **Yes** (write it), **Change** (the user says what; redraft and ask again), **Skip**. **Show every draft in full in your message first**, numbered, each with its path; the question then names the draft by its number. Never put draft text in an option preview: the preview box cuts long text off, and the user can't approve what they can't see.
 6. **Write only the yeses.** A skipped item writes nothing and comes back in the next scan.
 7. **Build:** `docs.mjs build --dir .`. Report in one line: what was written, the page counts, any warnings.
 

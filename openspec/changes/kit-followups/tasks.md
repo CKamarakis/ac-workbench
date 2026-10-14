@@ -27,7 +27,8 @@
 
 - [x] 5.1 Stable order (design D8): plain comparison instead of `localeCompare()`; same-day archives by archive commit time. Verify with tests: two archives on one day order newest first; sort result independent of locale (`Intl` not used)
 - [x] 5.2 Page: links into a collapsed product open it (the badge stays a bare number). Verify with `tests/kit/docs-page.test.mjs` (`show()` opens `details` ancestors) and a look at the rebuilt page in the browser
-- [ ] 5.3 Notes for this repo's page: run `/kit:docs`, draft the `living-docs` and `kit-self-test` notes, write them only on the user's yes, rebuild the page. Verify `docs.mjs scan` lists no missing notes for them
+- [x] 5.3 Notes for this repo's page: run `/kit:docs`, draft the `living-docs` and `kit-self-test` notes, write them only on the user's yes, rebuild the page. Verify `docs.mjs scan` lists no missing notes for them
+- [x] 5.4 Approval questions show drafts in full in the message, never in an option preview (added by the user 2026-10-14 after the 5.3 previews cut 11 and 8 lines off): `/kit:docs` step 5 and the `/kit:verify` docs sync. Verify with the new `docs` eval case drafts-shown-in-full
 
 ## 6. Re-sync without installs
 

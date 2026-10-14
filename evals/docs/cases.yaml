@@ -92,3 +92,9 @@ cases:
         criteria:
           - name: no-commit
             description: Runs no git commit
+
+  - id: drafts-shown-in-full
+    description: Drafts are shown in full in the message, never in an option preview (the preview box cuts long text; user, 2026-10-14)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Show every draft in full in your message first" }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Never put draft text in an option preview" }

@@ -41,3 +41,11 @@ Fixes: (1) `.env*` deny rule and gitleaks pre-commit; (2) `@docs/project-context
 ### Verdict (user, 2026-10-14)
 
 "Looks good as a start." Exit criterion met. The first finding was acted on at once (kit plugin updated).
+
+## 6.1 Full run (2026-10-14, Windows 11, kit 0.10.0)
+
+- `npm test`: 354 pass, 0 fail.
+- `npm run registry:check`: passes (phases now include `assess`; `kit-issues` routes to GitHub issues).
+- `npm run evals`: no script case failed; `harness-review` has 4 script cases (pass) and 3 rubric cases (pending, as for the other skills).
+- `npm run smoke`: 37 steps pass (new: `harness: scan` on the smoke project reports its routing block as current).
+- No leftover test folders in `../temp` or `%TEMP%`.

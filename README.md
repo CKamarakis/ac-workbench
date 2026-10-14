@@ -86,6 +86,10 @@ The hooks ship in the kit plugin and do nothing outside kit projects.
 
 Plain Markdown in your repo: no external service, no quota. Notes you add by hand as `.md` are picked up as they are.
 
+### Harness review
+
+`/kit:harness-review` checks how a project is set up for Claude Code (CLAUDE.md, rules, skills, hooks, permissions, MCP servers, plugins, auto memory). It draws a map of the setup, rates eight layers (context, tools, memory, loops, verification, guardrails, feedback, observability) as OK, PARTIAL or GAP, and ends with at most three fixes and why they matter. It works in any Claude Code project, with or without the rest of the kit, and changes nothing; it points to Claude Code's own `/doctor prompt-audit` and `/skill-doctor` where they go deeper.
+
 ## Tools in use, and when they load
 
 Plain skills cost little while idle: only their name and one line sit in context until one is called. Hooks and workflow plugins act on their own, so those are kept to what each project needs.

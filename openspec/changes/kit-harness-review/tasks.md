@@ -30,5 +30,5 @@
 
 ## 6. Wrap-up
 
-- [ ] 6.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check`. Record results in `evals/trials/kit-harness-review.md`
-- [ ] 6.2 README: one short section on `/kit:harness-review` (what it does, that it works without the rest of the kit, that it changes nothing). Roadmap: M11 row and "Current position" updated, in the same commit as the change's last tasks
+- [x] 6.1 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check`. Record results in `evals/trials/kit-harness-review.md`
+- [x] 6.2 README: one short section on `/kit:harness-review` (what it does, that it works without the rest of the kit, that it changes nothing). Roadmap: M11 row and "Current position" updated, in the same commit as the change's last tasks

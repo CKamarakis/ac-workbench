@@ -128,6 +128,7 @@ function main() {
     { name: 'decisions: decide after archive', ...node('scripts/decisions.mjs', ['decide', ...c, '--id', 'D1', '--answer', 'Show a hint']), expect: { line: /decided D1/ } },
     { name: 'docs: build (decided)', ...node('scripts/docs.mjs', ['build', ...d]), expect: { line: /0 undecided/ } },
     { name: 'docs: scan', ...node('scripts/docs.mjs', ['scan', ...d]), expect: { line: /page: up to date/ } },
+    { name: 'harness: scan', ...node('scripts/harness.mjs', ['scan', ...d]), expect: { line: /routing block: current/ } },
   ];
 
   const r = runSteps(steps, { cwd: proj });

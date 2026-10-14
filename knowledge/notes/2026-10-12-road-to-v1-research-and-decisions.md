@@ -87,12 +87,12 @@ Research and decisions from the 2026-10-12 session after M8, for the road to v1 
 
 - **User:** a solo product builder (designer, PM, founder) who builds web apps with Claude Code, from quick prototypes to products they ship, and wants to stay in the decision seat while the agent builds, tests and documents.
 - **Use cases:**
-  1. Prototype in a day: idea → quick plan → build → share a link.
+  1. Prototype in a day: idea → quick plan → build → share a link. **(Dropped 2026-10-14, user: notes always become a PRD; see roadmap drift log.)**
   2. Ship a feature on a real product: PRD → ready → build → verify → archive → docs.
   3. Adopt mid-project: `/kit:start` + `/kit:docs` on an existing repo.
 - **Gaps to make it round:**
-  - a light prototype lane (skip PRD, readiness and docs; tests minimal);
-  - a share step (a preview deploy link; which tool is not yet researched);
+  - a light prototype lane (skip PRD, readiness and docs; tests minimal); **(dropped 2026-10-14)**
+  - a share step (a preview deploy link; which tool is not yet researched); **(moved after v1, as a proposal of how to deploy and share, not a built feature)**
   - a 10-minute demo walkthrough in the README.
 
 ## Positioning for the post
@@ -103,7 +103,7 @@ Research and decisions from the 2026-10-12 session after M8, for the road to v1 
 
 ## v1 scope (user, 2026-10-12)
 
-- **In v1:** Mac support, harness review, a prototype lane plus a share link, and a reliable way to test the kit from here before anyone else touches it ("I share as a professional; no basic bugs").
+- **In v1:** Mac support, harness review, and a reliable way to test the kit from here before anyone else touches it ("I share as a professional; no basic bugs"). **(2026-10-14: prototype lane and share link dropped from v1.)**
 - **After v1 (coming next):** Python, Node backend, mobile, cockpit, small teams.
 - **Small teams (checked in the code, 2026-10-12):** everything is files in git and the project tools are committed, so a team can share a repo. But `decisions.md` keeps its data in one JSON block (two branches adding decisions conflict), the committed docs page conflicts across parallel archives (a rebuild fixes it), and `/kit:next` assumes one person. Untested with more than one person. v1 wording: "built for solo builders; a small team can share it, untested with more than one person". Evidence idea: one M14 friend shares a repo for a day.
 - **Install test in CI:** try `claude plugin marketplace add` + `install` on a clean runner (no model calls, no API key); fall back to our own manifest check if the CLI wants a login. Research thin: https://claudeissues.com/issue/12840-feature-headless-programmatic-plugin-installation, https://github.com/anthropics/claude-code/issues/66750.

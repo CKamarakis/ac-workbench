@@ -21,6 +21,11 @@ const dirs = d => { try { return fs.readdirSync(d, { withFileTypes: true }).filt
 const files = (d, re = /\.md$/i) => { try { return fs.readdirSync(d, { withFileTypes: true }).filter(e => e.isFile() && re.test(e.name)).map(e => e.name).sort(); } catch { return []; } };
 const walkMd = d => { const out = []; const go = x => { for (const n of dirs(x)) go(path.join(x, n)); for (const f of files(x)) out.push(path.join(x, f)); }; go(d); return out.sort(); };
 
+/** Hook events whose hook can stop the action (hooks reference, "exit code 2 behavior per event", read 2026-10-14). */
+export const BLOCKING_EVENTS = new Set(['PreToolUse', 'UserPromptSubmit', 'UserPromptExpansion', 'Stop', 'SubagentStop', 'TeammateIdle',
+  'TaskCreated', 'TaskCompleted', 'ConfigChange', 'PostToolBatch', 'PreCompact', 'PreModelSwitch', 'Elicitation', 'ElicitationResult',
+  'WorktreeCreate', 'WorktreeRemove']);
+
 /** Frontmatter fields we need (name, description, type or metadata.type); no YAML parser needed. */
 function frontmatter(text) {
   const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text ?? '');
@@ -30,12 +35,14 @@ function frontmatter(text) {
     const kv = /^(\s*)(name|description|type):\s*(.*)$/.exec(lines[i]);
     if (!kv) continue;
     let v = kv[3].trim();
-    if (/^[>|]-?$/.test(v)) { // folded or literal block: following, more indented lines
+    if (/^[>|][-+]?$/.test(v)) { // folded or literal block: following, more indented lines; blank lines stay inside it
       const more = [];
-      while (i + 1 < lines.length && /^\s+\S/.test(lines[i + 1]) && lines[i + 1].search(/\S/) > kv[1].length) more.push(lines[++i].trim());
+      const inBlock = l => !l.trim() || (/^\s+\S/.test(l) && l.search(/\S/) > kv[1].length);
+      while (i + 1 < lines.length && inBlock(lines[i + 1])) { const l = lines[++i].trim(); if (l) more.push(l); }
       v = more.join(' ');
     }
-    v = v.replace(/^["']|["']$/g, '');
+    const q = /^(["'])(.*)\1$/.exec(v); // a matching pair only
+    if (q && !q[2].includes(q[1])) v = q[2];
     if (!(kv[2] in out)) out[kv[2]] = v;
   }
   return out;
@@ -115,9 +122,11 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
 
   // Hooks and permissions from settings
   const hooks = [];
+  // Only the program a hook runs, never its full command line, which can hold a token (M11 verify S1).
+  const program = x => (x.command ? (/^\s*"([^"]+)"|^\s*(\S+)/.exec(String(x.command)) ?? []).slice(1).find(Boolean)?.split(/[\\/]/).pop() ?? '' : String(x.type ?? ''));
   const addHooks = (h, source) => {
     for (const [event, groups] of Object.entries(h ?? {})) for (const g of Array.isArray(groups) ? groups : []) for (const x of g.hooks ?? []) {
-      hooks.push({ event, matcher: g.matcher ?? '', command: String(x.command ?? x.type ?? ''), source, blocking: event === 'PreToolUse' });
+      hooks.push({ event, matcher: g.matcher ?? '', program: program(x), source, blocking: BLOCKING_EVENTS.has(event) });
     }
   };
   const permissions = { allow: 0, deny: 0, ask: 0, defaultMode: null, files: [] };
@@ -136,10 +145,13 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
   const mcp = [];
   const mcpJson = json(path.join(root, '.mcp.json'), '.mcp.json');
   for (const n of Object.keys(mcpJson?.mcpServers ?? {})) mcp.push({ name: n, source: '.mcp.json' });
-  const cj = json(path.join(home, '.claude.json'), '~/.claude.json');
-  for (const n of Object.keys(cj?.mcpServers ?? {})) mcp.push({ name: n, source: '~/.claude.json (user)' });
+  // With CLAUDE_CONFIG_DIR set, .claude.json lives in that folder (seen in the kit-per-project trial, 2026-10-14).
+  const cjPath = env.CLAUDE_CONFIG_DIR ? path.join(configDir, '.claude.json') : path.join(home, '.claude.json');
+  const cjLabel = env.CLAUDE_CONFIG_DIR ? '$CLAUDE_CONFIG_DIR/.claude.json' : '~/.claude.json';
+  const cj = json(cjPath, cjLabel);
+  for (const n of Object.keys(cj?.mcpServers ?? {})) mcp.push({ name: n, source: `${cjLabel} (user)` });
   const projEntry = Object.entries(cj?.projects ?? {}).find(([k]) => path.resolve(k).toLowerCase() === root.toLowerCase())?.[1];
-  for (const n of Object.keys(projEntry?.mcpServers ?? {})) mcp.push({ name: n, source: '~/.claude.json (this project)' });
+  for (const n of Object.keys(projEntry?.mcpServers ?? {})) mcp.push({ name: n, source: `${cjLabel} (this project)` });
 
   // Enabled plugins and what they turn on (design D2b)
   const enabled = {};
@@ -148,19 +160,30 @@ export function scan({ dir = process.cwd(), home = os.homedir(), env = process.e
   const plugins = [];
   for (const id of Object.keys(enabled).filter(k => enabled[k] === true).sort()) {
     const entries = Array.isArray(installed[id]) ? installed[id] : [];
-    const entry = entries.find(e => e.projectPath && path.resolve(e.projectPath).toLowerCase() === root.toLowerCase()) ?? entries.find(e => e.scope === 'user') ?? entries[0];
+    // This project's install, else a machine-wide one; never another project's copy (M11 verify C7).
+    const entry = entries.find(e => e.projectPath && path.resolve(e.projectPath).toLowerCase() === root.toLowerCase()) ?? entries.find(e => ['user', 'managed'].includes(e.scope));
     const dirOf = entry?.installPath;
     if (!dirOf || !fs.existsSync(dirOf)) { plugins.push({ id, inspected: false, skills: [], hooks: [] }); continue; }
-    const ph = json(path.join(dirOf, 'hooks', 'hooks.json'), `plugin:${id}/hooks/hooks.json`);
     const before = hooks.length;
-    addHooks(ph?.hooks, `plugin:${id}`);
+    // Hooks from hooks/hooks.json plus what plugin.json declares, inline or as files (plugin manifest reference; M11 verify C8).
+    const manifest = json(path.join(dirOf, '.claude-plugin', 'plugin.json'), `plugin:${id}/.claude-plugin/plugin.json`) ?? {};
+    addHooks(json(path.join(dirOf, 'hooks', 'hooks.json'), `plugin:${id}/hooks/hooks.json`)?.hooks, `plugin:${id}`);
+    for (const h of [manifest.hooks].flat().filter(Boolean)) {
+      if (typeof h === 'string') addHooks(json(path.join(dirOf, h), `plugin:${id}/${h}`)?.hooks, `plugin:${id}`);
+      else addHooks(h, `plugin:${id}`);
+    }
+    // MCP server names only: the plugin's .mcp.json and inline mcpServers.
+    const fileMcp = json(path.join(dirOf, '.mcp.json'), `plugin:${id}/.mcp.json`);
+    const inlineMcp = manifest.mcpServers && typeof manifest.mcpServers === 'object' && !Array.isArray(manifest.mcpServers) ? manifest.mcpServers : {};
+    for (const n of new Set([...Object.keys(fileMcp?.mcpServers ?? fileMcp ?? {}), ...Object.keys(inlineMcp)])) mcp.push({ name: n, source: `plugin:${id}` });
     const pskills = dirs(path.join(dirOf, 'skills')).filter(n => fs.existsSync(path.join(dirOf, 'skills', n, 'SKILL.md')));
     plugins.push({ id, inspected: true, version: entry.version ?? null, skills: pskills, hooks: hooks.slice(before).map(h => h.event) });
   }
 
   // Auto memory (design D2a, D2)
   const memory = { dir: null, found: false, reason: null, files: [] };
-  const auto = [...settings].reverse().map(s => s.data?.autoMemoryDirectory).find(Boolean);
+  // Claude Code ignores autoMemoryDirectory from the shared project settings (settings reference; M11 verify C5).
+  const auto = [...settings].reverse().filter(s => s.scope !== 'project').map(s => s.data?.autoMemoryDirectory).find(Boolean);
   if (auto) memory.dir = path.resolve(String(auto).replace(/^~(?=[\\/])/, home));
   else {
     const name = env.CLAUDE_CODE_PROJECT_DIR_NAME && env.CLAUDE_CONFIG_DIR ? env.CLAUDE_CODE_PROJECT_DIR_NAME : memorySlug(roots?.shared ?? root);
@@ -230,10 +253,10 @@ export function formatScan(s) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const cmd = args[0];
-  const dir = args.includes('--dir') ? args[args.indexOf('--dir') + 1] : process.cwd();
+  const opt = k => (args.includes(k) ? args[args.indexOf(k) + 1] : undefined);
   try {
-    if (cmd !== 'scan') throw new Error('usage: harness.mjs scan [--dir <project>] [--json]');
-    const s = scan({ dir });
+    if (cmd !== 'scan') throw new Error('usage: harness.mjs scan [--dir <project>] [--home <dir>] [--json]');
+    const s = scan({ dir: opt('--dir') ?? process.cwd(), ...(opt('--home') ? { home: path.resolve(opt('--home')) } : {}) });
     console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : formatScan(s));
   } catch (e) {
     console.error(`error: ${e.message}`);

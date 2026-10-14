@@ -6,13 +6,16 @@ import { spawnSync } from 'node:child_process';
 import { tmpDir } from '../../tools/test-root.mjs';
 import { scan, memorySlug, formatScan } from '../../plugins/kit/scripts/harness.mjs';
 import { laneMap, routingBlock } from '../../plugins/kit/scripts/lanes.mjs';
+import { locate } from '../../plugins/kit/scripts/locate.mjs';
 
 const KIT = path.resolve(import.meta.dirname, '../../plugins/kit');
 
 // kit-harness-review 3.1-3.3 (spec: harness-review "Setup scan", "Kit checks only with the kit", "Read-only")
 const w = (root, rel, text) => { const p = path.join(root, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, text); return p; };
 const skill = (name, desc) => `---\nname: ${name}\ndescription: ${desc}\n---\n\n# ${name}\n`;
-const git = d => spawnSync('git', ['init', '-q'], { cwd: d });
+// C10 (M11 verify): the located git, and init must succeed
+const GIT = locate('git', { preferKnown: true })?.path ?? 'git';
+const git = d => assert.equal(spawnSync(GIT, ['init', '-q'], { cwd: d }).status, 0, 'git init');
 
 function machine() {
   const home = tmpDir('kit-harness-home-');
@@ -128,7 +131,7 @@ test('kit project: routing block reads as current the way /kit:start writes it (
 
 test('memory: a git worktree shares the main repo\'s memory folder', () => {
   const m = machine();
-  const g = (...a) => assert.equal(spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: m.dir }).status, 0, a.join(' '));
+  const g = (...a) => assert.equal(spawnSync(GIT, ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: m.dir }).status, 0, a.join(' '));
   g('commit', '--allow-empty', '-qm', 'x');
   const wt = tmpDir('kit-harness-wt-');
   g('worktree', 'add', '-q', wt);
@@ -154,4 +157,73 @@ test('read-only: the scan changes no file in the project or the home folder', ()
   const before = snap(m.dir) + snap(m.home);
   scan(m.opts);
   assert.equal(snap(m.dir) + snap(m.home), before);
+});
+
+// M11 verify leftovers (S1, C3-C9), fixed before v1
+test('S1: hook output names the program only, never the full command (it can hold a token)', () => {
+  const m = machine();
+  w(m.dir, '.claude/settings.json', JSON.stringify({ hooks: { PreToolUse: [{ hooks: [{ type: 'command', command: '"C:/tools/notify.exe" --token=SECRET123 --to ops' }] }] } }));
+  const s = scan(m.opts);
+  assert.equal(s.hooks[0].program, 'notify.exe');
+  assert.ok(!JSON.stringify(s).includes('SECRET123'));
+});
+
+test('C3: with CLAUDE_CONFIG_DIR set, MCP servers come from <config dir>/.claude.json', () => {
+  const m = machine();
+  const cfg = tmpDir('kit-harness-cfg-');
+  w(cfg, '.claude.json', JSON.stringify({ mcpServers: { fromcfg: {} } }));
+  w(m.home, '.claude.json', JSON.stringify({ mcpServers: { stale: {} } }));
+  assert.deepEqual(scan({ ...m.opts, env: { ...m.env, CLAUDE_CONFIG_DIR: cfg } }).mcp.map(x => x.name), ['fromcfg']);
+});
+
+test('C4: events that can block are marked (hooks reference), others are not', () => {
+  const m = machine();
+  const h = ev => ({ [ev]: [{ hooks: [{ type: 'command', command: 'node x.mjs' }] }] });
+  w(m.dir, '.claude/settings.json', JSON.stringify({ hooks: { ...h('Stop'), ...h('UserPromptSubmit'), ...h('PostToolUse'), ...h('SessionStart') } }));
+  assert.deepEqual(Object.fromEntries(scan(m.opts).hooks.map(x => [x.event, x.blocking])), { Stop: true, UserPromptSubmit: true, PostToolUse: false, SessionStart: false });
+});
+
+test('C5: autoMemoryDirectory in the shared project settings is ignored, like Claude Code does', () => {
+  const m = machine();
+  w(m.dir, '.claude/settings.json', JSON.stringify({ autoMemoryDirectory: tmpDir('kit-harness-mem-') }));
+  assert.equal(scan(m.opts).memory.dir, path.join(m.home, '.claude', 'projects', memorySlug(m.dir), 'memory'));
+});
+
+test('C6: the CLI takes --home', () => {
+  const m = machine();
+  w(m.home, '.claude/skills/mine/SKILL.md', skill('mine', 'A personal skill'));
+  const r = spawnSync(process.execPath, [path.join(KIT, 'scripts', 'harness.mjs'), 'scan', '--dir', m.dir, '--home', m.home, '--json'], { encoding: 'utf8', env: { ...process.env, CLAUDE_CONFIG_DIR: '' } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout).skills.filter(x => x.scope === 'user').map(x => x.name), ['mine']);
+});
+
+test('C7: an install that belongs to another project is never used for this one', () => {
+  const m = machine();
+  const other = tmpDir('kit-harness-plugin-');
+  w(other, 'skills/x/SKILL.md', skill('x', 'x'));
+  w(m.dir, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'p@m': true } }));
+  w(m.home, '.claude/plugins/installed_plugins.json', JSON.stringify({ plugins: { 'p@m': [{ scope: 'project', projectPath: tmpDir('kit-harness-elsewhere-'), installPath: other }] } }));
+  assert.deepEqual(scan(m.opts).plugins.map(p => [p.id, p.inspected]), [['p@m', false]]);
+});
+
+test('C8: plugin hooks declared in plugin.json and plugin MCP servers are counted', () => {
+  const m = machine();
+  const pd = tmpDir('kit-harness-plugin-');
+  w(pd, '.claude-plugin/plugin.json', JSON.stringify({ name: 'p', hooks: { Stop: [{ hooks: [{ type: 'command', command: 'node s.mjs' }] }] }, mcpServers: { inline: {} } }));
+  w(pd, '.mcp.json', JSON.stringify({ mcpServers: { fromfile: {} } }));
+  w(m.home, '.claude/settings.json', JSON.stringify({ enabledPlugins: { 'p@m': true } }));
+  w(m.home, '.claude/plugins/installed_plugins.json', JSON.stringify({ plugins: { 'p@m': [{ scope: 'user', installPath: pd }] } }));
+  const s = scan(m.opts);
+  assert.deepEqual(s.plugins[0].hooks, ['Stop']);
+  assert.deepEqual(s.mcp.filter(x => x.source === 'plugin:p@m').map(x => x.name).sort(), ['fromfile', 'inline']);
+});
+
+test('C9: block descriptions keep their paragraphs; quotes are stripped only as a matching pair', () => {
+  const m = machine();
+  w(m.dir, '.claude/skills/a/SKILL.md', '---\nname: a\ndescription: >\n  First part.\n\n  Second part.\n---\n');
+  w(m.dir, '.claude/skills/b/SKILL.md', "---\nname: b\ndescription: It's fine'\n---\n");
+  w(m.dir, '.claude/skills/c/SKILL.md', '---\nname: c\ndescription: "a" and "b"\n---\n');
+  w(m.dir, '.claude/skills/d/SKILL.md', '---\nname: d\ndescription: "quoted whole"\n---\n');
+  const d = Object.fromEntries(scan(m.opts).skills.map(x => [x.name, x.description]));
+  assert.deepEqual(d, { a: 'First part. Second part.', b: "It's fine'", c: '"a" and "b"', d: 'quoted whole' });
 });

@@ -154,5 +154,6 @@ cases:
   - id: summary-mentions-kit-docs
     description: The Later part mentions /kit:docs once, and the starter creates no docs folders (kit-docs, project-starter "Docs page mentioned at setup")
     checks:
-      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "optional: when you want a browsable page of what's built .* run /kit:docs, any time, also mid-project" }
+      - { kind: content-match, path: '{{kit}}/scripts/start-plan.mjs', pattern: "optional: when you want a browsable page of what's built .* run /kit:docs, any time, also mid-project" }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "planner's \"Later\" lines as printed \\(including its `/kit:docs` line" }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "Don't create `knowledge/docs/` or `knowledge/foundations/`" }

@@ -10,7 +10,7 @@
 - [x] 2.1 Remove the library-error hook (design D4): delete `plugins/kit/hooks/library-hint.mjs`, its `hooks.json` entry and its tests. Verify `npm test` (the install check confirms `hooks.json` still points only at existing files)
 - [x] 2.2 `install: none` (design D5, spec toolkit-registry "Nothing to install"): validator accepts it; `setup.mjs` plan reports "nothing to install"; `start-plan.mjs` treats it as present; `claude-code-builtins` and `context7` switch to it with their reason in `install_note`. Verify with tests: a `none` entry whose check fails runs no command in `apply`; validator cases for `none`; `npm run registry:check`
 - [x] 2.3 `/kit:next` order (design D1, spec skill-routing): a Ready PRD waits while a change is active. Verify with `tests/kit/next.test.mjs`: the "waits for the active change" scenario; the existing "no active change" Ready-PRD test still passes
-- [ ] 2.4 `/kit:start` docs line from the planner (design D9): `formatPlan` prints it under Later when `knowledge/docs/` is missing; the start skill shows the planner's Later lines and drops its own sentence. Verify with a `start-plan` test (line present without `knowledge/docs/`, absent with it) and `npm run evals` for `start`
+- [x] 2.4 `/kit:start` docs line from the planner (design D9): `formatPlan` prints it under Later when `knowledge/docs/` is missing; the start skill shows the planner's Later lines and drops its own sentence. Verify with a `start-plan` test (line present without `knowledge/docs/`, absent with it) and `npm run evals` for `start`
 
 ## 3. Verify resolves fixed findings
 

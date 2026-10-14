@@ -252,3 +252,12 @@ test('project tool with install: none is present, never installed', () => {
   const p = planProject({ dir: tmp(), registry: reg, version: '9.9.9', today: '2026-10-01', deps: { platform: 'win32', run: () => ({ status: 1, stdout: '', stderr: '' }) } });
   assert.equal(p.tools[0].action, 'present');
 });
+
+// kit-followups 2.4: the /kit:docs line comes from the planner
+test('Later lists /kit:docs until the project has knowledge/docs', () => {
+  const line = /optional: when you want a browsable page of what's built \(worth it beyond a day or two of work\), run \/kit:docs, any time, also mid-project/;
+  const d = tmp();
+  assert.match(formatPlan(plan(d)), line);
+  fs.mkdirSync(path.join(d, 'knowledge', 'docs'), { recursive: true });
+  assert.doesNotMatch(formatPlan(plan(d)), /kit:docs/);
+});

@@ -51,7 +51,7 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
 6. **Summarize in three parts, in plain words for the user.** Each item appears once.
    - **Done:** what was written or changed (e.g. "CLAUDE.md: workflow rules updated"), the knowledge folder (new or already there), and the tools now available with one line each on what they're for. A tool shown as `ok` or installed counts as done. When a tool has a `why:` line (an install that reaches beyond the project, such as a machine-wide CLI), repeat it in one plain sentence.
    - **Needs you:** only steps that block using the project **now**: a failed install (with its fix line), a `PENDING`/`YOU` step, or a skipped file change and what to do about it. If there's nothing, write "Nothing".
-   - **Later:** the `LATER` lines ("when you first …"), one line listing the tools available on demand, and "optional: when you want a browsable page of what's built (worth it beyond a day or two of work), run /kit:docs, any time, also mid-project". Don't create `knowledge/docs/` or `knowledge/foundations/`.
+   - **Later:** the planner's "Later" lines as printed (including its `/kit:docs` line, when shown), and one line listing the tools available on demand. Don't create `knowledge/docs/` or `knowledge/foundations/`.
    - Don't repeat internal install notes (e.g. "unverified on Windows"); they're for the kit, not the user.
 
    End with one next step: `/kit:next`, `/kit:capture` to save the first note, or `/opsx:explore` to start the first change.

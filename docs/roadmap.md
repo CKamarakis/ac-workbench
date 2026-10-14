@@ -56,7 +56,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 
 ## Current position and next actions
 
-1. **Now:** M1–M4, M6–M9 and M11 are done (kit 0.10.0); M10 dropped. **Road to v1** (decided 2026-10-12; research and decisions in [`knowledge/notes/2026-10-12-road-to-v1-research-and-decisions.md`](../knowledge/notes/2026-10-12-road-to-v1-research-and-decisions.md); overview page https://claude.ai/artifact/QEEarrq35wNcYDnTtf4qtP):
+1. **Now:** M1–M4, M6–M9 and M11 are done, and the kit is installed per project (kit 0.11.0); the small leftovers (M11 low findings, stale descriptions) are fixed; M10 dropped. **Road to v1** (decided 2026-10-12; research and decisions in [`knowledge/notes/2026-10-12-road-to-v1-research-and-decisions.md`](../knowledge/notes/2026-10-12-road-to-v1-research-and-decisions.md); overview page https://claude.ai/artifact/QEEarrq35wNcYDnTtf4qtP):
    - **v1 means:** someone who isn't the user installs the kit on a clean machine, goes from an idea to an archived change with a docs page, and knows where to send feedback.
    - **Target user:** a solo product builder (PM, designer, founder) who builds web apps with Claude Code, from notes and PRDs to shipped features, and stays in the decision seat.
    - **v1 supports:** JS/TS web apps; Windows (tested here), macOS (checked by the Mac tester), Linux (install commands only, untested); the planning and docs parts work with any stack.

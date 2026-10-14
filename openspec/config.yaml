@@ -6,10 +6,12 @@ context: |
   Full living context, decisions and open ideas: docs/project-context.md. Read it before any proposal.
   Deliverable: a marketplace repo (.claude-plugin/marketplace.json) whose main plugin is `kit`
   (plugins/kit: skills, zero-dependency scripts, templates, generated data/toolkit.json).
-  Kit pieces: toolkit registry (toolkit.yaml), skill evals, tool setup, skill routing, project starter, /kit:next.
-  Order of work and current position: docs/roadmap.md (read it first). Milestones: prd-pipeline (built:
-  voice/text -> note -> PRD in the project's knowledge/ folder -> /opsx:propose), quality gates next, then cockpit/feedback/harness review (change kit-overview-feedback).
-  MVP is local-only and free: no paid services beyond the Claude plan; set up once, works in every project.
+  Kit pieces: toolkit registry (toolkit.yaml), skill evals, smoke test, tool setup, skill routing, project starter, /kit:next,
+  capture and PRDs, readiness check, verify gates, living docs, harness review.
+  Order of work and current position: docs/roadmap.md (read it first). Road to v1: M12 prove it on Toughbubble,
+  M13 release readiness, M14 outside test and release; cockpit and other extras come after v1.
+  Local-only and free: no paid services beyond the Claude plan. The kit and its tools are installed per project;
+  only CLIs and plugin marketplaces are machine-wide.
   Platform: Windows 11, Git Bash + PowerShell; global npm bins are not on the agent shell PATH.
   First test consumer: Toughbubble (Next.js, already on OpenSpec).
 

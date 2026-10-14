@@ -12,4 +12,4 @@ const hooks = fs.existsSync(path.join(root, 'hooks', 'hooks.json'));
 console.log(`kit ok: ${manifest.name} ${manifest.version}`);
 console.log(`plugin root: ${root}`);
 console.log(`skills (${skills.length}): ${skills.join(', ')}`);
-console.log(`hooks: ${hooks ? 'archive gate + library hint (active only in kit projects)' : 'none'}`);
+console.log(`hooks: ${hooks ? 'archive gate (active only in kit projects)' : 'none'}`);

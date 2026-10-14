@@ -103,7 +103,7 @@ Plain skills cost little while idle: only their name and one line sit in context
 
 | Tool | Installed | When it loads or runs |
 |---|---|---|
-| **kit** (this plugin) | per project (`--scope project`); its marketplace once per machine | Skills (`/kit:…`) load when called. Two hooks check each shell command, but **act only in kit projects** (with `.claude/kit.json`): one blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions); the other adds a "look up the docs" hint when a build or test fails on a library |
+| **kit** (this plugin) | per project (`--scope project`); its marketplace once per machine | Skills (`/kit:…`) load when called. One hook checks each shell command, but **acts only in kit projects** (with `.claude/kit.json`): it blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions) |
 | **OpenSpec** | CLI once per machine; its `/opsx:…` skills per project (by `/kit:start`) | When you plan or build: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` |
 | **git, gh, jq** | once per machine (`/kit:setup`) | Only when a command calls them |
 | **gitleaks** | once per machine | On every `git commit`, in repos with the pre-commit hook enabled |

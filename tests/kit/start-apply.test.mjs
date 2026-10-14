@@ -140,3 +140,21 @@ test('prd-pipeline 5.1: apply creates the knowledge folders and keeps existing n
   assert.equal(fs.readFileSync(path.join(d, 'knowledge', 'notes', 'a.md'), 'utf8'), 'mine');
   assert.ok(!fs.existsSync(path.join(d, 'knowledge', 'notes', '.gitkeep')));
 });
+
+// kit-followups 6.1: a files-only re-sync updates files and the stamp, and installs nothing
+test('files-only re-sync: routing block and stamp updated, no install runs, tools listed as left alone', () => {
+  const dir = tmp('kit-sa-files-'), home = tmp('kit-sa-home-');
+  const deps = fakeDeps(dir);
+  applyProject(opts(dir, home, deps, { type: 'web-ui', version: '0.1.0' }));
+  // An older kit's routing block and a tool that has gone missing since.
+  const claude = path.join(dir, 'CLAUDE.md');
+  fs.writeFileSync(claude, fs.readFileSync(claude, 'utf8').replace(/<!-- kit:routing:start -->[\s\S]*<!-- kit:routing:end -->/, '<!-- kit:routing:start -->\nold rules\n<!-- kit:routing:end -->'));
+  deps.have.clear();
+  deps.calls.length = 0;
+  const r = applyProject(opts(dir, home, deps, { type: 'web-ui', accept: 'all', filesOnly: true }));
+  assert.ok(r.written.includes('CLAUDE.md'));
+  assert.ok(r.written.includes('.claude/kit.json'));
+  assert.ok(!deps.calls.some(c => c.startsWith('install') || c.startsWith('claude plugin install')), deps.calls.join('\n'));
+  assert.ok(r.tools.leftAlone.length > 0);
+  assert.match(formatResult(r), /left alone/);
+});

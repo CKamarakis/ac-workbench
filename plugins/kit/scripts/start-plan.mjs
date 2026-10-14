@@ -301,6 +301,7 @@ export function parseArgs(argv) {
     else if (a === '--opt-in') o.optIn = argv[++i].split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--accept') o.accept = argv[++i].split(',').map(s => s.trim()).filter(Boolean);
     else if (a === '--json') o.json = true;
+    else if (a === '--files-only') o.filesOnly = true;
     else if (a === '--home') o.home = argv[++i];
     else if (a === '--registry') o.registry = loadRegistry(argv[++i]);
     else throw new Error(`unknown option ${a}`);

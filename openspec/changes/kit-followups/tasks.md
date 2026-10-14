@@ -32,8 +32,8 @@
 
 ## 6. Re-sync without installs
 
-- [ ] 6.1 `start-apply.mjs --files-only` (design D7, spec project-starter "Re-sync without tool installs"). Verify with `tests/kit/start-apply.test.mjs`: an out-of-date routing block is updated, no install command runs, the summary lists the tools left alone
-- [ ] 6.2 Start skill: only on a re-sync whose plan would install a tool, ask "files only, or files and tools?" and pass `--files-only` on the first; otherwise ask nothing extra. Verify `npm run evals` for `start`; try it on the Toughbubble copy (`../temp/Toughbubble`) and record the result in `evals/trials/kit-followups.md`
+- [x] 6.1 `start-apply.mjs --files-only` (design D7, spec project-starter "Re-sync without tool installs"). Verify with `tests/kit/start-apply.test.mjs`: an out-of-date routing block is updated, no install command runs, the summary lists the tools left alone
+- [x] 6.2 Start skill: only on a re-sync whose plan would install a tool, ask "files only, or files and tools?" and pass `--files-only` on the first; otherwise ask nothing extra. Verify `npm run evals` for `start`; try it on the Toughbubble copy (`../temp/Toughbubble`) and record the result in `evals/trials/kit-followups.md`
 
 ## 7. Tested versions
 

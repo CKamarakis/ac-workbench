@@ -41,10 +41,11 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
    - One message: a one-line summary of what gets added (the `CREATE` items and tool installs), then each `CHANGE` with its diff, its `about` and `Recommended: <recommend> (<why>)` from the plan JSON.
    - Ask **one** question, **with the AskUserQuestion tool**: "Apply all (Recommended)", "Apply all except some files" (then ask which), "Cancel". The diffs are shown in your message above the question, never inside it.
    - Never apply a change the user didn't confirm. A recommendation is not an answer.
+   - **Re-sync with tool installs pending** (the project already has `.claude/kit.json` and the plan shows `INSTALL` lines): add one more question in the same call: "Files and tools (Recommended)" or "Files only (no installs now)". Files only passes `--files-only` in step 5, and the summary lists those tools as left alone. A fresh setup, or a re-sync with no `INSTALL` line, asks nothing about tools.
 
 5. **Apply** with the same type, and only the confirmed changes:
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-apply.mjs" --dir . --type <type|none> --accept <id,id|all>
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/start-apply.mjs" --dir . --type <type|none> --accept <id,id|all> [--files-only]
    ```
    `--accept` lists only the confirmed `CHANGE` ids (e.g. `CLAUDE.md,.gitignore`). New files are always created. Tool installs can take a few minutes.
 

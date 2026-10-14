@@ -1,7 +1,7 @@
 // /kit:start apply step (design D4, D14; spec: project-starter). Re-plans, then applies only what is
 // allowed: new files, confirmed changes, init commands, per-project tool installs, the stamp, and the
 // machine's project list. Never deletes a file; never writes user-level Claude settings. Zero dependencies.
-// Usage: node start-apply.mjs --dir <project> [--type <t>] [--opt-in a,b] [--accept all|id,id] [--json] [--home <dir>] [--registry <file.json>]
+// Usage: node start-apply.mjs --dir <project> [--type <t>] [--opt-in a,b] [--accept all|id,id] [--files-only] [--json] [--home <dir>] [--registry <file.json>]
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -56,7 +56,7 @@ export function applyProject(opts) {
   const plan = planProject({ ...opts, registry, version, today, deps });
   const dir = plan.dir;
   const ok = id => accept === 'all' || (Array.isArray(accept) && (accept.includes('all') || accept.includes(id)));
-  const out = { written: [], skipped: [], ran: [], errors: [], tools: { installed: [], failed: [], pending: [], present: [], fallback: [] }, plan };
+  const out = { written: [], skipped: [], ran: [], errors: [], tools: { installed: [], failed: [], pending: [], present: [], fallback: [], leftAlone: [] }, plan };
   fs.mkdirSync(dir, { recursive: true });
 
   const run = (command, why) => {
@@ -92,6 +92,8 @@ export function applyProject(opts) {
   for (const t of plan.tools) {
     if (t.action === 'present') { out.tools.present.push(t.name); continue; }
     if (t.action === 'pending') { out.tools.pending.push({ name: t.name, command: t.command, note: t.note }); continue; }
+    // Files-only re-sync (kit-followups D7): take a kit update without installing anything.
+    if (opts.filesOnly) { out.tools.leftAlone.push(t.name); continue; }
     const entry = registry.tools.find(e => e.name === t.name);
     const r = deps.run(t.command, { cwd: dir });
     const check = deps.run(entry.check, { cwd: dir, timeout: 60000 });
@@ -124,6 +126,7 @@ export function formatResult(r) {
   for (const n of r.tools.present) L.push(`  present    ${n}`);
   for (const f of r.tools.fallback) L.push(`  enabled    ${f.name} (written to .claude/settings.json; the CLI install failed: ${f.error})`);
   for (const f of r.tools.failed) L.push(`  FAILED     ${f.name}: ${f.error}\n             fix: ${f.fix}`);
+  for (const n of r.tools.leftAlone ?? []) L.push(`  left alone ${n} (files-only re-sync; re-sync with tools to install it)`);
   for (const p of r.tools.pending) L.push(`  PENDING    ${p.name}: needs you${p.command ? `\n             run: ${p.command}` : ''}${p.note ? `\n             note: ${p.note}` : ''}`);
   for (const t of r.plan?.tools ?? []) if (t.firstUse) L.push(`  LATER      ${t.name}: ${t.firstUse}`);
   L.push(`  listed in  ${r.projectsFile}`);

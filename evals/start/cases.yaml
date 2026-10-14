@@ -157,3 +157,10 @@ cases:
       - { kind: content-match, path: '{{kit}}/scripts/start-plan.mjs', pattern: "optional: when you want a browsable page of what's built .* run /kit:docs, any time, also mid-project" }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "planner's \"Later\" lines as printed \\(including its `/kit:docs` line" }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "Don't create `knowledge/docs/` or `knowledge/foundations/`" }
+
+  - id: resync-files-only
+    description: A re-sync with pending installs offers files only; a fresh setup asks nothing about tools (kit-followups, project-starter "Re-sync without tool installs")
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Files only \(no installs now\)' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'A fresh setup, or a re-sync with no `INSTALL` line, asks nothing about tools' }
+      - { kind: content-match, path: '{{kit}}/scripts/start-plan.mjs', pattern: "a === '--files-only'" }

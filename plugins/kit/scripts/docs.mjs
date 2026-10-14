@@ -70,7 +70,7 @@ export function findSpecs(dir, root = path.join(dir, 'openspec', 'specs')) {
     }
   };
   walk(root);
-  return found.sort((a, b) => a.path.localeCompare(b.path));
+  return found.sort((a, b) => cmp(a.path, b.path));
 }
 
 /** `moving-around` -> `Moving around`. */
@@ -93,7 +93,7 @@ export function specTree(specs) {
     return node;
   };
   for (const s of specs) nodeFor(s.path).hasSpec = true;
-  const sort = list => { list.sort((a, b) => a.path.localeCompare(b.path)); list.forEach(n => sort(n.children)); return list; };
+  const sort = list => { list.sort((a, b) => cmp(a.path, b.path)); list.forEach(n => sort(n.children)); return list; };
   return sort(roots);
 }
 
@@ -115,10 +115,28 @@ function sections(text) {
 }
 
 const DATED = /^(\d{4}-\d{2}-\d{2})-(.+)$/;
-/** Archive folder names, newest first: dated ones by date (then name), undated ones after, by name. */
+const cmp = (a, b) => a.localeCompare(b, 'en'); // fixed locale: the same order on every machine (kit-followups D8)
+
+/** When an archive folder was first committed (seconds), or Infinity when it isn't committed yet (just archived). */
+function archivedAt(dir, name) {
+  const r = spawnSync('git', ['log', '--diff-filter=A', '--format=%ct', '--', path.join('openspec', 'changes', 'archive', name)], { cwd: dir, encoding: 'utf8' });
+  const times = r.status === 0 ? r.stdout.split(/\r?\n/).filter(Boolean).map(Number) : [];
+  return times.length ? Math.min(...times) : Infinity;
+}
+
+/** Archive folder names, newest first: dated ones by date, same-day ones by when they were archived (then name), undated ones after, by name. */
 function archiveFolders(dir) {
-  return list(path.join(dir, 'openspec', 'changes', 'archive')).filter(e => e.isDirectory()).map(e => e.name)
-    .sort((a, b) => { const da = DATED.test(a), db = DATED.test(b); return da && db ? b.localeCompare(a) : da ? -1 : db ? 1 : a.localeCompare(b); });
+  const names = list(path.join(dir, 'openspec', 'changes', 'archive')).filter(e => e.isDirectory()).map(e => e.name);
+  const day = n => DATED.exec(n)?.[1] ?? null;
+  const counts = {};
+  for (const n of names) if (day(n)) counts[day(n)] = (counts[day(n)] ?? 0) + 1;
+  const at = {};
+  for (const n of names) if (day(n) && counts[day(n)] > 1) at[n] = archivedAt(dir, n); // git only for ties
+  return names.sort((a, b) => {
+    const da = day(a), db = day(b);
+    if (da && db) return da !== db ? (da < db ? 1 : -1) : (at[b] - at[a]) || cmp(b, a);
+    return da ? -1 : db ? 1 : cmp(a, b);
+  });
 }
 
 /** Archived changes, newest first (dated folders by date, then undated by name). History is read, never stored (D9).

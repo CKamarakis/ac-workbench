@@ -124,3 +124,8 @@ test('C5: product cards are anchored by product and slug; short links still reso
   assert.equal(count(html, /id="card-storms-canvas"/g), 0);
   assert.match(html, /\.slice\(-\('\/'\+t\)\.length\)===/);
 });
+
+// kit-followups 5.2: following a link into a collapsed product opens it
+test('the page script opens every collapsed product around the current link', () => {
+  assert.match(renderPage(model()), /links\[j\]\.setAttribute\('aria-current','page'\);for\(var p=links\[j\]\.parentElement;p;p=p\.parentElement\)if\(p\.tagName==='DETAILS'\)p\.open=true;/);
+});

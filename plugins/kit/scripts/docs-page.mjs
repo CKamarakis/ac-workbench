@@ -36,8 +36,8 @@ export function compareNodes(key, dir) {
     if (!va && !vb) return 0;
     if (!va) return 1;
     if (!vb) return -1;
-    const c = key === 'name' ? va.localeCompare(vb) : (va < vb ? -1 : va > vb ? 1 : 0);
-    return (dir === 'desc' ? -c : c) || a.name.localeCompare(b.name);
+    const c = key === 'name' ? va.localeCompare(vb, 'en') : (va < vb ? -1 : va > vb ? 1 : 0);
+    return (dir === 'desc' ? -c : c) || a.name.localeCompare(b.name, 'en');
   };
 }
 const sortTree = nodes => [...nodes].map(n => ({ ...n, children: sortTree(n.children ?? []) }))
@@ -136,7 +136,7 @@ function show(){
   for(var i=0;i<pages.length;i++){var on=pages[i].getAttribute('data-page')===view;pages[i].classList.toggle('on',on);if(on)found=true;}
   if(!found){document.querySelector('.page[data-page="overview"]').classList.add('on');view='overview';}
   var links=document.querySelectorAll('nav a[href]');
-  for(var j=0;j<links.length;j++){if(links[j].getAttribute('href')==='#'+(view.indexOf('spec:')===0?'spec/'+view.slice(5):view))links[j].setAttribute('aria-current','page');else links[j].removeAttribute('aria-current');}
+  for(var j=0;j<links.length;j++){if(links[j].getAttribute('href')==='#'+(view.indexOf('spec:')===0?'spec/'+view.slice(5):view)){links[j].setAttribute('aria-current','page');for(var p=links[j].parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;}else links[j].removeAttribute('aria-current');}
   if(h.indexOf('foundations/')===0){var cards=document.querySelectorAll('[data-card]');var t=h.slice(12),hit=null;for(var k=0;k<cards.length;k++){var c=cards[k].getAttribute('data-card');if(c===t){hit=cards[k];break}if(!hit&&c.slice(-('/'+t).length)==='/'+t)hit=cards[k]}if(hit)hit.scrollIntoView();}
   else window.scrollTo(0,0);
 }

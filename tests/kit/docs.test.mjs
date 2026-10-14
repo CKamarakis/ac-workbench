@@ -356,3 +356,23 @@ test('undecided items from archived changes stay on the page, labelled with thei
   assert.equal(m.pages['storms/stickies'].undecided.length, 1);
   assert.match(renderPage(m), /archived change b/);
 });
+
+// kit-followups 5.1: stable order
+import { spawnSync as run } from 'node:child_process';
+import { compareNodes } from '../../plugins/kit/scripts/docs-page.mjs';
+test('two archives on one day: the one archived later comes first, whatever its name', () => {
+  const d = tmp();
+  const git = (at, ...a) => run('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8', env: { ...process.env, ...(at ? { GIT_COMMITTER_DATE: at, GIT_AUTHOR_DATE: at } : {}) } });
+  git(null, 'init', '-q');
+  archive(d, '2026-10-12-zeta', { why: 'Archived first.' });
+  git(null, 'add', '-A'); git('2026-10-12T10:00:00', 'commit', '-qm', 'zeta');
+  archive(d, '2026-10-12-alpha', { why: 'Archived second.' });
+  git(null, 'add', '-A'); git('2026-10-12T12:00:00', 'commit', '-qm', 'alpha');
+  archive(d, '2026-10-12-beta', { why: 'Not committed yet: newest.' });
+  assert.deepEqual(archivedChanges(d).map(a => a.folder), ['2026-10-12-beta', '2026-10-12-alpha', '2026-10-12-zeta']);
+});
+
+test('name order uses a fixed locale (same on every machine)', () => {
+  const names = ['beta', 'Alpha', 'alpha', 'Beta'].map(name => ({ name }));
+  assert.deepEqual(names.sort(compareNodes('name', 'asc')).map(n => n.name), ['alpha', 'Alpha', 'beta', 'Beta']);
+});

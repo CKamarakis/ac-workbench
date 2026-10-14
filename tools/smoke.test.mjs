@@ -31,3 +31,13 @@ test('runSteps: exit code, forbidden line, missing file and a throwing step all 
   assert.match(runSteps([{ name: 'd', run: () => { throw new Error('boom'); } }], quiet).failed.actual, /boom/);
   assert.equal(runSteps([{ name: 'e', run: () => ({ status: 0, out: '' }) }], quiet).ok, true);
 });
+
+// kit-followups 7.1: the tested OpenSpec version comes from the registry
+import { testedVersion, versionLine } from './smoke.mjs';
+test('tested version is the registry reviewed_version; the line names both when they differ', () => {
+  assert.equal(testedVersion({ tools: [{ name: 'openspec', reviewed_version: '1.13.2' }] }), '1.13.2');
+  assert.equal(testedVersion({ tools: [] }), null);
+  assert.equal(versionLine('1.14.0', '1.13.2'), 'OpenSpec 1.14.0 (kit tested with 1.13.2)');
+  assert.equal(versionLine('1.13.2', '1.13.2'), 'OpenSpec 1.13.2');
+  assert.equal(versionLine('', '1.13.2'), 'OpenSpec (version unknown) (kit tested with 1.13.2)');
+});

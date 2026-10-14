@@ -15,6 +15,7 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 - **Before a tool becomes a default:** read its full docs, trial it, and record the verdict and evidence in `toolkit.yaml` (`npm run registry`).
 - Mark anything not checked against official docs as **unverified**.
 - **Smoke test:** when verifying a change that touches kit files, run `npm run smoke:check` and tell the user what it says. Before a release or tag, run `npm run smoke` (it must pass).
+- **Tool updates:** after updating a tool (e.g. OpenSpec), run `npm run smoke`; when it passes, set that tool's `reviewed_version` in `toolkit.yaml` to the new version (it means "tested with") and run `npm run registry`. Read the release notes first for a major version.
 - Commits pass the gitleaks hook (`git config core.hooksPath .githooks`, once per clone).
 
 ## Commands

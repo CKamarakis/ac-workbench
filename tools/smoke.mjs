@@ -12,7 +12,9 @@ import { testRoot } from './test-root.mjs';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KIT = path.join(REPO, 'plugins', 'kit');
 const FIXTURES = path.join(REPO, 'tools', 'smoke', 'fixtures');
-export const TESTED_OPENSPEC = '1.13.2';
+/** The OpenSpec version the kit was last tested with: the registry's reviewed_version (kit-followups D10). */
+export const testedVersion = registry => (registry?.tools ?? []).find(t => t.name === 'openspec')?.reviewed_version ?? null;
+export const versionLine = (installed, tested) => `OpenSpec ${installed || '(version unknown)'}${installed && installed === tested ? '' : tested ? ` (kit tested with ${tested})` : ''}`;
 export const RECORD = path.join(REPO, '.smoke-pass.json');
 const CHANGE = 'smoke-change';
 
@@ -70,7 +72,7 @@ function main() {
   };
 
   const version = (spawnSync(openspecCmd(['--version']), { shell: true, encoding: 'utf8', env }).stdout ?? '').trim();
-  console.log(`OpenSpec ${version || '(version unknown)'}${version === TESTED_OPENSPEC ? '' : ` (kit tested with ${TESTED_OPENSPEC})`}`);
+  console.log(versionLine(version, testedVersion(JSON.parse(fs.readFileSync(path.join(KIT, 'data', 'toolkit.json'), 'utf8')))));
   console.log(`project: ${proj}\n`);
 
   const node = (script, args, extra = {}) => ({

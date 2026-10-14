@@ -37,7 +37,7 @@
 
 ## 7. Tested versions
 
-- [ ] 7.1 `tools/smoke.mjs` reads OpenSpec's tested version from the registry's `reviewed_version` (design D10, spec kit-self-test). One `CLAUDE.md` line on bumping `reviewed_version` after a passing smoke run. Verify `npm run smoke` prints the version line from the registry
+- [x] 7.1 `tools/smoke.mjs` reads OpenSpec's tested version from the registry's `reviewed_version` (design D10, spec kit-self-test). One `CLAUDE.md` line on bumping `reviewed_version` after a passing smoke run. Verify `npm run smoke` prints the version line from the registry
 
 ## 8. Wrap-up
 

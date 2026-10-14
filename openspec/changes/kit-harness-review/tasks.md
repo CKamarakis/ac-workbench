@@ -24,9 +24,9 @@
 
 ## 5. Trials
 
-- [ ] 5.1 Run `/kit:harness-review` on this repo. Record the report, time and tokens in `evals/trials/kit-harness-review.md`; check nothing changed (`git status`)
-- [ ] 5.2 Run it on the Toughbubble copy (`../temp/Toughbubble`). Record the report and check nothing changed in the copy
-- [ ] 5.3 The user judges both reports (exit criterion: findings useful). Record the verdict and any changes asked for
+- [x] 5.1 Run `/kit:harness-review` on this repo. Record the report, time and tokens in `evals/trials/kit-harness-review.md`; check nothing changed (`git status`)
+- [x] 5.2 Run it on the Toughbubble copy (`../temp/Toughbubble`). Record the report and check nothing changed in the copy
+- [x] 5.3 The user judges both reports (exit criterion: findings useful). Record the verdict and any changes asked for
 
 ## 6. Wrap-up
 

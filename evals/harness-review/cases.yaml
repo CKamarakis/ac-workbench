@@ -43,6 +43,7 @@ cases:
     description: The scan leaves the project as it was (git sees no change)
     setup:
       git_init: true
+      kit_installed: false   # a plain project: the review works without the kit
       files:
         CLAUDE.md: "x\n"
     checks:

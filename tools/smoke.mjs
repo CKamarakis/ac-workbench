@@ -69,6 +69,8 @@ function main() {
   const env = {
     ...process.env, HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: path.join(home, '.config'),
     OPENSPEC_TELEMETRY: '0', DO_NOT_TRACK: '1',
+    // A throwaway Claude config too: start-apply runs `claude plugin install` for the kit (kit-per-project verify C3).
+    CLAUDE_CONFIG_DIR: path.join(home, '.claude'), CLAUDE_CODE_PLUGIN_CACHE_DIR: path.join(home, '.claude', 'plugins'),
   };
 
   const version = (spawnSync(openspecCmd(['--version']), { shell: true, encoding: 'utf8', env }).stdout ?? '').trim();
@@ -93,9 +95,10 @@ function main() {
 
   const steps = [
     { name: 'test project', ...local('write package.json', () => fs.writeFileSync(path.join(proj, 'package.json'), JSON.stringify({ name: 'smoke', private: true, scripts: { test: 'node -e 0' } }, null, 2))) },
-    { name: 'start: plan', ...node('scripts/start-plan.mjs', [...d, '--type', 'none']), expect: { line: /change\(s\) to apply/ } },
-    { name: 'start: kit per project', ...node('scripts/start-plan.mjs', [...d, '--type', 'none']), expect: { line: /claude plugin install kit@ac-workbench --scope project/ } },
-    { name: 'start: apply', ...node('scripts/start-apply.mjs', [...d, '--type', 'none', '--accept', 'all', '--home', home]), expect: { line: /ran\s+openspec init/, noLine: /ERROR/, file: '.claude/kit.json' } },
+    { name: 'start: plan', ...node('scripts/start-plan.mjs', [...d, '--type', 'none']), expect: { line: /claude plugin install kit@ac-workbench --scope project[\s\S]*change\(s\) to apply/ } },
+    // The kit can't really install here (isolated Claude config, no marketplace): it must be reported as failed with
+    // its fix, never written into the settings as if installed (kit-per-project verify C2). Exit 1 for that reason only.
+    { name: 'start: apply', ...node('scripts/start-apply.mjs', [...d, '--type', 'none', '--accept', 'all', '--home', home]), expect: { code: 1, line: /^(?=[\s\S]*ran\s+openspec init)(?=[\s\S]*FAILED\s+kit:[^\n]*\n[^\n]*fix: run it yourself in the project: claude plugin install kit@ac-workbench --scope project)/, noLine: /ERROR|FAILED\s+(?!\s|kit:)/, file: '.claude/kit.json' } },
     { name: 'start: files', ...local('check files', () => { for (const f of ['CLAUDE.md', 'knowledge/notes', 'openspec/config.yaml']) if (!fs.existsSync(path.join(proj, f))) throw new Error(`missing ${f}`); }) },
     { name: 'capture: note', ...node('scripts/knowledge.mjs', ['new-note', ...d, '--title', 'Sticky notes on a board', '--body', 'Users want sticky notes they can drag.', '--date', '2026-01-01']), expect: { line: /created notes\/2026-01-01-sticky-notes-on-a-board\.md/ } },
     { name: 'prd: new', ...node('scripts/knowledge.mjs', ['new-prd', ...d, '--title', 'Storms stickies', '--sources', 'notes/2026-01-01-sticky-notes-on-a-board.md']), expect: { line: /status Draft/, file: 'knowledge/prds/storms-stickies.md' } },

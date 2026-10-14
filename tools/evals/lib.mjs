@@ -53,6 +53,12 @@ export function makeSandbox(setup = {}, { repo = REPO } = {}) {
     const r = spawnSync('git', ['init', '-q'], { cwd: dir, encoding: 'utf8' });
     if (r.status !== 0) throw new Error(`git init failed in sandbox: ${r.stderr || r.error}`);
   }
+  // Kit skills only run where the kit is installed (README: `claude plugin install kit@ac-workbench --scope project`),
+  // so a sandbox starts with it enabled; a case's own settings file replaces this (files below), kit_installed: false skips it.
+  if (setup.kit_installed !== false) {
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), JSON.stringify({ enabledPlugins: { 'kit@ac-workbench': true } }, null, 2) + '\n');
+  }
   for (const rel of setup.copy ?? []) {
     fs.cpSync(path.join(repo, rel), path.join(dir, rel), { recursive: true });
   }

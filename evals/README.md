@@ -18,6 +18,7 @@ cases:
     description: Ping script prints the kit version
     setup:                      # optional; prepares the temp sandbox (the working dir)
       git_init: true            #   run `git init` in the sandbox
+      kit_installed: false      #   default true: the sandbox starts with the kit in .claude/settings.json (as after the README install)
       files:                    #   files to create: path -> content
         README.md: "hello"
       copy:                     #   repo-relative paths copied into the sandbox

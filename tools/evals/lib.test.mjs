@@ -195,10 +195,23 @@ test('compareRuns shows per-case outcomes, time and interventions for both setup
 // kit-per-project: eval commands never reach the user's real Claude config (start-apply runs `claude plugin install`)
 test('eval commands run with a throwaway Claude config, not the real one', () => {
   const show = `node -e "require('fs').writeFileSync('env.txt', [process.env.CLAUDE_CONFIG_DIR, process.env.CLAUDE_CODE_PLUGIN_CACHE_DIR].join('|'))"`;
-  const r = runCase({ id: 'iso', input: { run: show }, checks: [{ kind: 'content-match', path: 'env.txt', pattern: 'kit-eval-claude-[^|]+\|.*kit-eval-claude-' }] }, { keep: true });
+  const r = runCase({ id: 'iso', input: { run: show }, checks: [{ kind: 'content-match', path: 'env.txt', pattern: 'kit-eval-claude-[^|]+\\|.*kit-eval-claude-' }] }, { keep: true });
+  cleanupLater(r.sandbox); // removed at exit even when an assertion below fails
   assert.equal(r.outcome, 'pass', JSON.stringify(r.checks));
   const home = path.join(os.homedir(), '.claude');
-  const [cfg] = fs.readFileSync(path.join(r.sandbox, 'env.txt'), 'utf8').split('|');
-  assert.ok(!path.resolve(cfg).startsWith(path.resolve(home)));
-  cleanupLater(r.sandbox);
+  // Both variables, checked one by one (verify C1: a lone '|' in the pattern above once made it an alternation).
+  const [cfg, cache] = fs.readFileSync(path.join(r.sandbox, 'env.txt'), 'utf8').split('|');
+  for (const v of [cfg, cache]) {
+    assert.match(v ?? '', /kit-eval-claude-/);
+    assert.ok(!path.resolve(v).startsWith(path.resolve(home)));
+  }
+});
+
+// kit-per-project verify: kit skills only run where the kit is installed, so a sandbox starts that way (README install step)
+test('sandbox starts with the kit enabled in the project settings; kit_installed: false opts out', () => {
+  const withKit = sandbox({});
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(withKit, '.claude', 'settings.json'), 'utf8')), { enabledPlugins: { 'kit@ac-workbench': true } });
+  assert.equal(fs.existsSync(path.join(sandbox({ kit_installed: false }), '.claude', 'settings.json')), false);
+  const own = sandbox({ files: { '.claude/settings.json': '{"permissions":{}}' } });
+  assert.equal(fs.readFileSync(path.join(own, '.claude', 'settings.json'), 'utf8'), '{"permissions":{}}', 'a case\'s own settings file wins');
 });

@@ -20,3 +20,6 @@ evals/**/sandbox/
 
 # Last passing smoke run (npm run smoke; read by npm run smoke:check)
 .smoke-pass.json
+
+# playwright-cli page snapshots (session-local)
+.playwright-cli/

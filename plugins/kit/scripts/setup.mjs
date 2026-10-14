@@ -12,6 +12,8 @@ import { locate, pathWith } from './locate.mjs';
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACTIVE = ['adopted', 'trial'];
+/** The kit's own plugin id: per project like every tool, but it runs /kit:start itself (kit-per-project). */
+export const KIT_PLUGIN = 'kit@ac-workbench';
 
 /** True for a registry entry with nothing to install (`install: none`); the one place that knows the form (kit-followups D5). */
 export const nothingToInstall = entry => entry?.install === 'none';
@@ -80,9 +82,9 @@ export function plan(registry, deps = defaultDeps()) {
   for (const e of registry.tools ?? []) {
     if (e.scope !== 'project') continue;
     for (const [id, on] of Object.entries(enabled)) {
-      if (!on || id.split('@')[0] !== e.name) continue;
+      if (!on || (e.plugin ? id !== e.plugin : id.split('@')[0] !== e.name)) continue;
       // The kit runs /kit:start, so it must reach every kit project before the user-level install goes (design D3).
-      out.warnings.push(e.name === 'kit'
+      out.warnings.push(id === KIT_PLUGIN
         ? `${id} is enabled in ~/.claude/settings.json (user scope). Kit rule: the kit is installed per project. Move it in this order: first install it per project in each project set up with the kit (\`claude plugin install ${id} --scope project\` in its folder, or /kit:start there), then remove the user-level install with \`claude plugin uninstall ${id} --scope user\`.`
         : `${id} is enabled in ~/.claude/settings.json (user scope). Kit rule: project-scope tools are enabled per project only. Move it: remove it there and run /kit:start in the projects that need it.`);
     }

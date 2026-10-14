@@ -280,6 +280,12 @@ test('the kit is a per-project tool: present when the project settings enable it
   assert.equal(own.tools.find(t => t.name === 'kit').action, 'present');
   assert.doesNotMatch(formatPlan(own), /uninstall kit@ac-workbench --scope user/);
 
+  // verify C4: a local-scope install (.claude/settings.local.json) counts as the project having the kit
+  const dirLocal = tmp(); fs.mkdirSync(path.join(dirLocal, '.claude')); fs.writeFileSync(path.join(dirLocal, '.claude', 'settings.local.json'), JSON.stringify({ enabledPlugins: { 'kit@ac-workbench': true } }));
+  const real_ = defaultDeps();
+  const local = planProject({ dir: dirLocal, registry: real, version: '9.9.9', today: '2026-10-01', deps: { ...real_, run: (c, o) => (/^claude/.test(c) ? { status: 127, stdout: '', stderr: '' } : real_.run(c, o)) } });
+  assert.equal(local.tools.find(t => t.name === 'kit').action, 'present');
+
   for (const settings of [null, { enabledPlugins: { 'kit@ac-workbench': false } }]) {
     const moved = run(settings);
     const kit = moved.tools.find(t => t.name === 'kit');

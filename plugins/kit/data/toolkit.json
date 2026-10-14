@@ -406,12 +406,12 @@
       "status": "adopted",
       "scope": "project",
       "plugin": "kit@ac-workbench",
-      "check": "node -e \"process.stdout.write(require('fs').readFileSync('.claude/settings.json','utf8'))\"",
+      "check": "node -e \"const f=require('fs');for(const p of ['.claude/settings.json','.claude/settings.local.json'])try{process.stdout.write(f.readFileSync(p,'utf8'))}catch{}\"",
       "check_match": "\"kit@ac-workbench\":\\s*true",
       "install": {
         "all": "claude plugin install kit@ac-workbench --scope project --json"
       },
-      "install_why": "this project used your user-level kit; once every kit project has its own, remove that one with `claude plugin uninstall kit@ac-workbench --scope user`",
+      "install_why": "the kit isn't enabled in this project's settings yet; if you also have a user-level kit, remove it once every kit project has its own, with `claude plugin uninstall kit@ac-workbench --scope user`",
       "rubric": {
         "problem_fit": "Bootstraps and routes everything else",
         "overlap": "None",

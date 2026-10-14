@@ -158,3 +158,25 @@ test('files-only re-sync: routing block and stamp updated, no install runs, tool
   assert.ok(r.tools.leftAlone.length > 0);
   assert.match(formatResult(r), /left alone/);
 });
+
+// kit-per-project verify C2, C9
+test('kit install fails -> reported as failed with the command, never written to settings (no fallback for the kit)', () => {
+  const dir = tmp('kit-apply-'), home = tmp('kit-home-');
+  const reg = { ...registry, tools: [...registry.tools, { name: 'kit', tier: 'global', status: 'adopted', scope: 'project', plugin: 'kit@ac-workbench', check: 'check kit', install: { all: 'claude plugin install kit@ac-workbench --scope project --json' } }] };
+  const r = applyProject({ ...opts(dir, home, fakeDeps(dir, { broken: ['kit'] })), registry: reg });
+  assert.deepEqual(r.tools.fallback.map(f => f.name), []);
+  const kit = r.tools.failed.find(f => f.name === 'kit');
+  assert.match(kit.fix, /claude plugin install kit@ac-workbench --scope project/);
+  const settings = path.join(dir, '.claude', 'settings.json');
+  assert.ok(!fs.existsSync(settings) || !/kit@ac-workbench/.test(fs.readFileSync(settings, 'utf8')));
+});
+
+test('plugin fallback also declares the plugin\'s marketplace, so a clone can resolve it', () => {
+  const dir = tmp('kit-apply-'), home = tmp('kit-home-');
+  const reg = { ...registry, tools: registry.tools.map(t => (t.name === 'sp' ? { ...t, source: 'github:o/sp-market' } : t)) };
+  const r = applyProject({ ...opts(dir, home, fakeDeps(dir, { broken: ['sp'] }), { optIn: ['sp'] }), registry: reg });
+  assert.deepEqual(r.tools.fallback.map(f => f.name), ['sp']);
+  const s = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'));
+  assert.deepEqual(s.enabledPlugins, { 'sp@market': true });
+  assert.deepEqual(s.extraKnownMarketplaces, { market: { source: { source: 'github', repo: 'o/sp-market' } } });
+});

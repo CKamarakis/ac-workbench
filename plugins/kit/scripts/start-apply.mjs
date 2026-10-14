@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planProject, parseArgs, configWithContext, kitVersion } from './start-plan.mjs';
-import { loadRegistry, defaultDeps } from './setup.mjs';
+import { loadRegistry, defaultDeps, KIT_PLUGIN } from './setup.mjs';
 
 const read = p => { try { return fs.readFileSync(p, 'utf8'); } catch { return null; } };
 const first = s => String(s ?? '').trim().split(/\r?\n/)[0]?.slice(0, 200) ?? '';
@@ -30,6 +30,13 @@ export function enablePluginInSettings(dir, pluginId, marketplace = null) {
   if (marketplace) s.extraKnownMarketplaces = { ...(s.extraKnownMarketplaces ?? {}), ...marketplace };
   writeFile(dir, '.claude/settings.json', JSON.stringify(s, null, 2) + '\n');
   return { ok: true };
+}
+
+/** `extraKnownMarketplaces` entry for a plugin whose registry `source` is `github:owner/repo`, else null (verify C9). */
+export function marketplaceFor(entry) {
+  const m = /^github:([^/\s]+\/[^/\s]+)$/.exec(entry?.source ?? '');
+  const name = entry?.plugin?.split('@')[1];
+  return m && name ? { [name]: { source: { source: 'github', repo: m[1] } } } : null;
 }
 
 /** Add or update this project in the machine's project list (design D3). */
@@ -100,8 +107,9 @@ export function applyProject(opts) {
     const present = check.status === 0 && (!entry.check_match || new RegExp(entry.check_match, 'm').test(check.stdout));
     if (r.status === 0 && present) { out.tools.installed.push(t.name); continue; }
     if (r.status === 0 && entry.install_note) { out.tools.pending.push({ name: t.name, command: null, note: entry.install_note }); continue; }
-    if (t.kind === 'plugin') {
-      const f = enablePluginInSettings(dir, t.plugin);
+    // No settings fallback for the kit: its check reads the settings, so a written entry would hide a failed install (verify C2).
+    if (t.kind === 'plugin' && t.plugin !== KIT_PLUGIN) {
+      const f = enablePluginInSettings(dir, t.plugin, marketplaceFor(entry));
       if (f.ok) { out.tools.fallback.push({ name: t.name, error: first(r.stderr) || first(r.stdout) || 'check failed after install' }); continue; }
     }
     out.tools.failed.push({ name: t.name, error: r.status !== 0 ? first(r.stderr) || first(r.stdout) || `exit ${r.status}` : 'installed, but its check still fails', fix: `run it yourself in the project: ${t.command}` });

@@ -182,3 +182,10 @@ test('C9: nothingToInstall is the single check for install: none', () => {
   assert.equal(nothingToInstall({ install: { all: 'x' } }), false);
   assert.equal(nothingToInstall({}), false);
 });
+
+// kit-per-project verify C10: the warning matches the entry's plugin id, not just its name
+test('user-scope warning matches the plugin id: kit@<other-marketplace> gets no kit warning', () => {
+  const kitEntry = tool('kit', { scope: 'project', plugin: 'kit@ac-workbench' });
+  assert.deepEqual(plan(registry([kitEntry]), fakeDeps({ userPlugins: { 'kit@other-market': true } }).deps).warnings, []);
+  assert.equal(plan(registry([kitEntry]), fakeDeps({ userPlugins: { 'kit@ac-workbench': true } }).deps).warnings.length, 1);
+});

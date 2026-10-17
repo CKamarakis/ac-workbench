@@ -33,9 +33,14 @@ A project without `<knowledge>/roadmaps/roadmap.md` SHALL work with every kit co
 - **WHEN** the user runs `/kit:next`, `/kit:prd` or `/kit:verify`
 - **THEN** none of them mentions or needs a roadmap
 
+#### Scenario: Check without a roadmap
+- **GIVEN** a project with no `knowledge/roadmaps/`
+- **WHEN** the roadmap check or report runs
+- **THEN** it says there is no roadmap here and that it's optional, and exits without an error
+
 ### Requirement: Roadmap check warns and never blocks
 The roadmap check SHALL report findings in two groups and SHALL NOT block any step, including a release:
-- **broken**, shown first: a milestone file missing `id`, `title` or `status`; an unknown status; a duplicate ID; an ID in the order without a file, or a milestone file missing from the order; a task line in the wrong shape; an `active` milestone with no tasks;
+- **broken**, shown first: a missing `##` heading (North star, Principles, Order, Now, Waiting on you); a milestone file missing `id`, `title` or `status`, or with unreadable frontmatter; an unknown status; a duplicate ID; an order line not in the shape `- <ID>`, an ID in the order without a file, or a milestone file missing from the order; a task line in the wrong shape, or a task number used twice; an `active` milestone with no tasks; a Waiting-on-you item not in the shape `- [<ID>|general] <question> (proposed YYYY-MM-DD)`, or naming an unknown milestone;
 - **tidy-up**: `roadmap.md` over 150 lines, or a line in it over 300 characters; Now longer than 5 lines; a `done` or `dropped` milestone still in `milestones/`; a stale Now.
 
 Each finding SHALL name the file (and line where there is one) and the fix. A roadmap with no findings SHALL report that it is in good condition.
@@ -54,6 +59,11 @@ Each finding SHALL name the file (and line where there is one) and the fix. A ro
 - **GIVEN** `milestones/m11-harness-review.md` has `status: done`
 - **WHEN** the check runs
 - **THEN** it reports under tidy-up that the file should move to `done/`
+
+#### Scenario: Waiting item names an unknown milestone
+- **GIVEN** a Waiting-on-you item `- [M7] Who? (proposed 2026-10-17)` and no milestone `M7`
+- **WHEN** the check runs
+- **THEN** it reports under broken the line and "unknown milestone M7", with the fix
 
 ### Requirement: Stale Now and unplanned work
 The check SHALL report Now as stale only when an OpenSpec change was archived, or a branch was merged into the current branch, after the last commit that changed `roadmap.md`: the moments Now should be updated. Ordinary commits SHALL NOT make Now stale. It SHALL list as unplanned work each active OpenSpec change that no milestone links to. Branches are not checked (decided 2026-10-17; revisit with parallel work).
@@ -109,7 +119,7 @@ When the user answers a decision, it SHALL leave `roadmap.md` and a drift-log en
 - **THEN** it is counted under Later with its date, and nothing marks it as old
 
 ### Requirement: Roadmap skill writes only on a yes
-`/kit:roadmap` SHALL create a roadmap, add a milestone, start or pause one, finish or drop one, tick a task, add a drift entry, link notes, a PRD or a change, and update Now. Each write SHALL be shown first and applied only on the user's yes. Only the user SHALL change order or scope. After every write the skill SHALL run the check and show any broken finding with its fix.
+`/kit:roadmap` SHALL create a roadmap, add a milestone, add tasks to it, start or pause one, finish or drop one, tick a task, add a drift entry, link notes, a PRD or a change, and update Now. Each write SHALL be shown first and applied only on the user's yes. Only the user SHALL change order or scope. After every write the skill SHALL run the check and show any broken finding with its fix.
 
 #### Scenario: Create on a yes
 - **GIVEN** a project with no roadmap
@@ -125,6 +135,11 @@ When the user answers a decision, it SHALL leave `roadmap.md` and a drift-log en
 - **GIVEN** explored notes the user agrees are a goal
 - **WHEN** the milestone is added
 - **THEN** its file links to those notes
+
+#### Scenario: Add a task
+- **GIVEN** milestone `M1` with tasks `T1` and `T2`
+- **WHEN** the user adds a task "Docs" and says yes
+- **THEN** the file gains `- [ ] T3 Docs` after `T2`
 
 #### Scenario: Finish a milestone
 - **GIVEN** an active milestone with every task ticked
@@ -145,9 +160,14 @@ When a PRD or OpenSpec change is made for a milestone, the skill SHALL offer to 
 - **THEN** the skill offers to tick `T1` and update Now
 
 ### Requirement: Roadmap report
-On request, the skill SHALL show a short report: the milestones in order with ID, title, status and the tasks left (or "n of m done"), Now, and Waiting on you. Broken findings, if any, SHALL be listed at the top.
+On request, the skill SHALL show a short report: the milestones in order with ID, title, status and the tasks left (or "n of m done"), Now, and Waiting on you. Broken findings, if any, SHALL be listed at the top. After Waiting on you, the report SHALL add one line for tidy-up findings and one for unplanned work when there are any, and SHALL mark the current milestone.
 
 #### Scenario: Report
 - **GIVEN** a roadmap with `M12` planned and 1 of 5 tasks done
 - **WHEN** the user asks for the report
 - **THEN** the row shows `M12 · Toughbubble proof · planned`, the four open tasks, and "1 of 5 done"
+
+#### Scenario: Unplanned work in the report
+- **GIVEN** an active change `kanban-board` that no milestone links to
+- **WHEN** the user asks for the report
+- **THEN** it ends with "Unplanned work: kanban-board"

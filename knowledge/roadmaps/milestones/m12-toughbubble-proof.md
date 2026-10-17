@@ -1,7 +1,7 @@
 ---
 id: M12
 title: Toughbubble proof
-status: planned
+status: active
 notes:
   - notes/kit-workflow/2026-10-17-kit-judge-keyword-criteria-are-unreliable.md
 ---

@@ -1,6 +1,6 @@
 ---
 title: Explore stage in the flow
-status: Building
+status: Shipped
 sources:
   - notes/kit-workflow/2026-10-17-kit-workflow-notes-first-explore-before-prd.md
   - notes/kit-workflow/2026-10-17-kit-workflow-happy-path-real-life-and-overview-status-next.md

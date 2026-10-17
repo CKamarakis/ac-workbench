@@ -136,7 +136,24 @@ test('archived change -> suggest marking the PRD Shipped (nothing written)', () 
 test('notes but no PRD and no active change -> /kit:prd', () => {
   const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes: [{ path: 'notes/a.md', title: 'A' }] }) });
   assert.equal(s.use, '/kit:prd');
-  assert.match(s.reason, /1 note\(s\) in knowledge\/notes and no PRD yet/);
+  assert.match(s.reason, /1 note\(s\) in knowledge\/notes no change uses yet \("A"\)/);
+  assert.match(s.reason, /archive it if it's already handled \(\/kit:capture\)/);
+});
+
+test('notes a change already cites are not counted: all cited -> no /kit:prd', () => {
+  const notes = [{ path: 'notes/a.md', title: 'A' }, { path: 'notes/b.md', title: 'B' }];
+  const changes = [{ name: 'old', archived: true, link: null, notes: ['notes/a.md', 'notes/b.md'] }];
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes, changes }) });
+  assert.notEqual(s.use, '/kit:prd');
+  const one = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes, changes: [{ ...changes[0], notes: ['notes/a.md'] }] }) });
+  assert.equal(one.use, '/kit:prd');
+  assert.match(one.reason, /^1 note\(s\) .*\("B"\)/);
+});
+
+test('more than three fresh notes -> three titles and a count', () => {
+  const notes = ['A', 'B', 'C', 'D', 'E'].map(t => ({ path: `notes/${t}.md`, title: t }));
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes }) });
+  assert.match(s.reason, /5 note\(s\) .*\("A", "B", "C" and 2 more\)/);
 });
 
 test('no knowledge folder -> same suggestion as before', () => {
@@ -163,10 +180,13 @@ test('6.2 readKnowledge + gitChangedSince on a real temp repo', async () => {
   const c1 = g('rev-parse', '--short', 'HEAD').stdout.trim();
   w('openspec/changes/gift-cards/proposal.md', `# P\n\nPRD: \`knowledge/prds/gift-cards.md @ ${c1}\`\n`);
   w('openspec/changes/archive/2026-10-01-old/proposal.md', '# Old\n');
+  w('openspec/changes/archive/2026-10-01-old/design.md', 'From note `knowledge/notes/2026-09-30-idea.md`.\n');
+  w('knowledge/notes/2026-09-30-idea.md', '---\ntitle: Idea\n---\n\nI\n');
+  w('knowledge/notes/2026-09-30-other.md', '---\ntitle: Other\n---\n\nO\n');
   const k = readKnowledge(d);
   assert.equal(k.dir, 'knowledge');
-  assert.deepEqual(k.changes.find(c => c.name === 'gift-cards'), { name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: c1 } });
-  assert.deepEqual(k.changes.find(c => c.name === 'old'), { name: 'old', archived: true, link: null });
+  assert.deepEqual(k.changes.find(c => c.name === 'gift-cards'), { name: 'gift-cards', archived: false, link: { path: 'knowledge/prds/gift-cards.md', commit: c1 }, notes: [] });
+  assert.deepEqual(k.changes.find(c => c.name === 'old'), { name: 'old', archived: true, link: null, notes: ['notes/2026-09-30-idea.md'] });
   const since = gitChangedSince(d);
   assert.equal(since('knowledge/prds/gift-cards.md', c1), false);
   w('knowledge/prds/gift-cards.md', fs.readFileSync(path.join(d, 'knowledge/prds/gift-cards.md'), 'utf8') + 'edit\n');

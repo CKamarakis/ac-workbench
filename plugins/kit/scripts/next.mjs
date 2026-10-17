@@ -70,8 +70,12 @@ export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null,
     const others = ready.slice(1).map(p => p.slug);
     return at('artifacts', `PRD "${ready[0].slug}" is Ready and no change uses it yet: propose a change from it.`, ready[0], others.length ? { otherReady: others } : {});
   }
-  if (list.notes.length && !list.prds.length && activeCount === 0) {
-    return { suggestion: step(map, 'prd', `${list.notes.length} note(s) in ${dir}/notes and no PRD yet: shape them into a PRD.`), warnings };
+  // A note a change already cites (proposal or design) was used; only the others are ideas still waiting.
+  const fresh = list.notes.filter(n => !changes.some(c => c.notes?.includes(n.path)));
+  if (fresh.length && !list.prds.length && activeCount === 0) {
+    const titles = fresh.slice(0, 3).map(n => `"${n.title}"`).join(', ') + (fresh.length > 3 ? ` and ${fresh.length - 3} more` : '');
+    const one = fresh.length === 1;
+    return { suggestion: step(map, 'prd', `${fresh.length} note(s) in ${dir}/notes no change uses yet (${titles}): shape ${one ? 'it' : 'them'} into a PRD, or archive ${one ? 'it' : 'the ones'} if ${one ? "it's" : "they're"} already handled (/kit:capture).`), warnings };
   }
   return { suggestion: null, warnings };
 }
@@ -171,11 +175,13 @@ export function format(s) {
   return lines.join('\n');
 }
 
-/** Knowledge list plus every change's PRD link (active and archived), for prdSuggest. */
+/** Knowledge list plus every change's PRD link and the notes its proposal or design cites (active and archived), for prdSuggest. */
 export function readKnowledge(dir) {
   const kdir = knowledgeDir(dir);
   const rel = path.relative(dir, kdir).split(path.sep).join('/');
+  const list = listKnowledge(kdir);
   const changes = [];
+  const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
   const root = path.join(dir, 'openspec', 'changes');
   const scan = (base, archived) => {
     let entries = [];
@@ -184,12 +190,15 @@ export function readKnowledge(dir) {
       if (!e.isDirectory() || (!archived && e.name === 'archive')) continue;
       let text = null;
       try { text = fs.readFileSync(path.join(base, e.name, 'proposal.md'), 'utf8'); } catch { /* no proposal yet */ }
-      changes.push({ name: archived ? e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : e.name, archived, link: prdLink(text) });
+      // Cited by file name (with or without .md); a path cut short with "…" doesn't count.
+      const cites = text + read(path.join(base, e.name, 'design.md'));
+      const notes = (list.notes ?? []).filter(n => cites.includes(path.posix.basename(n.path, '.md'))).map(n => n.path);
+      changes.push({ name: archived ? e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : e.name, archived, link: prdLink(text), notes });
     }
   };
   scan(root, false);
   scan(path.join(root, 'archive'), true);
-  return { dir: rel, list: listKnowledge(kdir), changes };
+  return { dir: rel, list, changes };
 }
 
 /** (projectRelPath, commit) -> true if the file has commits after `commit` or uncommitted changes; null if git can't tell. */

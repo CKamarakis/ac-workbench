@@ -24,7 +24,7 @@ Roadmap structure first, then status, backlog and the explore-or-PRD step.
 
 - [x] T1 Roadmap format, check and /kit:roadmap skill (change roadmap-structure)
 - [x] T2 /kit:status report (the agreed table)
-- [ ] T3 Backlog: one place for what we said we would do
+- [x] T3 Backlog: one place for what we said we would do
 - [ ] T4 /kit:next offers explore or PRD for a new note
 
 ## Notes

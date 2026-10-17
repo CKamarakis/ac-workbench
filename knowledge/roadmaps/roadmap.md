@@ -76,9 +76,9 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-M12a Kit workflow: T1 roadmap, T2 /kit:status done (kit-status archived 2026-10-17).
-Now: T3 Backlog: one place for what we said we would do.
-Then: T4 explore-or-PRD; after that M12 on Toughbubble.
+M12a Kit workflow: T1 roadmap, T2 /kit:status, T3 loose ends done (archived 2026-10-17).
+Now: T4 /kit:next offers explore or PRD for a new note.
+Then: M12 on Toughbubble. Loose ends: 13 open, 4 important (/kit:loose-ends).
 
 ## Waiting on you
 

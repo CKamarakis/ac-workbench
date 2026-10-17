@@ -1,6 +1,6 @@
 ---
 title: Loose ends
-status: Building
+status: Shipped
 sources:
   - notes/2026-10-12-next-on-roadmap-and-pending-tasks.md
   - notes/kit-workflow/2026-10-17-kit-workflow-happy-path-real-life-and-overview-status-next.md

@@ -1,6 +1,6 @@
 # Proposal
 
-PRD: `knowledge/prds/explore-stage.md @ uncommitted`
+PRD: `knowledge/prds/explore-stage.md @ 071ea4b`
 Milestone: M12a (T4)
 
 ## Why

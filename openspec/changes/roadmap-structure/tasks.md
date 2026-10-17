@@ -2,20 +2,20 @@
 
 ## 1. Templates and the read side
 
-- [ ] 1.1 Bump the kit to `0.12.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
-- [ ] 1.2 Templates in `plugins/kit/templates/roadmap/` (design D6): `roadmap.md` with the five headings (North star, Principles, Order, Now, Waiting on you), `milestone.md`, `drift-log.md`. Verify the install check in `npm test` lists them
-- [ ] 1.3 `roadmap.mjs` parse (design D2): `parseRoadmap(dir)` reads `roadmap.md`, `milestones/`, `done/`, `drift-log.md` into one object (order, Now lines, waiting items, milestones with frontmatter, tasks, links). Verify with unit tests in `tests/kit/roadmap.test.mjs` on fixture folders (valid; missing status; bad task line; order vs files mismatch)
+- [x] 1.1 Bump the kit to `0.12.0` in `plugins/kit/.claude-plugin/plugin.json`. Verify with `node plugins/kit/scripts/ping.mjs`
+- [x] 1.2 Templates in `plugins/kit/templates/roadmap/` (design D6): `roadmap.md` with the five headings (North star, Principles, Order, Now, Waiting on you), `milestone.md`, `drift-log.md`. Verify with the `new` test (the install check covers skills and hooks, not templates)
+- [x] 1.3 `roadmap.mjs` parse (design D2): `parseRoadmap(dir)` reads `roadmap.md`, `milestones/`, `done/`, `drift-log.md` into one object (order, Now lines, waiting items, milestones with frontmatter, tasks, links). Verify with unit tests in `tests/kit/roadmap.test.mjs` on fixture folders (valid; missing status; bad task line; order vs files mismatch)
 
 ## 2. Check and report
 
-- [ ] 2.1 `checkRoadmap` (spec roadmap "Roadmap check warns and never blocks"): broken findings (missing `id`/`title`/`status`, unknown status, duplicate ID, order vs files, task shape, active without tasks) and tidy-up (over 150 lines, line over 300 characters, Now over 5 lines, done/dropped still in `milestones/`), each with file, line and fix; "in good condition" when none; exit code 0 always. Verify each scenario of the requirement as a unit test
-- [ ] 2.2 Stale Now and unplanned work (spec "Stale Now and unplanned work"; design D3, D4): Now stale only after an archive or merge newer than `roadmap.md`; active changes no milestone links to; branches not checked; skip with a note when git can't answer. Verify with tests on a temp git repo (archive after the update; ordinary commits only; change with no milestone; branch not listed)
-- [ ] 2.3 `reportRoadmap` (spec "Roadmap report", "Waiting on you by relevance"): milestones in order with status, tasks left or "n of m done", Now, Blocking now (first active milestone and the next one, plus `general`) and a Later count with the full list; broken findings on top; nothing sorted or flagged by age. Verify each scenario as a unit test, including reorder moving a decision and a 40-day-old decision not flagged
+- [x] 2.1 `checkRoadmap` (spec roadmap "Roadmap check warns and never blocks"): broken findings (missing `id`/`title`/`status`, unknown status, duplicate ID, order vs files, task shape, active without tasks) and tidy-up (over 150 lines, line over 300 characters, Now over 5 lines, done/dropped still in `milestones/`), each with file, line and fix; "in good condition" when none; exit code 0 always. Verify each scenario of the requirement as a unit test
+- [x] 2.2 Stale Now and unplanned work (spec "Stale Now and unplanned work"; design D3, D4): Now stale only after an archive or merge newer than `roadmap.md`; active changes no milestone links to; branches not checked; skip with a note when git can't answer. Verify with tests on a temp git repo (archive after the update; ordinary commits only; change with no milestone; branch not listed)
+- [x] 2.3 `reportRoadmap` (spec "Roadmap report", "Waiting on you by relevance"): milestones in order with status, tasks left or "n of m done", Now, Blocking now (the current milestone, first active or else first not finished, and the next one, plus `general`) and a Later count with the full list; broken findings on top; nothing sorted or flagged by age. Verify each scenario as a unit test, including reorder moving a decision and a 40-day-old decision not flagged
 
 ## 3. Writes
 
-- [ ] 3.1 `roadmap.mjs` write commands (design D1): `new` (from the templates; refuses if `roadmap.md` exists), `add` (next free ID, `planned`, goal, position in the order), `status` (`done`/`dropped` move the file to `done/`, ID stays in the order), `tick`, `order`, `now`, `wait` (add, or resolve into a drift-log entry), `link` (notes, prd, changes, branches), `drift` (append only). Each write runs `check` and prints broken findings. Verify with unit tests per command, including "IDs never reused" after a drop, "drift entries never rewritten" and "answered decision moves to the drift log"
-- [ ] 3.2 CLI and `--json` for every command, `error:` on bad input, like `knowledge.mjs`. Verify with CLI tests (`node roadmap.mjs check --dir <fixture>` output and exit code 0)
+- [x] 3.1 `roadmap.mjs` write commands (design D1): `new` (from the templates; refuses if `roadmap.md` exists), `add` (next free ID, `planned`, goal, position in the order), `status` (`done`/`dropped` move the file to `done/`, ID stays in the order), `task`, `tick`, `order`, `now`, `wait` (add), `answer` (into a drift-log entry), `link` (notes, prd, changes, branches), `drift` (append only). Each write runs `check` and prints broken findings. Verify with unit tests per command, including "IDs never reused" after a drop, "drift entries never rewritten" and "answered decision moves to the drift log"
+- [x] 3.2 CLI and `--json` for every command, `error:` on bad input, like `knowledge.mjs`. Verify with CLI tests (`node roadmap.mjs check --dir <fixture>` output and exit code 0)
 
 ## 4. Skill, registry and starter
 

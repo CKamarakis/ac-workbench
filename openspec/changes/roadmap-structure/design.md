@@ -23,7 +23,7 @@ See proposal.md (Why) and the PRD. Constraints that shape the approach:
 ## Decisions
 
 ### D1. One script, `roadmap.mjs`, for all reads and writes
-Commands: `new`, `add`, `status` (planned/active/paused/done/dropped; `done`/`dropped` also moves the file to `done/`), `tick`, `order`, `now`, `wait` (add, or resolve: the item leaves `roadmap.md` and a drift-log entry records question, answer, date and who decided; readiness D6), `link`, `drift` (append), `check`, `report`, all with `--dir` and `--json` like the other kit scripts. Pure functions (`parseRoadmap`, `checkRoadmap`, `reportRoadmap`) are exported for tests.
+Commands: `new`, `add`, `status` (planned/active/paused/done/dropped; `done`/`dropped` also moves the file to `done/`), `task` (adds a `T<n>` line; added at apply, since `tick` and the "active without tasks" rule need it), `tick`, `order`, `now`, `wait` (adds an item), `answer` (the item leaves `roadmap.md` and a drift-log entry records question, answer, date and who decided; readiness D6), `link`, `drift` (append), `check`, `report`, all with `--dir` and `--json` like the other kit scripts. Pure functions (`parseRoadmap`, `checkRoadmap`, `reportRoadmap`) are exported for tests.
 - *Why:* the PRD's main risk is the format drifting as agents write it; a script that is the only writer makes the format a property of code, and `check` covers hand edits.
 - *Alternative:* the skill edits Markdown directly and only `check` runs after. Rejected: the same freehand writing that caused today's file.
 

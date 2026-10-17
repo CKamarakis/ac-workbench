@@ -1,11 +1,12 @@
 ---
 title: Roadmap structure
-status: Ready
+status: Building
 sources:
   - notes/kit-workflow/2026-10-17-roadmap-as-a-kit-skill-drift-and-continuity-and-the-status-t.md
   - notes/kit-workflow/2026-10-17-kit-workflow-happy-path-real-life-and-overview-status-next.md
   - notes/2026-10-12-road-to-v1-research-and-decisions.md
   - notes/2026-10-12-next-on-roadmap-and-pending-tasks.md
+change: roadmap-structure
 ---
 
 <!-- Keep it to one or two pages. Every section should help someone decide or build. Write "Unknown" or move it to Open questions rather than guessing. -->
@@ -50,7 +51,7 @@ Other projects, such as Toughbubble, have no roadmap at all. The cost: you lose 
 - A check script, warn only (see Requirements).
 - A `/kit:roadmap` skill: create, add item, start, finish, tick task, drift entry, links to notes, PRD and change in both directions, a short report.
 - Moving this repo's `docs/roadmap.md` to the new format and location; `CLAUDE.md` points to the new file.
-- Optional per project; `/kit:start` asks.
+- Optional per project; `/kit:start` mentions `/kit:roadmap` under Later and asks nothing (readiness D1, 2026-10-17).
 
 **Out (and why):**
 - Backlog: its own change (4); kept separate so the roadmap doesn't grow back.
@@ -64,7 +65,7 @@ Other projects, such as Toughbubble, have no roadmap at all. The cost: you lose 
 
 *Create*
 - Given a project with no roadmap, when I run `/kit:roadmap`, then it offers to create one from the template and writes nothing until I say yes.
-- Given a new or re-synced project, when `/kit:start` runs, then it asks whether I want a roadmap (optional) and creates nothing on a no.
+- Given a project with no roadmap, when `/kit:start` runs, then it asks only the project type and mentions `/kit:roadmap` once under Later; it creates nothing (readiness D1).
 - Given a project with no roadmap, when I use any other kit command, then nothing asks for or needs a roadmap.
 
 *Add items (both directions)*
@@ -81,15 +82,16 @@ Other projects, such as Toughbubble, have no roadmap at all. The cost: you lose 
 - IDs never change and are never reused; the order is a list in `roadmap.md`, separate from the IDs.
 
 *Drift and continuity*
-- Given a branch or change not linked to any milestone, when the check runs, then it's listed as unplanned work, and the skill offers a drift entry (date, what, why, on-plan alternative, impact, decided by).
+- Given an active change not linked to any milestone, when the check runs, then it's listed as unplanned work (branches aren't checked for now, readiness D5), and the skill offers a drift entry (date, what, why, on-plan alternative, impact, decided by).
 - Given work that stops (archive or merge), then the skill offers an updated Now, 5 lines or fewer.
-- Given a Now older than the latest commit, when the check runs, then it reports Now as stale.
+- Given a change archived or a branch merged after the last roadmap update, when the check runs, then it reports Now as stale; ordinary commits don't (readiness D3).
 
 *Waiting on you (pending decisions)*
 - Each pending decision is linked to a milestone, or marked general, and keeps the date it was proposed as plain information.
-- Given pending decisions, when I look at the roadmap report or status, then those linked to the active or next milestone show under "Blocking now"; the rest show as a count under "Later", listed in full in the report.
+- Given pending decisions, when I look at the roadmap report or status, then those linked to the current milestone (the first active one, or else the first not finished) or the next one show under "Blocking now"; the rest show as a count under "Later", listed in full in the report.
 - Given I reorder milestones, then the decisions move between "Blocking now" and "Later" with them.
 - Decisions are never marked old by age: the user may leave a project for weeks.
+- Given I answer a decision, then it leaves `roadmap.md` and the drift log records the date, question, answer and who decided (readiness D6).
 
 *Check script (warn only)*
 - It never blocks any step, including a release.

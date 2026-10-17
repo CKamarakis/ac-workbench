@@ -1,6 +1,6 @@
 # Proposal
 
-PRD: `knowledge/prds/loose-ends.md @ uncommitted`
+PRD: `knowledge/prds/loose-ends.md @ c9de2fb`
 Milestone: M12a (T3)
 
 ## Why

@@ -76,9 +76,9 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-M12a Kit workflow: building change roadmap-structure (roadmap format, check, /kit:roadmap skill).
-This roadmap is its first real use: moved here from docs/roadmap.md on 2026-10-17.
-Next: archive roadmap-structure, then M12 on Toughbubble (ready to test).
+M12a Kit workflow: T1 done (roadmap-structure archived 2026-10-17); the roadmap lives in knowledge/roadmaps/.
+Next: M12 on Toughbubble (ready to test).
+M12a T2-T4 (status, backlog, explore-or-PRD) wait; their order vs M12 is under Waiting on you.
 
 ## Waiting on you
 

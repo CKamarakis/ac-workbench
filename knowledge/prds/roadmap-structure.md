@@ -1,6 +1,6 @@
 ---
 title: Roadmap structure
-status: Building
+status: Shipped
 sources:
   - notes/kit-workflow/2026-10-17-roadmap-as-a-kit-skill-drift-and-continuity-and-the-status-t.md
   - notes/kit-workflow/2026-10-17-kit-workflow-happy-path-real-life-and-overview-status-next.md

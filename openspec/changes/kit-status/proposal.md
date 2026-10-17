@@ -1,6 +1,6 @@
 # Proposal
 
-PRD: `knowledge/prds/kit-status.md @ uncommitted`
+PRD: `knowledge/prds/kit-status.md @ fae18c9`
 Milestone: M12a (T2)
 
 ## Why

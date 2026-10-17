@@ -133,6 +133,15 @@ function main() {
     { name: 'docs: build (decided)', ...node('scripts/docs.mjs', ['build', ...d]), expect: { line: /0 undecided/ } },
     { name: 'docs: scan', ...node('scripts/docs.mjs', ['scan', ...d]), expect: { line: /page: up to date/ } },
     { name: 'harness: scan', ...node('scripts/harness.mjs', ['scan', ...d]), expect: { line: /routing block: current/ } },
+    // roadmap-structure 5.1: the optional roadmap, end to end (spec: roadmap)
+    { name: 'roadmap: none yet', ...node('scripts/roadmap.mjs', ['check', ...d]), expect: { line: /No roadmap here \(optional\)/ } },
+    { name: 'roadmap: new', ...node('scripts/roadmap.mjs', ['new', ...d]), expect: { line: /created roadmaps\//, file: 'knowledge/roadmaps/roadmap.md' } },
+    { name: 'roadmap: add', ...node('scripts/roadmap.mjs', ['add', ...d, '--title', 'Storms stickies', '--goal', 'Sticky notes on the board.', '--notes', 'notes/2026-01-01-sticky-notes-on-a-board.md']), expect: { line: /added M1/, file: 'knowledge/roadmaps/milestones/m1-storms-stickies.md' } },
+    { name: 'roadmap: task', ...node('scripts/roadmap.mjs', ['task', ...d, '--id', 'M1', '--text', 'Drag and drop']), expect: { line: /M1: added T1/ } },
+    { name: 'roadmap: start', ...node('scripts/roadmap.mjs', ['status', ...d, '--id', 'M1', '--to', 'active']), expect: { line: /M1: planned -> active/, noLine: /BROKEN/ } },
+    { name: 'roadmap: tick', ...node('scripts/roadmap.mjs', ['tick', ...d, '--id', 'M1', '--task', 'T1']), expect: { line: /T1 ticked/ } },
+    { name: 'roadmap: check', ...node('scripts/roadmap.mjs', ['check', ...d]), expect: { line: /in good condition/ } },
+    { name: 'roadmap: report', ...node('scripts/roadmap.mjs', ['report', ...d]), expect: { line: /M1 · Storms stickies · active · 1 of 1 done/ } },
   ];
 
   const r = runSteps(steps, { cwd: proj });

@@ -26,6 +26,6 @@
 
 ## 5. Proof and this repo
 
-- [ ] 5.1 Smoke steps: `roadmap.mjs new`, `add`, `status --to active`, `tick`, `check` ("in good condition"), `report`. Verify `npm run smoke` passes with the new steps
+- [x] 5.1 Smoke steps: `roadmap.mjs new`, `add`, `status --to active`, `tick`, `check` ("in good condition"), `report`. Verify `npm run smoke` passes with the new steps
 - [ ] 5.2 Move this repo's roadmap (design D7): record counts from `docs/roadmap.md` (milestones, drift entries, pending items); write `knowledge/roadmaps/` through `roadmap.mjs`, keeping each finished milestone's full old text in its `done/` file; compare counts; `check` with no broken findings; `docs/roadmap.md` becomes a pointer; update `CLAUDE.md`, `openspec/config.yaml` context and `docs/project-context.md`. Verify counts match and `node plugins/kit/scripts/roadmap.mjs check --dir .` reports no broken findings; show the user the report
 - [ ] 5.3 Full run: `npm test`, `npm run registry:check`, `npm run evals`, `npm run smoke`, `npm run smoke:check`; record results in `evals/trials/roadmap-structure.md`. Ask the user to update the memory note that says "read docs/roadmap.md first"

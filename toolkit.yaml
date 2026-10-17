@@ -5,7 +5,7 @@
 version: 1
 
 # Workflow phases. Each one gets exactly one owner (lane map, spec: skill-routing).
-phases: [capture, prd, brainstorm, artifacts, plan, ready, build, verify, review, ui-polish, close, docs, roadmap, assess, kit-issues]
+phases: [capture, prd, brainstorm, artifacts, plan, ready, build, verify, review, ui-polish, close, docs, roadmap, status, assess, kit-issues]
 
 # Test policy per project type (spec: toolkit-registry "Test policy per project type").
 # /kit:verify runs these package.json scripts. Projects without a type use "none".
@@ -49,6 +49,9 @@ situations:
   - when: I want to see or change the project's goals, order and what's waiting
     phase: roadmap
     use: /kit:roadmap
+  - when: I am back after a while, or want to pick the next item
+    phase: status
+    use: /kit:status
   - when: I want a check-up of this project's Claude Code setup
     phase: assess
     use: /kit:harness-review
@@ -315,7 +318,7 @@ tools:
       license: Own work
     reviewed_version: 0.1.0
     reviewed_on: 2026-10-01
-    phases: [capture, prd, ready, verify, docs, roadmap, assess, kit-issues]
+    phases: [capture, prd, ready, verify, docs, roadmap, status, assess, kit-issues]
     skills:
       capture: /kit:capture
       prd: /kit:prd
@@ -323,6 +326,7 @@ tools:
       verify: /kit:verify
       docs: /kit:docs
       roadmap: /kit:roadmap
+      status: /kit:status
       assess: /kit:harness-review
       kit-issues: github.com/CKamarakis/ac-workbench/issues
     verdicts:

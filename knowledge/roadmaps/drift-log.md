@@ -48,3 +48,4 @@ Every change of direction, with its reason. Entries are only ever added.
 
 | Date | What changed | Why | On-plan alternative | Impact | Decided by |
 |---|---|---|---|---|---|
+| 2026-10-17 | Decided (M12a): Order of the M12a changes 2-4 (status, backlog, explore-or-PRD) vs M12 -> M12a T2-T4 (status, backlog, explore-or-PRD) first, then M12 on Toughbubble. | proposed 2026-10-17 | - | - | user |

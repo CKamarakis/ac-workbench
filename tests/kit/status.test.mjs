@@ -1,0 +1,267 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { tmpDir } from '../../tools/test-root.mjs';
+import { projectStatus, format, cap, ageDays } from '../../plugins/kit/scripts/status.mjs';
+import { locate } from '../../plugins/kit/scripts/locate.mjs';
+
+const SCRIPT = fileURLToPath(new URL('../../plugins/kit/scripts/status.mjs', import.meta.url));
+const GIT = locate('git')?.path ?? 'git';
+const NOW = Date.parse('2026-10-17T12:00:00Z');
+
+// A project folder written from a map of relative paths to file contents.
+function project(files = {}) {
+  const d = tmpDir('kit-status-');
+  for (const [rel, text] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true });
+    fs.writeFileSync(path.join(d, rel), text);
+  }
+  fs.mkdirSync(path.join(d, 'openspec', 'changes'), { recursive: true });
+  return d;
+}
+const spec = '# Spec\n\n## Purpose\n\nX.\n';
+const roadmap = ({ order, now = ['Working.'], waiting = [] }) => ['# Roadmap', '', '## North star', '', 'V1.', '', '## Principles', '', '- The user decides.', '',
+  '## Order', '', ...order.map(id => `- ${id}`), '', '## Now', '', ...now, '', '## Waiting on you', '', ...waiting, ''].join('\n');
+const ms = (id, title, status, tasks, extra = '') => `---\nid: ${id}\ntitle: ${title}\nstatus: ${status}\n${extra}---\n\nA goal.\n\n## Tasks\n\n${tasks.join('\n')}\n`;
+const prd = (title, status, extra = '') => `---\ntitle: ${title}\nstatus: ${status}\nsources: []\n${extra}---\n\n## Problem\n\nX.\n\n## Open questions\n\n- None.\n`;
+const note = (title, date) => `---\ntitle: ${title}\ndate: ${date}\n---\n\nText.\n`;
+const decisions = (change, items) => `# Decisions: ${change}\n\n<!-- kit-decisions-data ${JSON.stringify({ change, next: items.length + 1, items, readyAt: null })} -->\n`;
+const run = (d, opts = {}) => projectStatus(d, { git: null, openspec: true, now: NOW, ...opts });
+
+const withRoadmap = (extra = {}) => project({
+  'PRODUCT.md': '# Toughbubble\n',
+  'knowledge/roadmaps/roadmap.md': roadmap({ order: ['M12a', 'M12', 'M13', 'M14'], ...extra.roadmap }),
+  'knowledge/roadmaps/drift-log.md': '# Drift log\n',
+  'knowledge/roadmaps/milestones/m12a-kit-workflow.md': ms('M12a', 'Kit workflow', 'active', ['- [x] T1 Roadmap', '- [ ] T2 Status', '- [ ] T3 Backlog'], extra.m12a ?? ''),
+  'knowledge/roadmaps/milestones/m12-toughbubble-proof.md': ms('M12', 'Toughbubble proof', 'planned', ['- [ ] T1 Upgrade']),
+  'knowledge/roadmaps/milestones/m13-release-prep.md': ms('M13', 'Release prep', 'planned', ['- [ ] T1 License']),
+  'knowledge/roadmaps/milestones/m14-launch.md': ms('M14', 'Launch', 'planned', ['- [ ] T1 Post']),
+  ...extra.files,
+});
+
+// ---------- 1.2 overview ----------
+
+test('overview: built comes from main specs, newest-archived first; a Shipped PRD with no archive is not built', () => {
+  const d = project({
+    'PRODUCT.md': '# P\n',
+    'openspec/specs/roadmap/spec.md': spec, 'openspec/specs/harness-review/spec.md': spec, 'openspec/specs/old/spec.md': spec,
+    'openspec/changes/archive/2026-10-10-harness/specs/harness-review/spec.md': spec,
+    'openspec/changes/archive/2026-10-17-roadmap-structure/specs/roadmap/spec.md': spec,
+    'knowledge/prds/gift-cards.md': prd('Gift cards', 'Shipped', 'change: gift-cards\n'),
+  });
+  const s = run(d);
+  assert.equal(s.overview.description.path, 'PRODUCT.md');
+  assert.equal(s.overview.built.count, 3);
+  assert.deepEqual(s.overview.built.newest, ['roadmap', 'harness-review', 'old']);
+  assert.ok(!s.overview.built.newest.includes('gift-cards'));
+  assert.deepEqual(s.overview.archived.map(a => a.change), ['roadmap-structure', 'harness']);
+});
+
+test('overview: 15 capabilities -> the count and 5 names', () => {
+  const files = { 'README.md': '# R\n' };
+  for (let i = 1; i <= 15; i++) files[`openspec/specs/cap-${String(i).padStart(2, '0')}/spec.md`] = spec;
+  const s = run(project(files));
+  assert.equal(s.overview.built.count, 15);
+  assert.equal(s.overview.built.newest.length, 5);
+});
+
+test('overview: description file order is PRODUCT.md, docs/project-context.md, README.md', () => {
+  assert.equal(run(project({ 'README.md': 'r', 'docs/project-context.md': 'c' })).overview.description.path, 'docs/project-context.md');
+  const none = run(project({}));
+  assert.equal(none.overview.description.path, null);
+  assert.equal(none.overview.description.fix, '/kit:start');
+  assert.match(format(none), /no description found/);
+});
+
+test('missing: roadmap and backlog reported; openspec CLI and git reported when absent', () => {
+  const s = run(project({}), { openspec: false });
+  const m = s.missing.map(x => x.source);
+  assert.ok(m.includes('roadmap') && m.includes('backlog') && m.includes('openspec CLI') && m.includes('git'));
+});
+
+// ---------- 1.3 sections ----------
+
+test('sections with a roadmap: Now by title with Left and Source; Next and After in roadmap order', () => {
+  const s = run(withRoadmap());
+  const now = s.sections.now.rows[0];
+  assert.equal(now.item, 'Kit workflow');
+  assert.deepEqual(now.left, ['T2 Status', 'T3 Backlog']);
+  assert.equal(now.source, 'knowledge/roadmaps/milestones/m12a-kit-workflow.md');
+  assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Toughbubble proof']);
+  assert.deepEqual(s.sections.after.rows.map(r => r.item), ['Release prep', 'Launch']);
+  assert.equal(s.sections.debt.note, 'no backlog yet');
+});
+
+test('milestone and its linked change are two rows in Now, each with its own Left and Source', () => {
+  const d = withRoadmap({ m12a: 'changes:\n  - kit-status\n', files: {
+    'openspec/changes/kit-status/proposal.md': '# Proposal\n\nPRD: `knowledge/prds/kit-status.md @ abc1234`\n',
+    'openspec/changes/kit-status/tasks.md': '- [x] 1.1 a\n- [ ] 1.2 b\n- [ ] 1.3 c\n',
+    'knowledge/prds/kit-status.md': prd('Kit status', 'Building', 'change: kit-status\n'),
+  } });
+  const rows = run(d).sections.now.rows;
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].kind, 'milestone');
+  assert.deepEqual([rows[1].item, rows[1].left, rows[1].source], ['Kit status', '2 of 3 tasks open', 'openspec/changes/kit-status/']);
+});
+
+test('several items under way: Now lists every active change', () => {
+  const d = project({ 'openspec/changes/notes-search/tasks.md': '- [ ] 1.1 a\n', 'openspec/changes/task-board/tasks.md': '- [x] 1.1 a\n- [ ] 1.2 b\n' });
+  const s = run(d);
+  assert.deepEqual(s.sections.now.rows.map(r => [r.item, r.left]), [['notes search', '1 of 1 tasks open'], ['task board', '1 of 2 tasks open']]);
+  assert.equal(s.handoff.underWay.length, 2);
+  assert.match(format(s), /it asks which one/);
+});
+
+test('no roadmap: Next from Ready PRDs (newest first) then notes no PRD or change uses; nothing created', () => {
+  const d = project({
+    'PRODUCT.md': '# P\n',
+    'knowledge/prds/a.md': prd('Alpha', 'Ready'), 'knowledge/prds/b.md': prd('Beta', 'Draft', ''),
+    'knowledge/notes/2026-10-01-idea.md': note('An idea', '2026-10-01'),
+    'knowledge/notes/2026-10-02-used.md': note('Used note', '2026-10-02'),
+    'knowledge/prds/c.md': prd('Gamma', 'Draft').replace('sources: []', 'sources:\n  - notes/2026-10-02-used.md'),
+  });
+  const before = fs.readdirSync(d, { recursive: true }).sort();
+  const s = run(d);
+  assert.equal(s.roadmap, false);
+  assert.deepEqual(s.sections.next.rows.map(r => [r.item, r.kind]), [['Alpha', 'prd'], ['An idea', 'note']]);
+  assert.equal(s.sections.next.rows[1].age, 16);
+  assert.equal(s.sections.now.rows.length, 0);
+  assert.ok(s.missing.some(m => m.source === 'roadmap' && /\/kit:roadmap/.test(m.fix)));
+  assert.equal(s.handoff.candidates[0].item, 'Alpha');
+  assert.deepEqual(fs.readdirSync(d, { recursive: true }).sort(), before);
+});
+
+test("We said we'd do: waiting items, PRD questions and open decisions (active and archived), with source and answering command", () => {
+  const d = withRoadmap({
+    roadmap: { waiting: ['- [general] Keep notes manageable? (proposed 2026-10-07)'] },
+    files: {
+      'knowledge/prds/sidebar.md': prd('Sidebar', 'Draft').replace('- None.', '- Q1?\n- Q2?'),
+      'openspec/changes/archive/2026-10-14-docs/decisions.md': decisions('docs', [
+        { id: 'D1', kind: 'gap', text: 'Cap the page size?', status: 'later', dates: { opened: '2026-10-12', later: '2026-10-12' } },
+        { id: 'D2', kind: 'gap', text: 'Done one', status: 'decided', dates: { opened: '2026-10-12' } }]),
+    },
+  });
+  const rows = run(d).sections.said.rows;
+  assert.deepEqual(rows.map(r => [r.kind, r.answer]), [['roadmap', '/kit:roadmap'], ['prd', '/kit:prd'], ['decision', '/kit:ready']]);
+  assert.equal(rows[1].item, 'PRD "Sidebar": 2 open question(s)');
+  assert.equal(rows[2].source, 'openspec/changes/archive/2026-10-14-docs/decisions.md');
+  assert.match(rows[2].status, /archived change/);
+});
+
+test('section cap: 8 waiting items -> 5 rows and 3 more', () => {
+  const waiting = Array.from({ length: 8 }, (_, i) => `- [general] Question ${i + 1}? (proposed 2026-10-0${i + 1})`);
+  const s = run(withRoadmap({ roadmap: { waiting } }));
+  assert.equal(s.sections.said.rows.length, 5);
+  assert.equal(s.sections.said.more, 3);
+  assert.equal(s.sections.said.rows[0].item, 'Question 1?', 'oldest first');
+  assert.match(format(s), /\+3 more/);
+  assert.deepEqual(cap([1, 2]), { rows: [1, 2], more: 0 });
+  assert.equal(ageDays('2026-10-10', NOW), 7);
+});
+
+// ---------- 1.4 mismatches ----------
+
+function gitInit(d) {
+  const g = (...a) => spawnSync(GIT, ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
+  g('init', '-q', '-b', 'main'); g('add', '.'); g('commit', '-qm', 'start');
+  return g;
+}
+
+test('mismatch (a): active milestone with tasks left, no change and no branch', () => {
+  const d = withRoadmap();
+  gitInit(d);
+  const s = run(d, { git: GIT });
+  assert.equal(s.mismatches.length, 1);
+  assert.match(s.mismatches[0].what, /"Kit workflow" \(M12a\) is active with 2 task\(s\) left, but no change is active/);
+  assert.match(s.mismatches[0].fix, /propose a change for it, or update Now/);
+  assert.match(format(s), /Doesn't match \(1\)/);
+});
+
+test('mismatch (a) not raised when a milestone branch exists', () => {
+  const d = withRoadmap({ m12a: 'branches:\n  - m12a-status\n' });
+  const g = gitInit(d);
+  g('branch', 'm12a-status');
+  assert.equal(run(d, { git: GIT }).mismatches.length, 0);
+});
+
+test('mismatch (b): Building PRD whose change is archived', () => {
+  const d = project({ 'knowledge/prds/roadmap-structure.md': prd('Roadmap structure', 'Building', 'change: roadmap-structure\n'), 'openspec/changes/archive/2026-10-17-roadmap-structure/proposal.md': '# P\n' });
+  const m = run(d).mismatches;
+  assert.equal(m.length, 1);
+  assert.match(m[0].fix, /\/kit:prd: mark it Shipped/);
+});
+
+test('mismatch (c): roadmap stale Now and unplanned work passed through', () => {
+  const d = withRoadmap({ m12a: 'changes:\n  - kit-status\n', files: { 'openspec/changes/kit-status/tasks.md': '- [ ] 1.1 a\n' } });
+  const g = gitInit(d);
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-10-18-gift-cards'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'openspec/changes/archive/2026-10-18-gift-cards/proposal.md'), '# P\n');
+  fs.mkdirSync(path.join(d, 'openspec/changes/stray'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'openspec/changes/stray/tasks.md'), '- [ ] 1.1 a\n');
+  spawnSync(GIT, ['add', '.'], { cwd: d });
+  spawnSync(GIT, ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'archive'], { cwd: d, env: { ...process.env, GIT_COMMITTER_DATE: '2030-01-01T10:00:00Z', GIT_AUTHOR_DATE: '2030-01-01T10:00:00Z' } });
+  const m = run(d, { git: GIT }).mismatches.map(x => x.what);
+  assert.ok(m.some(w => /Now may be stale/.test(w)), m.join('\n'));
+  assert.ok(m.some(w => /change stray is under way but no milestone links it/.test(w)));
+  void g;
+});
+
+test('everything agrees: no mismatches and no "Doesn\'t match" section', () => {
+  const d = project({ 'PRODUCT.md': '# P\n' });
+  const s = run(d);
+  assert.deepEqual(s.mismatches, []);
+  assert.doesNotMatch(format(s), /Doesn't match/);
+});
+
+// ---------- 1.5 handoff and CLI ----------
+
+test('handoff: one item under way names it and /kit:next', () => {
+  const s = run(project({ 'openspec/changes/kit-status/tasks.md': '- [ ] 1.1 a\n' }));
+  assert.deepEqual(s.handoff, { underWay: [{ item: 'kit status', change: 'kit-status' }], command: '/kit:next' });
+  assert.match(format(s), /-> Working on: kit status\. Run \/kit:next\./);
+});
+
+test('CLI: --json, exit 0, and git status unchanged after a run', () => {
+  const d = withRoadmap();
+  gitInit(d);
+  const before = spawnSync(GIT, ['status', '--porcelain'], { cwd: d, encoding: 'utf8' }).stdout;
+  const r = spawnSync(process.execPath, [SCRIPT, '--dir', d, '--json'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(JSON.parse(r.stdout).sections.now.rows[0].item, 'Kit workflow');
+  assert.equal(spawnSync(GIT, ['status', '--porcelain'], { cwd: d, encoding: 'utf8' }).stdout, before);
+  const plain = spawnSync(process.execPath, [SCRIPT, '--dir', d], { encoding: 'utf8' });
+  assert.equal(plain.status, 0);
+  assert.match(plain.stdout, /^Project {3}PRODUCT\.md/);
+});
+
+test('OpenSpec CLI not found: the rest is still filled and the skip is reported', () => {
+  const s = run(withRoadmap(), { openspec: false });
+  assert.equal(s.sections.now.rows[0].item, 'Kit workflow');
+  assert.ok(s.missing.some(m => m.source === 'openspec CLI' && /\/kit:setup/.test(m.fix)));
+});
+
+// ---------- verify C4, C5, C7 ----------
+
+test('verify C4: link bullets in tasks.md are not tasks; "- [ x]" counts as done', () => {
+  const s = run(project({ 'openspec/changes/a/tasks.md': '- [design](design.md)\n- [see spec](specs/x/spec.md)\n- [x] 1.1 a\n- [ x] 1.2 b\n- [ ] 1.3 c\n' }));
+  assert.equal(s.sections.now.rows[0].left, '1 of 3 tasks open');
+});
+
+test('verify C5: the handoff lists every active change, past the section cap', () => {
+  const files = {};
+  for (const n of ['a', 'b', 'c', 'd', 'e', 'f']) files[`openspec/changes/${n}/tasks.md`] = '- [ ] 1.1 x\n';
+  const s = run(withRoadmap({ files }));
+  assert.equal(s.sections.now.rows.length, 5);
+  assert.equal(s.handoff.underWay.length, 6);
+});
+
+test('verify C7: a PRD citing "./notes/x.md" counts as using notes/x.md', () => {
+  const d = project({
+    'knowledge/notes/2026-10-01-x.md': note('X', '2026-10-01'),
+    'knowledge/prds/p.md': prd('P', 'Draft').replace('sources: []', 'sources:\n  - ./notes/2026-10-01-x.md'),
+  });
+  assert.deepEqual(run(d).sections.next.rows.map(r => r.item), []);
+});

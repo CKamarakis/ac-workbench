@@ -22,7 +22,8 @@ The repo is a Claude Code plugin marketplace with one plugin, `kit`.
                          /opsx:archive -->  PRD Shipped; rebuild the docs page into the archive commit?
                                             |
                          /kit:docs     -->  knowledge/docs/index.html: what's built, why, what's undecided
- Not sure what's next?  /kit:next
+ Back after a while?    /kit:status  -->  what it is, what's built, what's under way, what's next; which item
+                         /kit:next    -->  the next step inside that item (never picks the item for you)
 ```
 
 ## Install
@@ -55,13 +56,17 @@ After the install above, run `/kit:start` once in the project folder (again only
 |---|---|
 | `/kit:capture` | Save an idea, dictation, link or screenshot as a note; import a `.txt` transcript; archive or move notes. Offers to update a matching PRD |
 | `/kit:prd` | Draft a PRD from the notes you pick, update it section by section (never overwriting your edits), and mark it Ready |
-| `/kit:next` | Tell you the next step and which skill to use, from your PRDs and OpenSpec state |
+| `/kit:status` | Where the project stands, in plain words: what it is, what's built, a table of Now / Next / We said we'd do / Tech debt / After with sources, and anything that doesn't match between the roadmap, PRDs, OpenSpec and git. Names the item to work on; read-only, works without a roadmap |
+| `/kit:next` | The next step inside the current item and which skill to use, from your PRDs and OpenSpec state. With nothing open it points you to `/kit:status`; with several changes active it asks which one |
+| `/kit:roadmap` | Optional roadmap: goals in order, tasks left, Now, decisions waiting on you, and a drift log. Writes only on your yes |
 | `/kit:judge` | Recommend plain OpenSpec or SuperSpec for a change, from a risk checklist, with the reasons. You decide |
 | `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Warns, never blocks |
 | `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests, and a **docs sync** (what was built goes into the specs and `design.md`, on your yes); writes `verify.md` |
 | `/kit:docs` | Build the project's docs page (`knowledge/docs/index.html`): products › sub-features, their Given/When/Then user stories, the why where it matters, foundation cards, the tools inventory, history and open decisions. Drafts missing notes and asks you per item; the page itself is rebuilt by a script at no token cost |
+| `/kit:harness-review` | Read-only check-up of the project's Claude Code setup, with at most three fixes |
 | `/kit:setup` | Install or check the machine toolset |
 | `/kit:start` | Set up or re-sync a project |
+| `/kit:ping` | Check that the kit plugin is installed |
 
 Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive`.
 

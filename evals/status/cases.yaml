@@ -1,0 +1,59 @@
+# Eval cases for /kit:status (spec: project-status). Deterministic: the facts script in a sandbox, plus the skill's rules.
+skill: status
+vars:
+  status: '{{kit}}/scripts/status.mjs'
+
+cases:
+  - id: roadmap-project-now-next-and-handoff
+    description: With a roadmap, Now and Next show milestones by title in roadmap order; the last line hands off to /kit:next
+    setup:
+      files:
+        PRODUCT.md: "# Shop\n\nAn online shop.\n"
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nV1.\n\n## Principles\n\n- The user decides.\n\n## Order\n\n- M1\n- M2\n\n## Now\n\nCheckout.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n"
+        knowledge/roadmaps/milestones/m1-checkout.md: "---\nid: M1\ntitle: Checkout\nstatus: active\nchanges:\n  - add-checkout\n---\n\nPay.\n\n## Tasks\n\n- [ ] T1 Card form\n"
+        knowledge/roadmaps/milestones/m2-gift-cards.md: "---\nid: M2\ntitle: Gift cards\nstatus: planned\n---\n\nGifts.\n\n## Tasks\n\n- [ ] T1 Codes\n"
+        openspec/changes/add-checkout/tasks.md: "- [x] 1.1 a\n- [ ] 1.2 b\n"
+    checks:
+      - kind: command-exit
+        command: node "{{status}}" --dir .
+        expect: 0
+        stdout_match: '^Project {3}PRODUCT\.md[\s\S]*\nNow\r?\n  Checkout \|[\s\S]*  add checkout \| 1 of 2 tasks open[\s\S]*\nNext\r?\n  Gift cards \|[\s\S]*-> Working on: add checkout\. Run /kit:next\.'
+
+  - id: no-roadmap-project
+    description: Without a roadmap the overview and Next are still filled, the roadmap is mentioned as optional, and no file is created
+    setup:
+      files:
+        PRODUCT.md: "# Toughbubble\n"
+        openspec/specs/notes/spec.md: "# Spec\n"
+        openspec/changes/archive/2026-10-10-notes/specs/notes/spec.md: "# Spec\n"
+        knowledge/prds/storms.md: "---\ntitle: Storms\nstatus: Ready\nsources: []\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{status}}" --dir .
+        expect: 0
+        stdout_match: 'Built {5}1 capabilities; newest: notes[\s\S]*\nNext\r?\n  Storms \| ready to propose[\s\S]*Missing: roadmap \(/kit:roadmap can set the order \(optional\)\)[\s\S]*Nothing under way\. Pick the next item \(first: Storms\)'
+      - kind: command-exit
+        command: >-
+          node -e "process.exit(require('fs').existsSync('knowledge/roadmaps') ? 1 : 0)"
+        expect: 0
+
+  - id: mismatch-shown-with-fix
+    description: A Building PRD whose change is archived shows under "Doesn't match" with the /kit:prd fix
+    setup:
+      files:
+        knowledge/prds/search.md: "---\ntitle: Search\nstatus: Building\nsources: []\nchange: search\n---\n\n## Problem\n\nP\n"
+        openspec/changes/archive/2026-10-12-search/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{status}}" --dir .
+        expect: 0
+        stdout_match: "Doesn't match \\(1\\)\\r?\\n  PRD \"Search\" is Building, but its change search is archived[\\s\\S]*fix: /kit:prd"
+
+  - id: skill-uses-only-facts-and-never-writes
+    description: The skill words the facts only, writes nothing, and hands off to /kit:next without running it
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'Use only the facts in the JSON' }
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'Never write\.' }
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: "Don't run it yourself" }
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/status\.mjs' }

@@ -1,7 +1,7 @@
 // /kit:next: suggest the next step from the project's OpenSpec state and the lane map
 // (design D6; spec: skill-routing "Next-step suggestion"). Owners and skills always come from the
 // lane map, never from this file. Zero dependencies.
-// Usage: node next.mjs [--dir <project>] [--json]
+// Usage: node next.mjs [--dir <project>] [--change <name>] [--json]
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -100,35 +100,60 @@ export function docsLine(page) {
   return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
 }
 
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
   // Every change in `openspec list` is unarchived; "complete" only means all tasks are ticked (verify + archive still due).
   const active = (openspec.changes ?? []).filter(c => c.status !== 'archived')
     .sort((a, b) => String(b.lastModified).localeCompare(String(a.lastModified)));
-  const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: active[0]?.name, changedSince });
+  // A name that isn't active counts only when something is (verify C3): with nothing active, "Nothing open" applies.
+  const named = change && active.some(c => c.name === change) ? change : null;
+  const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: named ?? active[0]?.name, changedSince });
   const questions = questionsLine(knowledge);
   const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
-  if (suggestion) return withWarnings(suggestion);
-  return withWarnings(openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf }));
+  // With a change named, a PRD step wins only when it is about that change (verify C1).
+  if (suggestion && (!named || suggestion.change === named)) return withWarnings(suggestion);
+  // kit-status D6: next works inside one item. Several active changes and none named -> the user picks one.
+  if (change && !named && active.length) return withWarnings(chooseStep(active, `No active change named "${change}".`));
+  if (!named && active.length > 1) return withWarnings(chooseStep(active, `${active.length} changes are active.`));
+  const picked = named ? active.filter(c => c.name === named) : active;
+  return withWarnings(openspecSuggest({ active: picked, statusOf, map, verifyOf, decisionsOf, leftover: leftoverCount(knowledge, archived) }));
 }
 
-function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null }) {
-  const s = openspecStep({ active, statusOf, map, verifyOf, decisionsOf });
+/** Several items under way (spec skill-routing "Several active changes"): list them; the skill asks which one. */
+function chooseStep(active, why) {
+  const names = active.map(c => c.name);
+  return { phase: 'choose', owner: null, use: 'pick a change', alternatives: [], reason: `${why} Pick one, then run /kit:next --change <name>.`, choose: names };
+}
+
+/** Items left for later (readiness D1, D4): open decisions in archived changes and PRD questions put off. */
+export function leftoverCount(knowledge, archived) {
+  const builds = archived?.open ?? 0;
+  const prd = (knowledge?.list?.prds ?? []).filter(p => p.valid && ['Draft', 'Review'].includes(p.status)).reduce((n, p) => n + (p.openQuestions ?? 0), 0);
+  return { builds, prd, total: builds + prd };
+}
+
+function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null, leftover = null }) {
+  const s = openspecStep({ active, statusOf, map, verifyOf, decisionsOf, leftover });
   // build-readiness D3: open decisions ride along on any suggestion for the change; never a gate.
   const open = s.change ? openLine(decisionsOf(s.change)) : null;
   return open ? { ...s, open } : s;
 }
 
-function openspecStep({ active, statusOf, map, verifyOf, decisionsOf }) {
-  if (!active.length) return step(map, 'brainstorm', 'No active change: explore the next idea before proposing it.');
+function openspecStep({ active, statusOf, map, verifyOf, decisionsOf, leftover }) {
+  // kit-status D6, readiness D1: nothing open -> a message pointing to /kit:status; next never runs it.
+  if (!active.length) {
+    const l = leftover ?? { total: 0 };
+    const items = l.total ? ` ${l.total} item${l.total === 1 ? '' : 's'} left for later (${[l.builds ? `${l.builds} from builds` : null, l.prd ? `${l.prd} PRD question${l.prd === 1 ? '' : 's'}` : null].filter(Boolean).join(', ')}).` : '';
+    return step(map, 'status', `Nothing open.${items} Run /kit:status to see what's next, or /kit:roadmap to change the order.`);
+  }
 
+  // Only one change reaches here: several go through the choose step first (kit-status D6).
   const change = active[0];
-  const others = active.slice(1).map(c => c.name);
   const st = statusOf(change.name) ?? {};
   const arts = st.artifacts ?? [];
-  const extra = { change: change.name, ...(others.length ? { otherActive: others } : {}) };
+  const extra = { change: change.name };
   // st.files: the files check, added by the CLI (planningFromFiles); absent in pure calls.
   const planning = planningState(st, st.files ?? null);
 
@@ -169,8 +194,8 @@ export function format(s) {
   if (s.docs) lines.push(`  docs:  ${s.docs}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
-  if (s.otherActive?.length) lines.push(`  other active changes: ${s.otherActive.join(', ')}`);
   if (s.otherReady?.length) lines.push(`  other Ready PRDs: ${s.otherReady.join(', ')}`);
+  if (s.choose?.length) lines.push(`  choose: ${s.choose.join(', ')}`);
   for (const w of s.warnings ?? []) lines.push(`  WARNING ${w}`);
   return lines.join('\n');
 }
@@ -271,6 +296,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2);
   const di = args.indexOf('--dir');
   const dir = path.resolve(di >= 0 ? args[di + 1] : process.cwd());
+  const ci = args.indexOf('--change');
+  const change = ci >= 0 ? args[ci + 1] : null;
   const ri = args.indexOf('--registry');
   const registry = loadRegistry(ri >= 0 ? args[ri + 1] : undefined);
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
@@ -281,6 +308,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir) });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

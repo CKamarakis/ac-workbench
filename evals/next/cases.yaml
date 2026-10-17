@@ -13,8 +13,8 @@ cases:
         expect: 0
         stdout_match: '^Next: /kit:start[\s\S]*why:'
 
-  - id: fresh-kit-project-suggests-brainstorm-owner
-    description: Right after /kit:start (no change yet) the suggestion is the brainstorm owner with a reason
+  - id: fresh-kit-project-points-to-status
+    description: Right after /kit:start (nothing open) the suggestion is a message pointing to /kit:status, never run by itself (kit-status D6)
     checks:
       - kind: command-exit
         command: node "{{apply}}" --dir . --type none --home home
@@ -22,7 +22,25 @@ cases:
       - kind: command-exit
         command: node "{{next}}" --dir .
         expect: 0
-        stdout_match: '^Next: /opsx:explore\r?\n  why:   No active change[\s\S]*owner: openspec'
+        stdout_match: '^Next: /kit:status\r?\n  why:   Nothing open\. Run /kit:status to see what''s next, or /kit:roadmap to change the order\.[\s\S]*owner: kit'
+
+  - id: several-active-changes-ask-which
+    description: Two active changes and none named -> both listed to choose from; --change gives that change's step
+    setup:
+      files:
+        openspec/changes/notes-search/proposal.md: "# Proposal\n"
+        openspec/changes/task-board/proposal.md: "# Proposal\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: 'Next: pick a change[\s\S]*choose: (notes-search, task-board|task-board, notes-search)'
+      - kind: command-exit
+        command: node "{{next}}" --dir . --change task-board
+        expect: 0
+        stdout_match: 'task-board'
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'never run it automatically' }
 
   - id: skill-offers-but-does-not-run
     description: The skill reports the suggestion and leaves the decision to the user

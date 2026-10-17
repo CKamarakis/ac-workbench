@@ -130,6 +130,14 @@ test('the real registry has a roadmap phase, owned by the kit with /kit:roadmap'
   assert.equal(lane.owner.skill, '/kit:roadmap');
 });
 
+// kit-status 3.1 (spec skill-routing "Status phase in the lane map")
+test('the real registry has a status phase, owned by the kit with /kit:status', () => {
+  const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));
+  const lane = laneMap(reg).lanes.find(l => l.phase === 'status');
+  assert.equal(lane.owner.name, 'kit');
+  assert.equal(lane.owner.skill, '/kit:status');
+});
+
 // kit-harness-review 2.1: assess phase; kit issues go to GitHub, never /kit:feedback
 test('the real registry has an assess phase owned by the kit with /kit:harness-review', () => {
   const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));

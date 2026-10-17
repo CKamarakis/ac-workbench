@@ -4,10 +4,11 @@ import { suggest, format } from '../../plugins/kit/scripts/next.mjs';
 import { laneMap } from '../../plugins/kit/scripts/lanes.mjs';
 
 const registry = {
-  phases: ['brainstorm', 'artifacts', 'plan', 'build', 'verify', 'close'],
+  phases: ['brainstorm', 'artifacts', 'plan', 'build', 'verify', 'close', 'status'],
   tools: [
     { name: 'openspec', status: 'adopted', phases: ['brainstorm', 'artifacts', 'plan', 'build', 'verify', 'close'],
       skills: { brainstorm: '/opsx:explore', artifacts: '/opsx:propose', plan: '/opsx:continue', build: '/opsx:apply', verify: 'openspec validate --strict', close: '/opsx:archive' } },
+    { name: 'kit-status', status: 'adopted', phases: ['status'], skills: { status: '/kit:status' } },
     { name: 'superspec', status: 'trial', overlaps: ['openspec'], skip_skills: ['x'], phases: ['build'], skills: { build: '/opsx:apply (worktree)' } },
   ],
 };
@@ -20,12 +21,24 @@ test('no OpenSpec in the folder -> /kit:start', () => {
   assert.equal(s.use, '/kit:start');
 });
 
-test('no active change -> brainstorm owner (e.g. /opsx:explore)', () => {
+test('no active change -> a message pointing to /kit:status (kit-status D6)', () => {
   const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map });
-  assert.equal(s.phase, 'brainstorm');
-  assert.equal(s.use, '/opsx:explore');
-  assert.equal(s.owner, 'openspec');
-  assert.match(s.reason, /No active change/);
+  assert.equal(s.phase, 'status');
+  assert.equal(s.use, '/kit:status');
+  assert.equal(s.reason, "Nothing open. Run /kit:status to see what's next, or /kit:roadmap to change the order.");
+});
+
+test('nothing open, items left for later -> the count in the message', () => {
+  const knowledge = K({ prds: [P('sidebar', 'Draft', { openQuestions: 1 })] });
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge, archived: { open: 2, oldest: '2026-10-12', changes: ['docs'] } });
+  assert.equal(s.use, '/kit:status');
+  assert.equal(s.reason, "Nothing open. 3 items left for later (2 from builds, 1 PRD question). Run /kit:status to see what's next, or /kit:roadmap to change the order.");
+  assert.deepEqual(leftoverCount(knowledge, { open: 2 }), { builds: 2, prd: 1, total: 3 });
+});
+
+test('Ready PRD before status: no change and a Ready PRD -> propose it, not /kit:status', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ prds: [P('gift-cards', 'Ready')] }) });
+  assert.equal(s.use, '/opsx:propose');
 });
 
 test('planning incomplete: proposal done, specs next -> continue, naming the next artifact', () => {
@@ -58,10 +71,17 @@ test('all tasks done -> verify, then close', () => {
   assert.equal(s.then, '/opsx:archive');
 });
 
-test('several active changes: the most recently modified one, others listed', () => {
-  const s = suggest({ openspec: { root: {}, changes: [change('old', 1, 5, '2026-09-01T00:00:00Z'), change('new', 1, 5, '2026-10-01T00:00:00Z')] }, statusOf: () => ({ isPlanningComplete: true }), map });
-  assert.equal(s.change, 'new');
-  assert.deepEqual(s.otherActive, ['old']);
+test('several active changes and none named -> list them to choose from (kit-status D6)', () => {
+  const openspec = { root: {}, changes: [change('old', 1, 5, '2026-09-01T00:00:00Z'), change('new', 1, 5, '2026-10-01T00:00:00Z')] };
+  const s = suggest({ openspec, statusOf: () => ({ isPlanningComplete: true }), map });
+  assert.equal(s.phase, 'choose');
+  assert.deepEqual(s.choose, ['new', 'old']);
+  assert.match(format(s), /choose: new, old/);
+  const picked = suggest({ openspec, statusOf: () => ({ isPlanningComplete: true }), map, change: 'old' });
+  assert.equal(picked.change, 'old');
+  assert.equal(picked.use, '/opsx:apply');
+  assert.equal(picked.otherActive, undefined);
+  assert.equal(suggest({ openspec, statusOf: () => null, map, change: 'nope' }).phase, 'choose');
 });
 
 test('owner comes from the lane map: changing the registry changes the suggestion', () => {
@@ -71,12 +91,12 @@ test('owner comes from the lane map: changing the registry changes the suggestio
 });
 
 test('unowned phase is said plainly, never guessed', () => {
-  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map: laneMap({ phases: ['brainstorm'], tools: [] }) });
-  assert.match(s.use, /no owner yet for "brainstorm"/);
+  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map: laneMap({ phases: ['status'], tools: [] }) });
+  assert.match(s.use, /no owner yet for "status"/);
 });
 
 // ---------- prd-pipeline 6.1: PRD-aware suggestions ----------
-import { prdSuggest, prdLink } from '../../plugins/kit/scripts/next.mjs';
+import { prdSuggest, prdLink, leftoverCount } from '../../plugins/kit/scripts/next.mjs';
 
 const kmap = laneMap({
   phases: ['capture', 'prd', ...registry.phases],
@@ -160,7 +180,7 @@ test('no knowledge folder -> same suggestion as before', () => {
   const without = suggest({ openspec: os0, statusOf: () => null, map: kmap });
   const missing = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: { dir: 'knowledge', list: { exists: false, notes: [], prds: [], invalid: [] }, changes: [] } });
   assert.deepEqual(missing, without);
-  assert.equal(without.use, '/opsx:explore');
+  assert.equal(without.use, '/kit:status');
 });
 
 test('invalid PRDs are reported as warnings', () => {
@@ -311,7 +331,7 @@ test('kit-docs: a stale docs page adds a reminder line; no page -> none; the ste
   assert.equal(docsLine(null), null);
   const line = docsLine({ exists: true, stale: true });
   const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map, docs: line });
-  assert.equal(s.phase, 'brainstorm');
+  assert.equal(s.phase, 'status');
   assert.equal(s.docs, line);
   assert.match(format(s), /\n  docs:  docs page is older than the last archive; run \/kit:docs/);
   assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).docs, undefined);
@@ -330,7 +350,7 @@ test('Ready PRD waits for the active change: suggestion stays on the change, wit
 // kit-followups 4.3: decisions left open in archived changes ride along, never replacing the step
 test('archived open decisions add one line; the suggested step is unchanged', () => {
   const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map, archived: { open: 2, oldest: '2026-10-12', changes: ['storms-canvas'] } });
-  assert.match(s.reason, /No active change/);
+  assert.match(s.reason, /^Nothing open\. 2 items left for later/);
   assert.match(s.archived, /^2 decisions still open in archived changes \(storms-canvas\)/);
   assert.match(format(s), /2 decisions still open in archived changes/);
   assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).archived, undefined);
@@ -348,4 +368,29 @@ test('C9 (verify 2026-10-17): a short note name counts as cited only as a whole 
   const k = readKnowledge(d);
   assert.deepEqual(k.changes.find(c => c.name === 'a').notes, []);
   assert.deepEqual(k.changes.find(c => c.name === 'b').notes, ['notes/api.md']);
+});
+
+// ---------- kit-status verify C1-C3 ----------
+
+test('verify C1: with --change B, a PRD step about change A does not win', () => {
+  const openspec = { root: {}, changes: [change('a', 1, 5, '2026-10-02T00:00:00Z'), change('b', 1, 5, '2026-10-01T00:00:00Z')] };
+  const knowledge = K({ prds: [P('pa', 'Building', { change: 'a' })], changes: [{ name: 'a', archived: false, link: { path: 'knowledge/prds/pa.md', commit: 'abc1234' } }] });
+  const changedSince = () => true;
+  const unnamed = suggest({ openspec, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge, changedSince });
+  assert.equal(unnamed.change, 'a', 'PRD changed since planning: review a');
+  const s = suggest({ openspec, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge, changedSince, change: 'b' });
+  assert.equal(s.change, 'b');
+  assert.equal(s.use, '/opsx:apply');
+});
+
+test('verify C2: the waiting reminder names the picked change', () => {
+  const openspec = { root: {}, changes: [change('a', 1, 5, '2026-10-02T00:00:00Z'), change('b', 1, 5, '2026-10-01T00:00:00Z')] };
+  const s = suggest({ openspec, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: K({ prds: [P('gift', 'Ready')] }), change: 'b' });
+  assert.match(s.waiting, /until b is done/);
+});
+
+test('verify C3: --change with nothing active -> "Nothing open", not an empty choice', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map, change: 'foo' });
+  assert.equal(s.use, '/kit:status');
+  assert.equal(s.choose, undefined);
 });

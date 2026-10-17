@@ -76,12 +76,11 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-M12a Kit workflow: T1 done (roadmap-structure archived 2026-10-17); the roadmap lives in knowledge/roadmaps/.
-Next: M12 on Toughbubble (ready to test).
-M12a T2-T4 (status, backlog, explore-or-PRD) wait; their order vs M12 is under Waiting on you.
+M12a Kit workflow: T1 done; T2-T4 come before M12 (decided 2026-10-17).
+Now: T2 /kit:status. Next step: explore (overview vs status, T3 dependency, no-roadmap projects), then PRD.
+Then: T3 backlog, T4 explore-or-PRD; after that M12 on Toughbubble.
 
 ## Waiting on you
 
 <!-- - [M1|general] <question> (proposed YYYY-MM-DD) -->
-- [M12a] Order of the M12a changes 2-4 (status, backlog, explore-or-PRD) vs M12 (proposed 2026-10-17)
 - [general] How to keep loose notes manageable (parked: decide after real use) (proposed 2026-10-07)

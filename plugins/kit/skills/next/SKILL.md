@@ -22,7 +22,9 @@ It checks the project's PRDs (in the knowledge folder) before the OpenSpec state
    - `then`, `next artifact`, the alternative for big or risky changes, other active changes, other Ready PRDs: mention them only when the script prints them.
    - `open` (decisions still open in the change), `later` (PRD open questions put off for later), `waiting` (a Ready PRD that waits until the active change is done) and `archived` (decisions still open in archived changes): add each as a one-line reminder after the next step. They never replace the next step.
    - `WARNING` lines (an invalid PRD, a check git couldn't make): show them as is.
-3. Don't run the suggested step yourself. Offer to run it; the user decides.
+   - `choose` (several changes are active): ask which one with **AskUserQuestion** (one option per change), then run the script again with `--change <name>` and reply with that change's step.
+   - Next is `/kit:status` ("Nothing open"): say nothing is in progress, give the count of items left for later if the reason has one, and say to run `/kit:status` to see what's next, or `/kit:roadmap` to change the order. Next works inside one item; picking the item is status's job.
+3. Don't run the suggested step yourself. Offer to run it; the user decides. This includes `/kit:status`: never run it automatically.
    - **Never change a PRD's status here**, not even to Shipped. Offer `/kit:prd` for that; the user says yes there.
 
 ## Notes

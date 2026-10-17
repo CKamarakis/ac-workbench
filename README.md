@@ -24,6 +24,7 @@ The repo is a Claude Code plugin marketplace with one plugin, `kit`.
                          /kit:docs     -->  knowledge/docs/index.html: what's built, why, what's undecided
  Back after a while?    /kit:status  -->  what it is, what's built, what's under way, what's next; which item
                          /kit:next    -->  the next step inside that item (never picks the item for you)
+ Left something behind?  /kit:loose-ends  -->  checks, friction, debt, kept findings, cleanup, ideas: by importance, never by date
 ```
 
 ## Install
@@ -56,8 +57,9 @@ After the install above, run `/kit:start` once in the project folder (again only
 |---|---|
 | `/kit:capture` | Save an idea, dictation, link or screenshot as a note; import a `.txt` transcript; archive or move notes. Offers to update a matching PRD |
 | `/kit:prd` | Draft a PRD from the notes you pick, update it section by section (never overwriting your edits), and mark it Ready |
-| `/kit:status` | Where the project stands, in plain words: what it is, what's built, a table of Now / Next / We said we'd do / Tech debt / After with sources, and anything that doesn't match between the roadmap, PRDs, OpenSpec and git. Names the item to work on; read-only, works without a roadmap |
+| `/kit:status` | Where the project stands, in plain words: what it is, what's built, a table of Now / Next / We said we'd do / Loose ends / After with sources, and anything that doesn't match between the roadmap, PRDs, OpenSpec and git. Names the item to work on; read-only, works without a roadmap |
 | `/kit:next` | The next step inside the current item and which skill to use, from your PRDs and OpenSpec state. With nothing open it points you to `/kit:status`; with several changes active it asks which one |
+| `/kit:loose-ends` | Things left behind while building that have no other owner (a check that belongs elsewhere, friction, debt, kept review findings, cleanup, ideas). Offered once at the end of a step; marked important or blocking; cleanup and an analysis of why they pile up. No ranks, no dates |
 | `/kit:roadmap` | Optional roadmap: goals in order, tasks left, Now, decisions waiting on you, and a drift log. Writes only on your yes |
 | `/kit:judge` | Recommend plain OpenSpec or SuperSpec for a change, from a risk checklist, with the reasons. You decide |
 | `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Warns, never blocks |

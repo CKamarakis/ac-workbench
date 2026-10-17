@@ -68,6 +68,8 @@ export function knowledgeSection(dir) {
     `- Notes, PRDs and assets live in \`${k}/\` (\`notes/\`, \`prds/\`, \`assets/\`). Never read \`${k}/archive/\`. Capture with \`/kit:capture\`, write PRDs with \`/kit:prd\`.`,
     `- \`/opsx:propose\`: if a PRD in \`${k}/prds/\` has \`status: Ready\` and no \`change\`, use it as the main input. If there are several, ask which one, listing them most recently updated first (by \`git log -1 --format=%cI -- <file>\`, or the file's date if it has uncommitted changes). Add this line to the proposal: \`PRD: ${k}/prds/<slug>.md @ <commit>\`, where the commit is \`git log -1 --format=%h -- <file>\`, or \`uncommitted\` if the file has uncommitted changes.`,
     "- After the proposal exists, offer to set the PRD's `change` to the change name and its status to `Building`. Change nothing in the PRD without a yes.",
+    // loose-ends D4 (spec skill-routing "Loose ends rule in the routing block").
+    `- Loose ends: during a step (\`/opsx:apply\`, \`/kit:verify\`, \`/opsx:archive\`, or a long chat), collect what you put aside (a check that belongs elsewhere, friction you worked around, debt, a review finding the user kept, cleanup, an idea out of scope). At the end of the step, offer them once as one numbered list through \`/kit:loose-ends\` (\`${k}/loose-ends.md\`); offer "seen again" for one that is already open. Point anything that belongs to a change's decisions, a PRD or the roadmap to that owner instead. Ask nothing when nothing was put aside.`,
   ];
 }
 

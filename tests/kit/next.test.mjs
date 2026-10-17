@@ -33,7 +33,7 @@ test('nothing open, items left for later -> the count in the message', () => {
   const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge, archived: { open: 2, oldest: '2026-10-12', changes: ['docs'] } });
   assert.equal(s.use, '/kit:status');
   assert.equal(s.reason, "Nothing open. 3 items left for later (2 from builds, 1 PRD question). Run /kit:status to see what's next, or /kit:roadmap to change the order.");
-  assert.deepEqual(leftoverCount(knowledge, { open: 2 }), { builds: 2, prd: 1, total: 3 });
+  assert.deepEqual(leftoverCount(knowledge, { open: 2 }), { builds: 2, prd: 1, loose: 0, total: 3 });
 });
 
 test('Ready PRD before status: no change and a Ready PRD -> propose it, not /kit:status', () => {
@@ -393,4 +393,27 @@ test('verify C3: --change with nothing active -> "Nothing open", not an empty ch
   const s = suggest({ openspec: os0, statusOf: () => null, map, change: 'foo' });
   assert.equal(s.use, '/kit:status');
   assert.equal(s.choose, undefined);
+});
+
+// ---------- loose-ends 3.2 (spec skill-routing "Next-step suggestion") ----------
+const L = (id, kind, extra = {}) => ({ id, text: `t ${id}`, kind, state: 'open', blocks: null, ...extra });
+
+test('loose ends count in "Nothing open" (accepted excluded)', () => {
+  const loose = [L('L1', 'check'), L('L2', 'idea'), L('L3', 'cleanup'), L('L4', 'accepted'), L('L5', 'idea', { state: 'done' })];
+  const s = suggest({ openspec: os0, statusOf: () => null, map, loose });
+  assert.equal(s.reason, "Nothing open. 3 items left for later (3 loose ends). Run /kit:status to see what's next, or /kit:roadmap to change the order.");
+});
+
+test('a loose end blocking the change rides along as a reminder; the step is unchanged', () => {
+  const loose = [L('L3', 'check', { text: 'Check paste from Word', blocks: 'tables-in-notes' }), L('L4', 'check', { blocks: 'other' })];
+  const s = suggest({ openspec: { root: {}, changes: [change('tables-in-notes', 2, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map, loose });
+  assert.equal(s.use, '/opsx:apply');
+  assert.deepEqual(s.blocked, ['L3 Check paste from Word']);
+  assert.match(format(s), /\n  blocked by: L3 Check paste from Word \(\/kit:loose-ends\)/);
+});
+
+// ---------- loose-ends verify C2 ----------
+test('verify C2: an unreadable loose-ends.md is a warning in next, not silence', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map, looseWarning: "knowledge/loose-ends.md exists but its data can't be read" });
+  assert.match(format(s), /WARNING knowledge\/loose-ends\.md exists but its data can't be read/);
 });

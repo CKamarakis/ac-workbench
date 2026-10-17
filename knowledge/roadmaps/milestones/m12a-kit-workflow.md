@@ -5,9 +5,11 @@ status: active
 changes:
   - roadmap-structure
   - kit-status
+  - loose-ends
 prd:
   - prds/roadmap-structure.md
   - prds/kit-status.md
+  - prds/loose-ends.md
 notes:
   - notes/kit-workflow/2026-10-17-kit-judge-keyword-criteria-are-unreliable.md
   - notes/kit-workflow/2026-10-17-kit-status-where-are-we-what-s-built-what-s-next.md

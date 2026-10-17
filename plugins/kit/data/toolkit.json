@@ -15,6 +15,7 @@
     "docs",
     "roadmap",
     "status",
+    "loose-ends",
     "assess",
     "kit-issues"
   ],
@@ -92,6 +93,11 @@
       "when": "I am back after a while, or want to pick the next item",
       "phase": "status",
       "use": "/kit:status"
+    },
+    {
+      "when": "I left small things behind, or want to see or clean up what is left",
+      "phase": "loose-ends",
+      "use": "/kit:loose-ends"
     },
     {
       "when": "I want a check-up of this project's Claude Code setup",
@@ -443,6 +449,7 @@
         "docs",
         "roadmap",
         "status",
+        "loose-ends",
         "assess",
         "kit-issues"
       ],
@@ -454,6 +461,7 @@
         "docs": "/kit:docs",
         "roadmap": "/kit:roadmap",
         "status": "/kit:status",
+        "loose-ends": "/kit:loose-ends",
         "assess": "/kit:harness-review",
         "kit-issues": "github.com/CKamarakis/ac-workbench/issues"
       },

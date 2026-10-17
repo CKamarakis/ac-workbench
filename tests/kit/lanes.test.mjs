@@ -152,3 +152,16 @@ test('the routing block sends kit issues to GitHub and never names /kit:feedback
   assert.doesNotMatch(block, /kit:feedback/);
   assert.match(block, /\| kit-issues \| `github\.com\/CKamarakis\/ac-workbench\/issues` \|/);
 });
+
+// loose-ends 2.2, 2.3 (spec skill-routing "Loose ends phase in the lane map", "Loose ends rule in the routing block")
+test('the real registry has a loose-ends phase, owned by the kit with /kit:loose-ends', () => {
+  const reg = YAML.parse(fs.readFileSync(path.join(repo, 'toolkit.yaml'), 'utf8'));
+  const lane = laneMap(reg).lanes.find(l => l.phase === 'loose-ends');
+  assert.equal(lane.owner.name, 'kit');
+  assert.equal(lane.owner.skill, '/kit:loose-ends');
+});
+
+test('the routing block carries the end-of-step loose ends rule', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
+  assert.match(block, /- Loose ends: during a step .*At the end of the step, offer them once as one numbered list through `\/kit:loose-ends` \(`knowledge\/loose-ends\.md`\)/);
+});

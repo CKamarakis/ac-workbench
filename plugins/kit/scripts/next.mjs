@@ -13,6 +13,7 @@ import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
 import { pageStatus } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine, archivedOpen, archivedLine } from './decisions.mjs';
+import { readLooseEnds, isOpen as looseOpen } from './loose-ends.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 
@@ -100,7 +101,7 @@ export function docsLine(page) {
   return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
 }
 
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null, loose = [], looseWarning = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -110,15 +111,16 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   // A name that isn't active counts only when something is (verify C3): with nothing active, "Nothing open" applies.
   const named = change && active.some(c => c.name === change) ? change : null;
   const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: named ?? active[0]?.name, changedSince });
+  if (looseWarning) warnings.push(looseWarning);
   const questions = questionsLine(knowledge);
-  const withWarnings = s => ({ ...s, ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
+  const withWarnings = s => ({ ...s, ...blockedBy(loose, s.change), ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
   // With a change named, a PRD step wins only when it is about that change (verify C1).
   if (suggestion && (!named || suggestion.change === named)) return withWarnings(suggestion);
   // kit-status D6: next works inside one item. Several active changes and none named -> the user picks one.
   if (change && !named && active.length) return withWarnings(chooseStep(active, `No active change named "${change}".`));
   if (!named && active.length > 1) return withWarnings(chooseStep(active, `${active.length} changes are active.`));
   const picked = named ? active.filter(c => c.name === named) : active;
-  return withWarnings(openspecSuggest({ active: picked, statusOf, map, verifyOf, decisionsOf, leftover: leftoverCount(knowledge, archived) }));
+  return withWarnings(openspecSuggest({ active: picked, statusOf, map, verifyOf, decisionsOf, leftover: leftoverCount(knowledge, archived, loose) }));
 }
 
 /** Several items under way (spec skill-routing "Several active changes"): list them; the skill asks which one. */
@@ -127,11 +129,19 @@ function chooseStep(active, why) {
   return { phase: 'choose', owner: null, use: 'pick a change', alternatives: [], reason: `${why} Pick one, then run /kit:next --change <name>.`, choose: names };
 }
 
-/** Items left for later (readiness D1, D4): open decisions in archived changes and PRD questions put off. */
-export function leftoverCount(knowledge, archived) {
+/** Items left for later (readiness D1, D4): open decisions in archived changes, PRD questions put off, and open
+ *  loose ends that aren't `accepted` (loose-ends D6). */
+export function leftoverCount(knowledge, archived, loose = []) {
   const builds = archived?.open ?? 0;
   const prd = (knowledge?.list?.prds ?? []).filter(p => p.valid && ['Draft', 'Review'].includes(p.status)).reduce((n, p) => n + (p.openQuestions ?? 0), 0);
-  return { builds, prd, total: builds + prd };
+  const ends = loose.filter(i => looseOpen(i) && i.kind !== 'accepted').length;
+  return { builds, prd, loose: ends, total: builds + prd + ends };
+}
+
+/** Open loose ends blocking the change the step is for: a reminder, never the step (loose-ends D6). */
+function blockedBy(loose, change) {
+  const b = change ? loose.filter(i => looseOpen(i) && i.blocks === change).map(i => `${i.id} ${i.text}`) : [];
+  return b.length ? { blocked: b } : {};
 }
 
 function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null, leftover = null }) {
@@ -145,7 +155,7 @@ function openspecStep({ active, statusOf, map, verifyOf, decisionsOf, leftover }
   // kit-status D6, readiness D1: nothing open -> a message pointing to /kit:status; next never runs it.
   if (!active.length) {
     const l = leftover ?? { total: 0 };
-    const items = l.total ? ` ${l.total} item${l.total === 1 ? '' : 's'} left for later (${[l.builds ? `${l.builds} from builds` : null, l.prd ? `${l.prd} PRD question${l.prd === 1 ? '' : 's'}` : null].filter(Boolean).join(', ')}).` : '';
+    const items = l.total ? ` ${l.total} item${l.total === 1 ? '' : 's'} left for later (${[l.builds ? `${l.builds} from builds` : null, l.prd ? `${l.prd} PRD question${l.prd === 1 ? '' : 's'}` : null, l.loose ? `${l.loose} loose end${l.loose === 1 ? '' : 's'}` : null].filter(Boolean).join(', ')}).` : '';
     return step(map, 'status', `Nothing open.${items} Run /kit:status to see what's next, or /kit:roadmap to change the order.`);
   }
 
@@ -196,6 +206,7 @@ export function format(s) {
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherReady?.length) lines.push(`  other Ready PRDs: ${s.otherReady.join(', ')}`);
   if (s.choose?.length) lines.push(`  choose: ${s.choose.join(', ')}`);
+  for (const b of s.blocked ?? []) lines.push(`  blocked by: ${b} (/kit:loose-ends)`);
   for (const w of s.warnings ?? []) lines.push(`  WARNING ${w}`);
   return lines.join('\n');
 }
@@ -283,6 +294,11 @@ export function planningState(st, files = null) {
   return { complete, nextArtifact: complete ? null : next };
 }
 
+/** Loose ends for the CLI; a file that can't be read becomes a warning, never an empty list in silence (verify C2). */
+function looseFor(dir) {
+  try { return { loose: readLooseEnds(dir).items }; } catch (e) { return { loose: [], looseWarning: e.message }; }
+}
+
 export function openspecJson(args, cwd) {
   const os = locate('openspec');
   if (!os) return null;
@@ -308,6 +324,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir) });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

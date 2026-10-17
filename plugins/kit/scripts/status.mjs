@@ -11,6 +11,7 @@ import { parseRoadmap, checkRoadmap, reportRoadmap, gitFindings, FINISHED } from
 import { readKnowledge } from './next.mjs';
 import { readDecisions } from './decisions.mjs';
 import { locate } from './locate.mjs';
+import { readLooseEnds, isOpen as looseOpen } from './loose-ends.mjs';
 
 export const CAP = 5;
 export const DESCRIPTION_FILES = ['PRODUCT.md', 'docs/project-context.md', 'README.md'];
@@ -156,9 +157,25 @@ function saidRows({ dir, roadmap, roadmapRel, knowledge, changes, archived, now 
   return kinds.flatMap(k => rows.filter(r => r.kind === k).sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? ''))));
 }
 
+// ---------- loose ends (loose-ends design D5; spec project-status "Facts from their owners") ----------
+
+/** Rows for important items and items blocking current work (important first), count lines per kind for the rest. */
+export function looseSection(loose, current) {
+  if (loose.error) return { rows: [], more: 0, counts: [], note: loose.error };
+  if (!loose.exists) return { rows: [], more: 0, counts: [], note: 'none yet; /kit:loose-ends adds them' };
+  const open = loose.items.filter(looseOpen);
+  const shown = open.filter(i => i.kind !== 'accepted' && (i.important || (i.blocks && current.has(i.blocks))))
+    .sort((a, b) => (b.important ? 1 : 0) - (a.important ? 1 : 0) || Number(a.id.slice(1)) - Number(b.id.slice(1)));
+  const rows = shown.map(i => row(i.text, i.kind, [i.important ? 'important' : null, i.blocks && current.has(i.blocks) ? `blocks ${i.blocks}` : null].filter(Boolean).join(', '),
+    `${loose.rel} (${i.id})`, { kind: 'loose', id: i.id, answer: '/kit:loose-ends', origin: i.source }));
+  const rest = open.filter(i => i.kind !== 'accepted' && !shown.includes(i));
+  const counts = [...new Set(rest.map(i => i.kind))].map(k => ({ kind: k, n: rest.filter(i => i.kind === k).length }));
+  return { ...cap(rows), counts, ...(!rows.length && !counts.length ? { note: 'none open' } : {}) };
+}
+
 // ---------- mismatches (spec "Mismatches shown, never resolved"; D4) ----------
 
-export function mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel }) {
+export function mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel, loose = null }) {
   const out = [];
   // (a) The roadmap says a milestone is active with work left, but nothing is under way for it.
   if (report?.exists && report.current && branches) {
@@ -177,6 +194,17 @@ export function mismatches({ roadmap, report, changes, knowledge, archived, bran
   // (c) The roadmap check's own git findings, passed through with their fixes.
   for (const f of findings?.tidy ?? []) out.push({ what: f.problem, sources: [`${roadmapRel}/${f.file}`, 'git log'], fix: f.fix });
   for (const u of findings?.unplanned ?? []) out.push({ what: `change ${u.change} is under way but no milestone links it`, sources: [`openspec/changes/${u.change}/`, `${roadmapRel}/milestones/`], fix: u.fix });
+  // (d) A loose end blocks work that is finished (loose-ends design D10).
+  const items = loose?.items ?? [];
+  const active = new Set(changes.map(c => c.name));
+  for (const i of items.filter(x => looseOpen(x) && x.blocks)) {
+    const m = roadmap?.exists ? roadmap.milestones.find(x => x.id === i.blocks) : null;
+    const l = items.find(x => x.id === i.blocks);
+    const why = m && FINISHED.includes(m.status) ? [`${m.id} is ${m.status}`, `${roadmapRel}/${m.file}`]
+      : !m && !l && done.has(i.blocks) && !active.has(i.blocks) ? [`change ${i.blocks} is archived`, 'openspec/changes/archive/']
+        : l && !looseOpen(l) ? [`${l.id} is ${l.state}`, loose.rel] : null;
+    if (why) out.push({ what: `${i.id} blocks ${i.blocks}, but ${why[0]}`, sources: [loose.rel, why[1]], fix: `mark ${i.id} done, drop it, or point it at what it blocks now (/kit:loose-ends)` });
+  }
   return out;
 }
 
@@ -209,6 +237,11 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     return { text: `${h} ${subject}`, date };
   };
 
+  // The real path also when the file can't be read, so the source link still works (verify C3).
+  const looseRel = posix(path.relative(dir, path.join(kroot, 'loose-ends.md')));
+  let loose;
+  try { loose = { ...readLooseEnds(dir), rel: looseRel }; } catch (e) { loose = { exists: true, items: [], error: e.message, rel: looseRel }; }
+  const current = new Set([...(report.exists && report.current ? [report.current] : []), ...changes.map(c => c.name)]);
   const description = DESCRIPTION_FILES.find(f => fs.existsSync(path.join(dir, f))) ?? null;
   const ctx = { dir, roadmap, report, knowledge, changes, archived, roadmapRel, now, last };
   const { next, after } = nextAndAfter(ctx);
@@ -217,12 +250,11 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     now: cap(nowAll),
     next: cap(next),
     said: cap(saidRows(ctx)),
-    debt: { rows: [], more: 0, note: 'no backlog yet' },
+    loose: looseSection(loose, current),
     after: cap(after),
   };
   const missing = [
     ...(roadmap.exists ? [] : [{ source: 'roadmap', fix: '/kit:roadmap can set the order (optional)' }]),
-    { source: 'backlog', fix: 'not built yet (roadmap M12a T3)' },
     ...(!hasOpenSpec ? [{ source: 'openspec', fix: '/kit:start sets OpenSpec up' }] : !openspec ? [{ source: 'openspec CLI', fix: 'read from the files instead; /kit:setup installs it' }] : []),
     ...(!git ? [{ source: 'git', fix: '/kit:setup installs it; last commits and branch checks skipped' }] : !isRepo ? [{ source: 'git', fix: 'not a git repository; last commits and branch checks skipped' }] : []),
   ];
@@ -237,7 +269,7 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     },
     roadmap: roadmap.exists,
     sections,
-    mismatches: mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel }),
+    mismatches: mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel, loose }),
     notes: findings?.notes ?? [],
     missing,
     handoff: underWay.length
@@ -248,7 +280,7 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
 
 // ---------- output ----------
 
-const TITLES = { now: 'Now', next: 'Next', said: "We said we'd do", debt: 'Tech debt', after: 'After' };
+const TITLES = { now: 'Now', next: 'Next', said: "We said we'd do", loose: 'Loose ends', after: 'After' };
 
 export function format(s) {
   const o = s.overview;
@@ -257,9 +289,10 @@ export function format(s) {
   for (const [k, title] of Object.entries(TITLES)) {
     const sec = s.sections[k];
     out.push('', title);
-    if (!sec.rows.length) out.push(`  ${sec.note ?? '(none)'}`);
+    if (!sec.rows.length && !sec.counts?.length) out.push(`  ${sec.note ?? '(none)'}`);
     for (const r of sec.rows) out.push(`  ${r.item} | ${Array.isArray(r.left) ? r.left.join('; ') || '-' : r.left} | ${r.status} | ${r.source}${r.answer ? ` | ${r.answer}` : ''}`);
     if (sec.more) out.push(`  +${sec.more} more`);
+    if (sec.counts?.length) out.push(`  + ${sec.counts.map(c => `${c.n} ${c.kind}`).join(', ')} (/kit:loose-ends)`);
   }
   if (s.mismatches.length) {
     out.push('', `Doesn't match (${s.mismatches.length})`);

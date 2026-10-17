@@ -18,10 +18,11 @@ The strategic view: **which item** to work on. `/kit:next` is the tactical one: 
 3. Reply in this shape, short:
    - **Project:** one or two lines from that file. With no file: say none was found (`overview.description.looked`) and suggest `overview.description.fix`.
    - **Built:** `built.count` capabilities, then the names in `built.newest`, in plain words.
-   - **One table** with the sections in this order: Now, Next, We said we'd do, Tech debt, After. Columns: Item · Left · Status · Source.
+   - **One table** with the sections in this order: Now, Next, We said we'd do, Loose ends, After. Columns: Item · Left · Status · Source.
      - Item in plain words: the `item` title. Milestone IDs, change names and branch names go only in Source.
      - Source as a clickable relative link. In We said we'd do, add the `answer` command (e.g. `/kit:prd`) after the source.
-     - A section with `more` gets a "+N more" row. An empty section: one line (`note`, e.g. "no backlog yet", or "none").
+     - A section with `more` gets a "+N more" row. An empty section: one line (`note`, e.g. "none yet", or "none").
+     - Loose ends: the rows are the important ones and those blocking current work; then one line with the `counts` per kind (e.g. "+ 3 idea, 2 cleanup") and `/kit:loose-ends`.
      - When rows have an `age` and there's no roadmap, show it as a hint ("waited 16 days"). Never sort or pick by it.
    - **Doesn't match:** only when `mismatches` isn't empty. One line each: what, the sources involved, the fix. Never say which source is right.
    - **Missing:** one line per `missing` entry, with its fix. When `roadmap` is false, mention once that `/kit:roadmap` can set the order (optional).

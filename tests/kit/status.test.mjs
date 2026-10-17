@@ -76,10 +76,10 @@ test('overview: description file order is PRODUCT.md, docs/project-context.md, R
   assert.match(format(none), /no description found/);
 });
 
-test('missing: roadmap and backlog reported; openspec CLI and git reported when absent', () => {
+test('missing: roadmap reported (not the backlog any more); openspec CLI and git reported when absent', () => {
   const s = run(project({}), { openspec: false });
   const m = s.missing.map(x => x.source);
-  assert.ok(m.includes('roadmap') && m.includes('backlog') && m.includes('openspec CLI') && m.includes('git'));
+  assert.ok(m.includes('roadmap') && !m.includes('backlog') && m.includes('openspec CLI') && m.includes('git'));
 });
 
 // ---------- 1.3 sections ----------
@@ -92,7 +92,7 @@ test('sections with a roadmap: Now by title with Left and Source; Next and After
   assert.equal(now.source, 'knowledge/roadmaps/milestones/m12a-kit-workflow.md');
   assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Toughbubble proof']);
   assert.deepEqual(s.sections.after.rows.map(r => r.item), ['Release prep', 'Launch']);
-  assert.equal(s.sections.debt.note, 'no backlog yet');
+  assert.equal(s.sections.loose.note, 'none yet; /kit:loose-ends adds them');
 });
 
 test('milestone and its linked change are two rows in Now, each with its own Left and Source', () => {
@@ -264,4 +264,47 @@ test('verify C7: a PRD citing "./notes/x.md" counts as using notes/x.md', () => 
     'knowledge/prds/p.md': prd('P', 'Draft').replace('sources: []', 'sources:\n  - ./notes/2026-10-01-x.md'),
   });
   assert.deepEqual(run(d).sections.next.rows.map(r => r.item), []);
+});
+
+// ---------- loose-ends 3.1 (spec project-status "Facts from their owners", "Mismatches shown, never resolved") ----------
+import { add as looseAdd, important as looseImportant, block as looseBlock } from '../../plugins/kit/scripts/loose-ends.mjs';
+
+test('Loose ends: important and blocking-current as rows, the rest as counts, accepted hidden', () => {
+  const d = withRoadmap();
+  const a = (text, kind) => looseAdd(d, { text, kind, origin: 'chat' });
+  a('Storms v1 mismatch', 'check'); a('PATH friction', 'friction'); a('idea one', 'idea'); a('idea two', 'idea'); a('C9 kept', 'accepted'); a('blocks M12 only', 'debt');
+  looseImportant(d, { id: 'L1', on: true });
+  looseBlock(d, { id: 'L2', target: 'M12a' });
+  looseBlock(d, { id: 'L6', target: 'M12' });
+  const sec = run(d).sections.loose;
+  assert.deepEqual(sec.rows.map(r => [r.item, r.status, r.answer]), [['Storms v1 mismatch', 'important', '/kit:loose-ends'], ['PATH friction', 'blocks M12a', '/kit:loose-ends']]);
+  assert.deepEqual(sec.counts, [{ kind: 'idea', n: 2 }, { kind: 'debt', n: 1 }]);
+  assert.match(format(run(d)), /\nLoose ends\n  Storms v1 mismatch \| check \| important \| knowledge\/loose-ends\.md \(L1\)[\s\S]*\+ 2 idea, 1 debt \(\/kit:loose-ends\)/);
+});
+
+test('mismatch (d): a loose end blocking a done milestone, an archived change, or a dropped loose end', () => {
+  // Blocked while open (verify C1 refuses finished targets), then the work finishes.
+  const d = withRoadmap({ files: { 'openspec/changes/kit-status/proposal.md': '# P\n' } });
+  const a = text => looseAdd(d, { text, kind: 'check', origin: 'chat' });
+  a('x'); a('y'); a('z'); a('target');
+  looseBlock(d, { id: 'L1', target: 'M12' });
+  looseBlock(d, { id: 'L2', target: 'kit-status' });
+  looseBlock(d, { id: 'L3', target: 'L4' });
+  assert.equal(run(d).mismatches.filter(m => /^L\d blocks/.test(m.what)).length, 0, 'nothing finished yet');
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive'), { recursive: true });
+  fs.renameSync(path.join(d, 'openspec/changes/kit-status'), path.join(d, 'openspec/changes/archive/2026-10-17-kit-status'));
+  fs.writeFileSync(path.join(d, 'knowledge/roadmaps/milestones/m12-toughbubble-proof.md'), ms('M12', 'Toughbubble proof', 'done', ['- [x] T1 Upgrade']));
+  spawnSync(process.execPath, [fileURLToPath(new URL('../../plugins/kit/scripts/loose-ends.mjs', import.meta.url)), 'drop', '--id', 'L4', '--reason', 'no', '--dir', d]);
+  const m = run(d).mismatches.map(x => x.what);
+  assert.ok(m.includes('L1 blocks M12, but M12 is done'), m.join('\n'));
+  assert.ok(m.includes('L2 blocks kit-status, but change kit-status is archived'));
+  assert.ok(m.includes('L3 blocks L4, but L4 is dropped'));
+});
+
+test('loose-ends verify C3: an unreadable loose-ends.md keeps its real path', () => {
+  const d = project({ 'knowledge/loose-ends.md': '# Loose ends\n\n<!-- kit-loose-ends-data {broken -->\n' });
+  const s = run(d);
+  assert.match(s.sections.loose.note, /can't be read/);
+  const m = projectStatus(d, { git: null, openspec: true, now: NOW });
+  assert.deepEqual(m.mismatches, []);
 });

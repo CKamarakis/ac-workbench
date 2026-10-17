@@ -21,6 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { knowledgeDir, parseFrontmatter, writeFrontmatter, slugify, today } from './knowledge.mjs';
 import { locate } from './locate.mjs';
+import { looseSummary } from './loose-ends.mjs';
 
 export const STATUSES = ['planned', 'active', 'paused', 'done', 'dropped'];
 export const FINISHED = ['done', 'dropped'];
@@ -409,6 +410,9 @@ export function formatReport(r, g = { tidy: [], unplanned: [], notes: [] }) {
     if (tidy.length) out.push(`Tidy-up (${tidy.length}): ${tidy.map(f => f.problem).join('; ')}`);
     if (g.unplanned.length) out.push(`Unplanned work: ${g.unplanned.map(u => u.change).join(', ')}`);
   }
+  // loose-ends D7: a pointer only; the roadmap never lists them.
+  if (r.loose?.unreadable) out.push('', "Loose ends: loose-ends.md can't be read (merge conflict or hand edit?): fix it from git");
+  else if (r.loose?.open) out.push('', `Loose ends: ${r.loose.open} open (${r.loose.important} important): /kit:loose-ends`);
   return out.join('\n');
 }
 
@@ -433,7 +437,7 @@ function run(o) {
   const root = knowledgeDir(dir);
   switch (o.cmd) {
     case 'check': { const p = parseRoadmap(root); const c = checkRoadmap(p); return { ...c, git: gitFindings(dir, p) }; }
-    case 'report': { const p = parseRoadmap(root); return { ...reportRoadmap(p), git: gitFindings(dir, p) }; }
+    case 'report': { const p = parseRoadmap(root); return { ...reportRoadmap(p), git: gitFindings(dir, p), loose: looseSummary(dir) }; }
     case 'new': return newRoadmap(root);
     case 'add': return addMilestone(root, { title: o.title, goal: o.goal ?? '', id: o.id ?? null, after: o.after ?? null, before: o.before ?? null, notes: csv(o.notes) });
     case 'status': return setStatus(root, { id: o.id, to: o.to });

@@ -423,3 +423,21 @@ test('C8: link trims before checking for duplicates', () => {
   link(kroot(d), { id: 'M1', kind: 'changes', value: ' foo' });
   assert.deepEqual(parseRoadmap(kroot(d)).milestones[0].links.changes, ['foo']);
 });
+
+// loose-ends 3.3 (spec roadmap "Roadmap report": loose ends pointer)
+test('report: ends with a loose ends pointer when there are open ones; none otherwise', async () => {
+  const { add, important } = await import('../../plugins/kit/scripts/loose-ends.mjs');
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active', ['- [ ] T1 x']) } });
+  const report = () => spawnSync(process.execPath, [SCRIPT, 'report', '--dir', d], { encoding: 'utf8' }).stdout.trimEnd();
+  assert.doesNotMatch(report(), /Loose ends/);
+  for (let n = 1; n <= 7; n++) add(d, { text: `t${n}`, kind: 'idea', origin: 'chat' });
+  important(d, { id: 'L1', on: true }); important(d, { id: 'L2', on: true });
+  assert.match(report(), /\nLoose ends: 7 open \(2 important\): \/kit:loose-ends$/);
+});
+
+test('loose-ends verify C2: the report says when loose-ends.md is unreadable', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active', ['- [ ] T1 x']) } });
+  fs.writeFileSync(path.join(d, 'knowledge', 'loose-ends.md'), '# Loose ends\n\n<!-- kit-loose-ends-data {broken -->\n');
+  const out = spawnSync(process.execPath, [SCRIPT, 'report', '--dir', d], { encoding: 'utf8' }).stdout;
+  assert.match(out, /Loose ends: loose-ends.md can't be read .*fix it from git/);
+});

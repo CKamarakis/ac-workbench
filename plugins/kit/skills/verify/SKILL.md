@@ -57,7 +57,8 @@ If it prints `error:`, show it and stop.
       node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" docs-sync --dir . --change <name> --proposed N --written N --declined N --left-out N [--unplanned a,b]
       ```
       Count per receipt item: proposed + left out must cover every receipt item, or the script stops and says how many are missing. Re-run step 2 so the report shows open decisions. The docs sync never adds a HARD item.
-6. **Show the report:** **HARD items first**, each with what to do; then the advisory list (including the docs sync and any open decisions). Then:
+6. **Loose ends from this step** (spec: loose-ends "One batch at the end of a step"): collect the advisory findings the user keeps (not fixed), and anything else put aside during verify, as one end-of-step list for `/kit:loose-ends` (kept findings as kind `accepted`, origin `review`). Offer it once, after the report; ask nothing when the list is empty.
+7. **Show the report:** **HARD items first**, each with what to do; then the advisory list (including the docs sync and any open decisions). Then:
    - Result `pass`: say the change can be archived (`/opsx:archive`).
    - Result `fail`: offer to fix the HARD items, then re-run step 2.
    - **After fixing an advisory finding** (only ones the user chose to fix), mark it resolved, naming the commit:

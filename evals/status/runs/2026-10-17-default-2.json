@@ -1,0 +1,86 @@
+{
+  "skill": "status",
+  "date": "2026-10-17T20:05:06.302Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 1581,
+  "summary": {
+    "pass": 4,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "roadmap-project-now-next-and-handoff",
+      "outcome": "pass",
+      "duration_ms": 485,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "no-roadmap-project",
+      "outcome": "pass",
+      "duration_ms": 580,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "mismatch-shown-with-fix",
+      "outcome": "pass",
+      "duration_ms": 514,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-uses-only-facts-and-never-writes",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/status/SKILL.md matches /Use only the facts in the JSON/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/status/SKILL.md matches /Never write\\./"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/status/SKILL.md matches /Don't run it yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/status/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/status\\.mjs/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

@@ -26,7 +26,7 @@ Status SHALL be one of `planned`, `active`, `paused`, `done`, `dropped`. IDs SHA
 - **THEN** only the order list in `roadmap.md` changes, and both IDs and file names stay the same
 
 ### Requirement: Roadmap is optional
-A project without `<knowledge>/roadmaps/roadmap.md` SHALL work with every kit command as before. No command other than `/kit:roadmap` and the starter's question SHALL ask for or create a roadmap.
+A project without `<knowledge>/roadmaps/roadmap.md` SHALL work with every kit command as before. No command other than `/kit:roadmap` SHALL ask for or create a roadmap; the starter only mentions it.
 
 #### Scenario: No roadmap
 - **GIVEN** a project with no `knowledge/roadmaps/`
@@ -56,12 +56,22 @@ Each finding SHALL name the file (and line where there is one) and the fix. A ro
 - **THEN** it reports under tidy-up that the file should move to `done/`
 
 ### Requirement: Stale Now and unplanned work
-The check SHALL report Now as stale when the latest commit on the current branch is newer than the last commit that changed `roadmap.md`. It SHALL list as unplanned work each active OpenSpec change and each local branch (other than the main branch) that no milestone links to.
+The check SHALL report Now as stale only when an OpenSpec change was archived, or a branch was merged into the current branch, after the last commit that changed `roadmap.md`: the moments Now should be updated. Ordinary commits SHALL NOT make Now stale. It SHALL list as unplanned work each active OpenSpec change that no milestone links to. Branches are not checked (decided 2026-10-17; revisit with parallel work).
 
-#### Scenario: Now behind the code
-- **GIVEN** `roadmap.md` was last committed on 2026-10-14 and the branch has a commit from 2026-10-17
+#### Scenario: Archive after the last roadmap update
+- **GIVEN** `roadmap.md` was last committed on 2026-10-14 and a change was archived on 2026-10-17
 - **WHEN** the check runs
-- **THEN** it reports under tidy-up that Now may be stale, with both dates
+- **THEN** it reports under tidy-up that Now may be stale, naming the archived change and both dates
+
+#### Scenario: Ordinary commits only
+- **GIVEN** `roadmap.md` was last committed on 2026-10-14 and only ordinary commits came after it
+- **WHEN** the check runs
+- **THEN** it doesn't report Now as stale
+
+#### Scenario: Branch not listed
+- **GIVEN** an unmerged branch `kit-status` that no milestone links to
+- **WHEN** the check runs
+- **THEN** it doesn't list the branch as unplanned work
 
 #### Scenario: Change with no milestone
 - **GIVEN** an active change `kanban-board` that no milestone links to
@@ -69,7 +79,19 @@ The check SHALL report Now as stale when the latest commit on the current branch
 - **THEN** it lists `kanban-board` as unplanned work and suggests linking it to a milestone or adding a drift entry
 
 ### Requirement: Waiting on you by relevance
-Each pending decision in `roadmap.md` SHALL name the milestone it belongs to, or `general`, and the date it was proposed. The report SHALL show under **Blocking now** the decisions of the first `active` milestone in the order and of the next one after it, plus `general` ones; all others SHALL be shown as a count under **Later** and listed in full in the report. Decisions SHALL NOT be flagged or sorted by age.
+Each pending decision in `roadmap.md` SHALL name the milestone it belongs to, or `general`, and the date it was proposed. The current milestone SHALL be the first `active` one in the order or, when none is active, the first one in the order that is not `done` or `dropped`. The report SHALL show under **Blocking now** the decisions of the current milestone and of the next not-finished one after it, plus `general` ones; all others SHALL be shown as a count under **Later** and listed in full in the report. Decisions SHALL NOT be flagged or sorted by age.
+
+When the user answers a decision, it SHALL leave `roadmap.md` and a drift-log entry SHALL record the date, the question, the answer and who decided, so no decision is lost.
+
+#### Scenario: No active milestone
+- **GIVEN** the order `M12, M13, M14`, all `planned`, and decisions for `M12` and `M14`
+- **WHEN** the user asks for the report
+- **THEN** `M12` counts as current, its decision is under Blocking now, and the `M14` decision is counted under Later
+
+#### Scenario: Decision answered
+- **GIVEN** a pending decision for `M12a`
+- **WHEN** the user answers it
+- **THEN** it no longer appears in `roadmap.md`, and `drift-log.md` gains an entry with the date, the question, the answer and "user"
 
 #### Scenario: Blocking now
 - **GIVEN** the order `M12a, M12, M13`, `M12a` active, and decisions for `M12a` and `M13`

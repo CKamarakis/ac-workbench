@@ -44,8 +44,8 @@ The status skill SHALL open with what the project is, from `PRODUCT.md`, `docs/p
 
 ### Requirement: Facts from their owners
 Each section SHALL be filled from the source that owns its facts:
-- Now: active OpenSpec changes (with their tasks left and the last commit), and the roadmap's current milestone when a roadmap exists;
-- Next: the roadmap order when a roadmap exists; otherwise `Ready` PRDs with no change, then notes no change or PRD uses;
+- Now: active OpenSpec changes (with their tasks left and the last commit), open explore records (`exploring`, with their open questions, or `ready-for-prd`), and the roadmap's current milestone when a roadmap exists;
+- Next: the roadmap order when a roadmap exists; otherwise `Ready` PRDs with no change; notes are never rows: with or without a roadmap, the notes no explore record, PRD or change uses are one count line after Next;
 - We said we'd do: the roadmap's Waiting on you, PRD open questions, open decisions in active changes, and open decisions in archived changes;
 - Loose ends: the open items of the loose ends file: as rows, the ones marked important and the ones blocking the current milestone or an active change, important first; every other open item, except `accepted` ones, as one count line per kind;
 - After: the roadmap's remaining open milestones after Next.
@@ -82,13 +82,24 @@ Every row SHALL name its source. The skill SHALL use only the facts the script r
 - **WHEN** the project has no loose ends file (the backlog the first version of status waited for)
 - **THEN** Loose ends shows one line saying there are none yet, and `/kit:loose-ends` adds them
 
+#### Scenario: Explore under way
+- **GIVEN** the explore record `kit-status` with 2 open questions, and no active change
+- **WHEN** the user runs `/kit:status`
+- **THEN** Now shows "Kit status" with Left listing the 2 questions, status "exploring", and its record as Source
+- **AND** the handoff names it as the item under way
+
+#### Scenario: Unused notes as one line
+- **GIVEN** no roadmap, one Ready PRD and 5 notes no explore record, PRD or change uses
+- **WHEN** the user runs `/kit:status`
+- **THEN** Next shows the Ready PRD as a row and one line "5 notes nothing has read yet (start an explore: /opsx:explore)"
+
 ### Requirement: Status without a roadmap
-When the project has no roadmap, status SHALL still show the overview, Now from active changes and Next from Ready PRDs and notes, and SHALL add one line saying `/kit:roadmap` can set the order. It SHALL NOT create a roadmap.
+When the project has no roadmap, status SHALL still show the overview, Now from active changes and Next from Ready PRDs, with unused notes as one count line, and SHALL add one line saying `/kit:roadmap` can set the order. It SHALL NOT create a roadmap.
 
 #### Scenario: Toughbubble-like project
 - **GIVEN** a project with `PRODUCT.md`, PRDs, notes, archived changes, no active change and no roadmap
 - **WHEN** the user runs `/kit:status`
-- **THEN** the overview and Built are filled, Now says nothing is under way, Next lists the Ready PRDs and notes without a PRD, and one line mentions `/kit:roadmap`
+- **THEN** the overview and Built are filled, Now says nothing is under way, Next lists the Ready PRDs and one count line for the notes nothing has read yet, and one line mentions `/kit:roadmap`
 - **AND** no file is created
 
 ### Requirement: Several items under way

@@ -75,7 +75,7 @@ export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null,
   if (fresh.length && !list.prds.length && activeCount === 0) {
     const titles = fresh.slice(0, 3).map(n => `"${n.title}"`).join(', ') + (fresh.length > 3 ? ` and ${fresh.length - 3} more` : '');
     const one = fresh.length === 1;
-    return { suggestion: step(map, 'prd', `${fresh.length} note(s) in ${dir}/notes no change uses yet (${titles}): shape ${one ? 'it' : 'them'} into a PRD, or archive ${one ? 'it' : 'the ones'} if ${one ? "it's" : "they're"} already handled (/kit:capture).`), warnings };
+    return { suggestion: step(map, 'prd', `${fresh.length} note(s) in ${dir}/notes no change uses yet (${titles}): shape ${one ? 'it' : 'them'} into a PRD, or archive ${one ? "it if it's" : 'any that are'} already handled (/kit:capture).`), warnings };
   }
   return { suggestion: null, warnings };
 }

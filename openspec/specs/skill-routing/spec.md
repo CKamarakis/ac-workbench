@@ -39,7 +39,7 @@ When a project is bootstrapped or re-synced, the kit SHALL write routing rules d
 ### Requirement: Next-step suggestion
 The next-step skill SHALL inspect the project's current state (active OpenSpec change and its artifact and task status) and SHALL suggest the next step with the owning skill from the lane map, with a one-line reason. When the active change has open decisions in its decision record, the suggestion SHALL add how many are open and the date of the oldest. When a PRD in `Draft` or `Review` has items under Open questions, the suggestion SHALL add a one-line reminder naming the PRD and the count. Both are reminders, never the next step itself.
 
-The next-step skill works inside one item; choosing the item belongs to the status skill. When nothing is under way (no active change and none of the PRD rules apply), the suggestion SHALL be the `status` phase owner. When several changes are active and none is named, the suggestion SHALL list them and the skill SHALL ask the user which one; when a change is named (`--change <name>`), the suggestion SHALL be that change's step.
+The next-step skill works inside one item; choosing the item belongs to the status skill. When nothing is under way (no active change and none of the PRD rules apply), the suggestion SHALL be the `status` phase owner. When several changes are active and none is named, the suggestion SHALL list them and the skill SHALL ask the user which one; when a change is named (`--change <name>`), the suggestion SHALL be that change's step. Open loose ends (except `accepted` ones) SHALL be included in the "Nothing open" count. When a loose end blocks the change the suggestion is for, the suggestion SHALL add it as a one-line reminder, never as the next step.
 
 #### Scenario: Planning incomplete
 - **WHEN** the active change has a proposal but no specs
@@ -94,6 +94,16 @@ The next-step skill works inside one item; choosing the item belongs to the stat
 - **GIVEN** one active change with open tasks
 - **WHEN** the user runs `/kit:next`
 - **THEN** the suggestion is the same as before this change, with no question asked
+
+#### Scenario: Loose ends in the Nothing open count
+- **GIVEN** no active change, no PRD in a flow, no new notes, and 4 open loose ends of which 1 is `accepted`
+- **WHEN** the user runs `/kit:next`
+- **THEN** the message counts 3 loose ends among the items left for later
+
+#### Scenario: Loose end blocking the change
+- **GIVEN** the active change `tables-in-notes` with open tasks, and the open loose end `L3` "Check paste from Word" blocking `tables-in-notes`
+- **WHEN** the user runs `/kit:next`
+- **THEN** the step is unchanged, and a reminder line names `L3` as blocking this change
 
 ### Requirement: Tool updates trigger lane review
 When a registry entry's installed version is newer than its reviewed version, the kit SHALL flag the entry for review. Owners and verdicts SHALL NOT change automatically.
@@ -227,3 +237,17 @@ The registry SHALL define a `status` phase, owned by the kit with the skill `/ki
 #### Scenario: Lane map shows the status phase
 - **WHEN** the lane map is built from the registry
 - **THEN** it lists `status`, owned by the kit with `/kit:status`
+
+### Requirement: Loose ends phase in the lane map
+The registry SHALL define a `loose-ends` phase, owned by the kit with the skill `/kit:loose-ends`, by the same owner rules as every other phase.
+
+#### Scenario: Lane map shows the loose ends phase
+- **WHEN** the lane map is built from the registry
+- **THEN** it lists `loose-ends`, owned by the kit with `/kit:loose-ends`
+
+### Requirement: Loose ends rule in the routing block
+The routing rules SHALL tell the agent to collect what it puts aside during a step (apply, verify, archive, or a long chat) and, at the end of the step, to offer them once as loose ends through `/kit:loose-ends`, pointing items that belong to a change, a PRD or the roadmap to that owner instead.
+
+#### Scenario: Rule present after a re-sync
+- **WHEN** a kit project's routing block is written or re-synced
+- **THEN** it contains the end-of-step loose ends rule naming `/kit:loose-ends`

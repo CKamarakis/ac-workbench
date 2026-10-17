@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { knowledgeDir, parseFrontmatter, writeFrontmatter, slugify } from './knowledge.mjs';
+import { knowledgeDir, parseFrontmatter, writeFrontmatter, slugify, today } from './knowledge.mjs';
 import { locate } from './locate.mjs';
 
 export const STATUSES = ['planned', 'active', 'paused', 'done', 'dropped'];
@@ -35,7 +35,6 @@ const WAIT = /^- \[([^\]]+)\] (.+?) \(proposed (\d{4}-\d{2}-\d{2})\)$/;
 
 const norm = s => s.replace(/\r\n/g, '\n');
 const read = p => { try { return norm(fs.readFileSync(p, 'utf8')); } catch { return null; } };
-const today = () => new Date().toISOString().slice(0, 10);
 const rdir = root => path.join(root, 'roadmaps');
 const mainFile = root => path.join(rdir(root), 'roadmap.md');
 const isComment = l => /^\s*<!--.*-->\s*$/.test(l);
@@ -163,7 +162,8 @@ export function gitFindings(projectDir, p) {
   if (!since) { out.notes.push('stale Now not checked: roadmap.md has no commit git can read'); return out; }
   const day = s => s.slice(0, 10);
   const after = t => Date.parse(t) > Date.parse(since);
-  const arch = run(['log', '--format=@%cI', '--name-only', '--', 'openspec/changes/archive']);
+  // Only the commit that added a change's archive folder counts as its archive (C5), and only commits after `since` (C10).
+  const arch = run(['log', `--since=${since}`, '--diff-filter=A', '--format=@%cI', '--name-only', '--', 'openspec/changes/archive']);
   const archived = new Map();
   let when = null;
   for (const l of arch.status === 0 ? arch.stdout.split('\n') : []) {
@@ -172,10 +172,12 @@ export function gitFindings(projectDir, p) {
     if (m && when && after(when) && !archived.has(m[1])) archived.set(m[1], when);
   }
   for (const [name, t] of archived) out.tidy.push(finding('roadmap.md', null, `Now may be stale: roadmap last updated ${day(since)}, then change ${name.replace(/^\d{4}-\d{2}-\d{2}-/, '')} was archived ${day(t)}`, 'update Now ("roadmap.mjs now") and tick its task'));
-  const merges = run(['log', '--merges', '--format=%cI\t%s']);
+  const merges = run(['log', '--merges', `--since=${since}`, '--format=%H\t%cI\t%s']);
   for (const l of merges.status === 0 ? merges.stdout.split('\n').filter(Boolean) : []) {
-    const [t, subject] = l.split('\t');
-    if (after(t)) out.tidy.push(finding('roadmap.md', null, `Now may be stale: roadmap last updated ${day(since)}, then merge "${subject}" on ${day(t)}`, 'update Now ("roadmap.mjs now")'));
+    const [h, t, subject] = l.split('\t');
+    // A merge that brings in a roadmap update is the update itself, not a reason to call Now stale (C4).
+    const roadmapChanged = run(['diff', '--quiet', `${h}^1`, h, '--', rel]).status === 1;
+    if (after(t) && !roadmapChanged) out.tidy.push(finding('roadmap.md', null, `Now may be stale: roadmap last updated ${day(since)}, then merge "${subject}" on ${day(t)}`, 'update Now ("roadmap.mjs now")'));
   }
   return out;
 }
@@ -242,18 +244,21 @@ function nextId(p) {
 export function addMilestone(root, { title, goal = '', id = null, after: a = null, before = null, notes = [] }) {
   const p = need(root);
   if (!title?.trim()) throw new Error('--title is required');
-  const used = new Set([...p.milestones.map(m => m.id), ...p.order.map(o => o.id)]);
-  if (id && used.has(id)) throw new Error(`${id} is already used; IDs are never reused`);
+  // File names are lowercased, so IDs are compared without case (C3).
+  const used = new Set([...p.milestones.map(m => m.id), ...p.order.map(o => o.id)].filter(Boolean).map(x => x.toLowerCase()));
+  if (id && used.has(id.toLowerCase())) throw new Error(`${id} is already used; IDs are never reused`);
   if (id && !ID.test(id)) throw new Error(`invalid ID "${id}"`);
   const newId = id ?? nextId(p);
-  const file = path.join(rdir(root), 'milestones', `${newId.toLowerCase()}-${slugify(title)}.md`);
-  const tpl = read(path.join(TEMPLATES, 'milestone.md')).replace('{{goal}}', goal.trim() || 'Goal: one line.');
-  const body = parseFrontmatter(tpl).body;
-  fs.writeFileSync(file, writeFrontmatter({ id: newId, title: title.trim(), status: 'planned', ...(notes.length ? { notes } : {}) }, body));
+  // Everything that can fail is checked before anything is written (C2, C3).
   const ids = p.order.map(o => o.id);
   const anchor = a ?? before;
   let at = ids.length;
   if (anchor) { const i = ids.indexOf(anchor); if (i < 0) throw new Error(`${anchor} is not in the order`); at = a ? i + 1 : i; }
+  const file = path.join(rdir(root), 'milestones', `${newId.toLowerCase()}-${slugify(title)}.md`);
+  if (fs.existsSync(file)) throw new Error(`${path.relative(root, file)} already exists`);
+  const tpl = read(path.join(TEMPLATES, 'milestone.md')).replace('{{goal}}', () => goal.trim() || 'Goal: one line.');
+  const body = parseFrontmatter(tpl).body;
+  fs.writeFileSync(file, writeFrontmatter({ id: newId, title: title.trim(), status: 'planned', ...(notes.length ? { notes } : {}) }, body));
   ids.splice(at, 0, newId);
   setSection(root, 'Order', ids.map(x => `- ${x}`));
   return { id: newId, file: path.relative(root, file).split(path.sep).join('/'), ...after(root) };
@@ -263,11 +268,12 @@ export function setStatus(root, { id, to }) {
   if (!STATUSES.includes(to)) throw new Error(`status must be one of ${STATUSES.join(', ')}`);
   const p = need(root);
   const m = milestoneOf(p, id);
-  writeMilestone(root, m, { ...m.data, status: to }, m.body);
   const folder = FINISHED.includes(to) ? 'done' : 'milestones';
+  const dest = path.join(rdir(root), folder, path.basename(m.file));
+  // Check the move before writing, so a failure leaves the file as it was (C1).
+  if (folder !== m.folder && fs.existsSync(dest)) throw new Error(`${folder}/${path.basename(m.file)} already exists`);
+  writeMilestone(root, m, { ...m.data, status: to }, m.body);
   if (folder !== m.folder) {
-    const dest = path.join(rdir(root), folder, path.basename(m.file));
-    if (fs.existsSync(dest)) throw new Error(`${folder}/${path.basename(m.file)} already exists`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.renameSync(fileOf(root, m), dest);
   }
@@ -317,7 +323,10 @@ export function setOrder(root, { ids }) {
 
 export function setNow(root, { text }) {
   need(root);
-  setSection(root, 'Now', norm(text).split('\n').map(l => l.trimEnd()).filter(Boolean));
+  // An empty Now is never written: a missing or mistyped flag must not wipe where work stopped (C6).
+  const lines = norm(text ?? '').split('\n').map(l => l.trimEnd()).filter(Boolean);
+  if (!lines.length) throw new Error('--text (or --text-file) is required; Now is left as it is');
+  setSection(root, 'Now', lines);
   return { now: true, ...after(root) };
 }
 
@@ -346,7 +355,8 @@ export function link(root, { id, kind, value }) {
   if (!value?.trim()) throw new Error('--value is required');
   const p = need(root);
   const m = milestoneOf(p, id);
-  const list = m.links[kind].includes(value) ? m.links[kind] : [...m.links[kind], value.trim()];
+  const v = value.trim();
+  const list = m.links[kind].includes(v) ? m.links[kind] : [...m.links[kind], v];
   writeMilestone(root, m, { ...m.data, [kind]: list }, m.body);
   return { id, kind, [kind]: list, ...after(root) };
 }

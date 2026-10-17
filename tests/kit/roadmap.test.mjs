@@ -358,3 +358,68 @@ test('CLI: report and --json; error: on bad input with exit 1', () => {
   assert.equal(none.status, 0);
   assert.match(none.stdout, /No roadmap here/);
 });
+
+// ---------- verify findings C1-C10 (code review 2026-10-17) ----------
+
+test('C1: finishing into an existing done/ file changes nothing', () => {
+  const d = project({ order: ['M3'], milestones: { 'm3-foo.md': ms('M3', 'Foo', 'active', ['- [x] T1 a']) }, done: { 'm3-foo.md': ms('M3', 'Foo old', 'done') } });
+  const before = fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m3-foo.md'), 'utf8');
+  assert.throws(() => setStatus(kroot(d), { id: 'M3', to: 'done' }), /already exists/);
+  assert.equal(fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m3-foo.md'), 'utf8'), before);
+});
+
+test('C2: a bad --after anchor writes no file and uses up no ID', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'planned') } });
+  assert.throws(() => addMilestone(kroot(d), { title: 'X', after: 'M99' }), /M99 is not in the order/);
+  assert.deepEqual(fs.readdirSync(path.join(d, 'knowledge/roadmaps/milestones')), ['m1-a.md']);
+  assert.equal(addMilestone(kroot(d), { title: 'Y' }).id, 'M2');
+});
+
+test('C3: an ID used in another case, or an existing file, is never overwritten', () => {
+  const d = project({ order: ['M5'], milestones: { 'm5-docs.md': ms('M5', 'Docs', 'planned', ['- [ ] T1 keep me']) } });
+  assert.throws(() => addMilestone(kroot(d), { title: 'Docs', id: 'm5' }), /already used/);
+  assert.match(fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m5-docs.md'), 'utf8'), /keep me/);
+});
+
+test('C4: the merge that brings in the roadmap update is not "stale"', () => {
+  const { d, g } = gitProject({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active', ['- [ ] T1 x']) } });
+  g('checkout', '-qb', 'feature');
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'x', '--allow-empty'], { cwd: d, env: env('2026-10-15T10:00:00Z') });
+  setNow(kroot(d), { text: 'Updated on the branch.' });
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'roadmap now'], { cwd: d, env: env('2026-10-16T10:00:00Z') });
+  g('checkout', '-q', 'main'); fs.writeFileSync(path.join(d, 'm.txt'), 'm'); g('add', '.'); g('commit', '-qm', 'main work');
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'merge', '-q', '--no-ff', '-m', 'Merge feature', 'feature'], { cwd: d, env: env('2026-10-18T10:00:00Z') });
+  assert.equal(gitFindings(d, parseRoadmap(kroot(d))).tidy.length, 0);
+});
+
+test('C5: editing an old archived change is not a new archive', () => {
+  const { d, g } = gitProject({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active', ['- [ ] T1 x']) } });
+  const old = path.join(d, 'openspec/changes/archive/2026-09-01-old');
+  fs.mkdirSync(old, { recursive: true }); fs.writeFileSync(path.join(old, 'proposal.md'), '# P\n');
+  g('add', '.'); g('commit', '-qm', 'old archive');
+  setNow(kroot(d), { text: 'Fresh.' }); g('commit', '-qam', 'roadmap');
+  fs.writeFileSync(path.join(old, 'proposal.md'), '# P typo fixed\n');
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'typo'], { cwd: d, env: env('2026-10-20T10:00:00Z') });
+  assert.equal(gitFindings(d, parseRoadmap(kroot(d))).tidy.length, 0);
+});
+
+test('C6: now without text is refused and Now stays', () => {
+  const d = project({ order: [] });
+  assert.throws(() => setNow(kroot(d), { text: '' }), /--text/);
+  assert.deepEqual(parseRoadmap(kroot(d)).now, ['Building the roadmap format.']);
+  const r = spawnSync(process.execPath, [SCRIPT, 'now', '--dir', d], { encoding: 'utf8' });
+  assert.equal(r.status, 1);
+});
+
+test("C7: a goal with $& or $' is written literally", () => {
+  const d = project({ order: [] });
+  const { file } = addMilestone(kroot(d), { title: 'Pricing', goal: "Charge $' per seat and $& more" });
+  assert.match(fs.readFileSync(path.join(d, 'knowledge', file), 'utf8'), /Charge \$' per seat and \$& more/);
+});
+
+test('C8: link trims before checking for duplicates', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'planned') } });
+  link(kroot(d), { id: 'M1', kind: 'changes', value: ' foo' });
+  link(kroot(d), { id: 'M1', kind: 'changes', value: ' foo' });
+  assert.deepEqual(parseRoadmap(kroot(d)).milestones[0].links.changes, ['foo']);
+});

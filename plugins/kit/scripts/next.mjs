@@ -190,9 +190,11 @@ export function readKnowledge(dir) {
       if (!e.isDirectory() || (!archived && e.name === 'archive')) continue;
       let text = null;
       try { text = fs.readFileSync(path.join(base, e.name, 'proposal.md'), 'utf8'); } catch { /* no proposal yet */ }
-      // Cited by file name (with or without .md); a path cut short with "…" doesn't count.
-      const cites = text + read(path.join(base, e.name, 'design.md'));
-      const notes = (list.notes ?? []).filter(n => cites.includes(path.posix.basename(n.path, '.md'))).map(n => n.path);
+      // Cited by its whole file name (with or without .md), not as part of another word; a path cut short with "…"
+      // doesn't count. A change with no proposal contributes only its design (C9).
+      const cites = (text ?? '') + read(path.join(base, e.name, 'design.md'));
+      const cited = n => new RegExp(`(^|[^\\w-])${path.posix.basename(n.path, '.md').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\.md)?(?![\\w-])`).test(cites);
+      const notes = (list.notes ?? []).filter(cited).map(n => n.path);
       changes.push({ name: archived ? e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : e.name, archived, link: prdLink(text), notes });
     }
   };

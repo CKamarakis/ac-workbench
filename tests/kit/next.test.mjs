@@ -335,3 +335,17 @@ test('archived open decisions add one line; the suggested step is unchanged', ()
   assert.match(format(s), /2 decisions still open in archived changes/);
   assert.equal(suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map }).archived, undefined);
 });
+
+test('C9 (verify 2026-10-17): a short note name counts as cited only as a whole name; a change without a proposal cites nothing', async () => {
+  const fs = await import('node:fs'); const path = await import('node:path');
+  const { readKnowledge } = await import('../../plugins/kit/scripts/next.mjs');
+  const d = tmpDir('kit-next-cite-');
+  const w = (rel, t) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), t); };
+  w('knowledge/notes/api.md', '---\ntitle: API\n---\n\nA\n');
+  w('knowledge/notes/null.md', '---\ntitle: Null\n---\n\nN\n');
+  w('openspec/changes/archive/2026-10-01-a/proposal.md', '# P\n\nThe rapid api-gateway work.\n');
+  w('openspec/changes/archive/2026-10-01-b/design.md', '# D\n\nFrom note `knowledge/notes/api.md`.\n');
+  const k = readKnowledge(d);
+  assert.deepEqual(k.changes.find(c => c.name === 'a').notes, []);
+  assert.deepEqual(k.changes.find(c => c.name === 'b').notes, ['notes/api.md']);
+});

@@ -19,10 +19,10 @@
 
 ## 4. Skill, registry and starter
 
-- [ ] 4.1 Skill `plugins/kit/skills/roadmap/SKILL.md` (spec "Roadmap skill writes only on a yes", "Links both ways"): create on a yes; add with or without notes; start/pause/finish/drop; tick; drift entry; link a PRD or change (offers the `Milestone: <id>` line back); update Now; report; never reorders or changes scope without a yes; runs check after every write and offers fixes. Verify the install check passes for the new skill
-- [ ] 4.2 Eval cases `evals/roadmap/cases.yaml` (spec skill-evals "Every kit skill has eval cases"): create on a yes only; agent proposes a reorder but doesn't apply it; finish moves to `done/`; report shows Blocking now. Verify `npm run evals` runs them
-- [ ] 4.3 `toolkit.yaml`: kit phase `roadmap` with skill `/kit:roadmap` (spec skill-routing "Roadmap phase in the lane map"); `npm run registry`. Verify `npm run registry:check` and a lane-map test showing `roadmap` owned by the kit
-- [ ] 4.4 Starter (spec project-starter "Roadmap mentioned at setup"; design D5): one Later line for `/kit:roadmap` when no `roadmap.md` exists; none when it exists; no question added; no folder created. Verify with tests in `tests/kit/start-plan.test.mjs` for both scenarios, and `npm run evals` for `start`
+- [x] 4.1 Skill `plugins/kit/skills/roadmap/SKILL.md` (spec "Roadmap skill writes only on a yes", "Links both ways"): create on a yes; add with or without notes; start/pause/finish/drop; tick; drift entry; link a PRD or change (offers the `Milestone: <id>` line back); update Now; report; never reorders or changes scope without a yes; runs check after every write and offers fixes. Verify the install check passes for the new skill
+- [x] 4.2 Eval cases `evals/roadmap/cases.yaml` (spec skill-evals "Every kit skill has eval cases"): create on a yes only; agent proposes a reorder but doesn't apply it; finish moves to `done/`; report shows Blocking now. Verify `npm run evals` runs them
+- [x] 4.3 `toolkit.yaml`: kit phase `roadmap` with skill `/kit:roadmap` (spec skill-routing "Roadmap phase in the lane map"); `npm run registry`. Verify `npm run registry:check` and a lane-map test showing `roadmap` owned by the kit
+- [x] 4.4 Starter (spec project-starter "Roadmap mentioned at setup"; design D5): one Later line for `/kit:roadmap` when no `roadmap.md` exists; none when it exists; no question added; no folder created. Verify with tests in `tests/kit/start-plan.test.mjs` for both scenarios, and `npm run evals` for `start`
 
 ## 5. Proof and this repo
 

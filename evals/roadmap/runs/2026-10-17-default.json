@@ -1,0 +1,146 @@
+{
+  "skill": "roadmap",
+  "date": "2026-10-17T16:25:39.063Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 659,
+  "summary": {
+    "pass": 5,
+    "fail": 0,
+    "pending": 2
+  },
+  "cases": [
+    {
+      "id": "no-roadmap-is-fine",
+      "outcome": "pass",
+      "duration_ms": 149,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "finish-moves-to-done",
+      "outcome": "pass",
+      "duration_ms": 327,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/roadmaps/done/m1-first.md matches /status: done/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "report-blocking-now",
+      "outcome": "pass",
+      "duration_ms": 175,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "triggers-in-description",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\.claude\\worktrees\\kit-status\\plugins\\kit/skills/roadmap/SKILL.md matches /^description: .*roadmap/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\.claude\\worktrees\\kit-status\\plugins\\kit/skills/roadmap/SKILL.md matches /^description: .*reprioritise/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\.claude\\worktrees\\kit-status\\plugins\\kit/skills/roadmap/SKILL.md matches /^description: .*archived/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "create-only-on-yes",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "says-optional",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "writes-nothing",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "proposes-reorder-only",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "proposes-with-reason",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "order-unchanged",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "never-hand-edits",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\.claude\\worktrees\\kit-status\\plugins\\kit/skills/roadmap/SKILL.md matches /Never edit the roadmap files by hand/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\.claude\\worktrees\\kit-status\\plugins\\kit/skills/roadmap/SKILL.md matches /Order and scope are the user/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

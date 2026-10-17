@@ -13,6 +13,7 @@
     "ui-polish",
     "close",
     "docs",
+    "roadmap",
     "assess",
     "kit-issues"
   ],
@@ -80,6 +81,11 @@
     {
       "when": "I'm about to commit",
       "use": "gitleaks pre-commit hook (runs automatically)"
+    },
+    {
+      "when": "I want to see or change the project's goals, order and what's waiting",
+      "phase": "roadmap",
+      "use": "/kit:roadmap"
     },
     {
       "when": "I want a check-up of this project's Claude Code setup",
@@ -429,6 +435,7 @@
         "ready",
         "verify",
         "docs",
+        "roadmap",
         "assess",
         "kit-issues"
       ],
@@ -438,6 +445,7 @@
         "ready": "/kit:ready",
         "verify": "/kit:verify",
         "docs": "/kit:docs",
+        "roadmap": "/kit:roadmap",
         "assess": "/kit:harness-review",
         "kit-issues": "github.com/CKamarakis/ac-workbench/issues"
       },

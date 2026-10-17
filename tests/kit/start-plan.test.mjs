@@ -263,6 +263,19 @@ test('Later lists /kit:docs until the project has knowledge/docs', () => {
   assert.doesNotMatch(formatPlan(plan(d)), /kit:docs/);
 });
 
+// roadmap-structure 4.4 (spec project-starter "Roadmap mentioned at setup"): mentioned once, never asked or created
+test('Later lists /kit:roadmap until the project has a roadmap; no roadmaps folder is planned', () => {
+  const d = tmp();
+  const p = plan(d);
+  const out = formatPlan(p);
+  assert.equal(out.split('\n').filter(l => /kit:roadmap/.test(l)).length, 1);
+  assert.match(out, /optional: .*goals in order, what's left and the decisions waiting.*\/kit:roadmap/);
+  assert.ok(!JSON.stringify(p.actions).includes('roadmaps'));
+  fs.mkdirSync(path.join(d, 'knowledge', 'roadmaps'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge', 'roadmaps', 'roadmap.md'), '# Roadmap\n');
+  assert.doesNotMatch(formatPlan(plan(d)), /kit:roadmap/);
+});
+
 // kit-per-project 2.2 (design D1, D2; spec project-starter "Kit installed per project")
 // The kit is present when this project's .claude/settings.json enables it: /kit:start only runs where the kit is loaded,
 // so the settings file is the whole question (no claude CLI call). The real shell runs the registry's check.

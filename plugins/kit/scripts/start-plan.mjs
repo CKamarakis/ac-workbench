@@ -225,7 +225,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   for (const a of actions) if (a.kind === 'file') Object.assign(a, aboutAction(a.id, knowledgeDir));
   const changes = actions.filter(a => !['same', 'keep'].includes(a.action)).length + tools.filter(t => t.action === 'install').length;
   const conflicts = actions.filter(a => a.action === 'conflict').length;
-  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, offeredTools: offeredTools(registry, offered), types: projectTypes(registry), typeOptions: typeOptions(registry, abs), docsLater: !fs.existsSync(path.join(abs, knowledgeDir, 'docs')), changes, conflicts };
+  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, offeredTools: offeredTools(registry, offered), types: projectTypes(registry), typeOptions: typeOptions(registry, abs), docsLater: !fs.existsSync(path.join(abs, knowledgeDir, 'docs')), roadmapLater: !fs.existsSync(path.join(abs, knowledgeDir, 'roadmaps', 'roadmap.md')), changes, conflicts };
 }
 
 export const CONTEXT_LINE = 'Project context, decisions and open ideas: docs/project-context.md. Read it before any proposal.';
@@ -260,6 +260,7 @@ export function appendToContextBlock(cfg) {
 
 export const configWithContext = cfg => cfg.replace(/\s*$/, '\n') + `\ncontext: |\n  ${CONTEXT_LINE}\n`;
 
+export const ROADMAP_LATER = "optional: when you want the goals in order, what's left and the decisions waiting in one place, run /kit:roadmap, any time";
 export const DOCS_LATER = "optional: when you want a browsable page of what's built (worth it beyond a day or two of work), run /kit:docs, any time, also mid-project";
 
 export function formatPlan(p) {
@@ -275,11 +276,13 @@ export function formatPlan(p) {
     lines.push(`  ${tag.padEnd(8)} ${t.name.padEnd(16)} ${t.why}${t.command && t.action !== 'present' ? `\n           ${t.command}` : ''}${t.note && t.action === 'pending' ? `\n           note: ${t.note}` : ''}${t.installWhy && t.action !== 'present' ? `\n           why: ${t.installWhy}` : ''}`);
   }
   const later = p.tools.filter(x => x.firstUse);
-  if (later.length || p.docsLater) {
+  if (later.length || p.docsLater || p.roadmapLater) {
     lines.push('', 'Later (when you first use it):');
     for (const x of later) lines.push(`  ${x.name.padEnd(16)} ${x.firstUse}`);
     // Living docs stay optional (spec: project-starter "Docs page mentioned at setup"); the line lives here, not in the skill.
     if (p.docsLater) lines.push(`  ${'kit:docs'.padEnd(16)} ${DOCS_LATER}`);
+    // The roadmap is optional too (spec: project-starter "Roadmap mentioned at setup"): mentioned, never asked or created.
+    if (p.roadmapLater) lines.push(`  ${'kit:roadmap'.padEnd(16)} ${ROADMAP_LATER}`);
   }
   const notOpted = p.offered.filter(n => !p.optIn.includes(n));
   if (notOpted.length) {

@@ -134,7 +134,7 @@ npm run evals        # eval cases for every kit skill
 npm run registry     # validate toolkit.yaml, regenerate plugins/kit/data/toolkit.json
 ```
 
-- **Order of work, current position and the drift log:** [`docs/roadmap.md`](docs/roadmap.md).
+- **Order of work, Now and the drift log:** [`knowledge/roadmaps/`](knowledge/roadmaps/roadmap.md) (kept with `/kit:roadmap`).
 - **Decisions and context:** [`docs/project-context.md`](docs/project-context.md).
 - **Planned and active changes:** [`openspec/changes/`](openspec/changes/).
 - **Secret scanning:** commits pass a gitleaks pre-commit hook. Enable it once per clone with `git config core.hooksPath .githooks`.

@@ -13,7 +13,7 @@ Constraints:
 - Set up once, and it works in every project.
 - The MVP is local only.
 
-**Order of work, current position and drift log: [`docs/roadmap.md`](roadmap.md). Read it first.**
+**Order of work, Now and drift log: [`knowledge/roadmaps/`](../knowledge/roadmaps/roadmap.md). Read it first.**
 
 Active changes: [`kit-overview-feedback`](../openspec/changes/kit-overview-feedback/) (cockpit, feedback, harness review, M5). M1–M4 are archived; current specs are in [`openspec/specs/`](../openspec/specs/).
 

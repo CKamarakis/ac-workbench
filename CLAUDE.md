@@ -4,8 +4,8 @@ A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
 
 ## Start every session here
 
-1. Read `docs/roadmap.md`: the north star, the milestones, **Current position**, and the drift rules.
-2. Work only on the current position or the next actions. Anything else: stop, add a drift-log entry with its reason, and ask the user. Reorders and scope changes are the user's decision.
+1. Read the roadmap: `node plugins/kit/scripts/roadmap.mjs report --dir .` (files in `knowledge/roadmaps/`: north star, order, **Now**, Waiting on you; drift rules in `drift-log.md`).
+2. Work only on Now and the current milestone's tasks. Anything else: stop, add a drift entry with its reason (`/kit:roadmap`), and ask the user. Reorders and scope changes are the user's decision.
 3. Planning lives in OpenSpec (`openspec/changes/`). The roadmap and the OpenSpec change are updated together, in one commit.
 
 ## Rules

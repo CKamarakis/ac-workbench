@@ -1,6 +1,6 @@
 ---
 title: Kit status
-status: Building
+status: Shipped
 sources:
   - notes/kit-workflow/2026-10-17-kit-status-where-are-we-what-s-built-what-s-next.md
   - notes/kit-workflow/2026-10-17-kit-workflow-happy-path-real-life-and-overview-status-next.md

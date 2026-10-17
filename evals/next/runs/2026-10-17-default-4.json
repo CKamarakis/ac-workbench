@@ -1,0 +1,227 @@
+{
+  "skill": "next",
+  "date": "2026-10-17T21:30:50.812Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 23746,
+  "summary": {
+    "pass": 11,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "no-openspec-suggests-start",
+      "outcome": "pass",
+      "duration_ms": 158,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "fresh-kit-project-points-to-status",
+      "outcome": "pass",
+      "duration_ms": 3159,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "several-active-changes-ask-which",
+      "outcome": "pass",
+      "duration_ms": 4514,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /never run it automatically/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-offers-but-does-not-run",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Don't run the suggested step yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/next\\.mjs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "ready-prd-suggests-propose",
+      "outcome": "pass",
+      "duration_ms": 3319,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "notes-only-no-prd-step",
+      "outcome": "pass",
+      "duration_ms": 3202,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "explore-record-ready-suggests-prd",
+      "outcome": "pass",
+      "duration_ms": 3112,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-reports-prd-and-never-writes-status",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /checks the project.s PRDs/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Never change a PRD's status here/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "newest-ready-prd-named-first",
+      "outcome": "pass",
+      "duration_ms": 3241,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "tasks-done-suggests-verify",
+      "outcome": "pass",
+      "duration_ms": 3034,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-explore-and-roadmap-steps",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /--explore <slug>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /never tick, finish or start a milestone yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "C:\\Users\\Chris\\Documents\\Projects\\ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Notes never come up as a step/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

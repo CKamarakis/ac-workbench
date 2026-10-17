@@ -14,6 +14,8 @@ import { pageStatus } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine, archivedOpen, archivedLine } from './decisions.mjs';
 import { readLooseEnds, isOpen as looseOpen } from './loose-ends.mjs';
+import { listRecords, OPEN as OPEN_EXPLORE } from './explore.mjs';
+import { parseRoadmap, reportRoadmap } from './roadmap.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 
@@ -71,13 +73,7 @@ export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null,
     const others = ready.slice(1).map(p => p.slug);
     return at('artifacts', `PRD "${ready[0].slug}" is Ready and no change uses it yet: propose a change from it.`, ready[0], others.length ? { otherReady: others } : {});
   }
-  // A note a change already cites (proposal or design) was used; only the others are ideas still waiting.
-  const fresh = list.notes.filter(n => !changes.some(c => c.notes?.includes(n.path)));
-  if (fresh.length && !list.prds.length && activeCount === 0) {
-    const titles = fresh.slice(0, 3).map(n => `"${n.title}"`).join(', ') + (fresh.length > 3 ? ` and ${fresh.length - 3} more` : '');
-    const one = fresh.length === 1;
-    return { suggestion: step(map, 'prd', `${fresh.length} note(s) in ${dir}/notes no change uses yet (${titles}): shape ${one ? 'it' : 'them'} into a PRD, or archive ${one ? "it if it's" : 'any that are'} already handled (/kit:capture).`), warnings };
-  }
+  // explore-stage: notes alone never lead to a suggestion; a note is input that an explore reads.
   return { suggestion: null, warnings };
 }
 
@@ -101,7 +97,7 @@ export function docsLine(page) {
   return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
 }
 
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null, loose = [], looseWarning = null }) {
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null, loose = [], looseWarning = null, explores = [], explore = null, roadmap = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -112,6 +108,7 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   const named = change && active.some(c => c.name === change) ? change : null;
   const { suggestion, warnings, waiting } = prdSuggest({ knowledge, map, activeCount: active.length, activeName: named ?? active[0]?.name, changedSince });
   if (looseWarning) warnings.push(looseWarning);
+  for (const r of explores.filter(x => x.state === 'unreadable')) warnings.push(r.error);
   const questions = questionsLine(knowledge);
   const withWarnings = s => ({ ...s, ...blockedBy(loose, s.change), ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
   // With a change named, a PRD step wins only when it is about that change (verify C1).
@@ -120,7 +117,44 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   if (change && !named && active.length) return withWarnings(chooseStep(active, `No active change named "${change}".`));
   if (!named && active.length > 1) return withWarnings(chooseStep(active, `${active.length} changes are active.`));
   const picked = named ? active.filter(c => c.name === named) : active;
-  return withWarnings(openspecSuggest({ active: picked, statusOf, map, verifyOf, decisionsOf, leftover: leftoverCount(knowledge, archived, loose) }));
+  const leftover = leftoverCount(knowledge, archived, loose);
+  if (!active.length) return withWarnings(outsideChange({ map, explores, explore, roadmap, leftover }));
+  return withWarnings(openspecSuggest({ active: picked, statusOf, map, verifyOf, decisionsOf }));
+}
+
+const leftoverText = l => (l?.total ? ` ${l.total} item${l.total === 1 ? '' : 's'} left for later (${[l.builds ? `${l.builds} from builds` : null, l.prd ? `${l.prd} PRD question${l.prd === 1 ? '' : 's'}` : null, l.loose ? `${l.loose} loose end${l.loose === 1 ? '' : 's'}` : null].filter(Boolean).join(', ')}).` : '');
+
+/**
+ * No active change (explore-stage D4): the explore stage, then the roadmap's next step, then "Nothing open".
+ *   explores: listRecords(dir); roadmap: reportRoadmap(parseRoadmap(...)) or null.
+ */
+export function outsideChange({ map, explores = [], explore = null, roadmap = null, leftover = null }) {
+  // Unreadable records are skipped here (suggest reports them as warnings, verify C1).
+  const open = explores.filter(r => OPEN_EXPLORE.includes(r.state));
+  const named = explore ? open.find(r => r.slug === explore) : null;
+  // A name that matches no open explore is said, like --change (verify C6).
+  if (explore && !named && open.length) {
+    return { phase: 'choose', owner: null, use: 'pick an explore', alternatives: [], reason: `No open explore named "${explore}". Pick one, then run /kit:next --explore <slug>.`, choose: open.map(r => r.slug) };
+  }
+  if (!named && open.length > 1) {
+    return { phase: 'choose', owner: null, use: 'pick an explore', alternatives: [], reason: `${open.length} explores are open${explore ? ` (none named "${explore}")` : ''}. Pick one, then run /kit:next --explore <slug>.`, choose: open.map(r => r.slug) };
+  }
+  const r = named ?? open[0];
+  if (r?.state === 'ready-for-prd') return step(map, 'prd', `Explore "${r.title}" has no open questions: write the PRD from it.`, { explore: r.slug, record: r.file });
+  if (r?.state === 'exploring') return step(map, 'brainstorm', `Explore "${r.title}" still has open questions: ${r.questions.map(q => `${q.id} ${q.text}`).join('; ')}.`, { explore: r.slug, record: r.file });
+  const more = leftoverText(leftover);
+  if (roadmap?.exists && roadmap.current) {
+    const cur = roadmap.rows.find(x => x.id === roadmap.current);
+    if (cur && cur.status === 'active' && cur.total > 0 && !cur.left.length) {
+      const nx = roadmap.rows.find(x => x.id === roadmap.next);
+      return step(map, 'roadmap', `${cur.id} ${cur.title} is done.${nx ? ` Next: ${nx.id} ${nx.title}.` : ' Nothing after it on the roadmap.'} Mark ${cur.id} done with /kit:roadmap${nx ? ', then start with /opsx:explore' : ''}.${more}`, { milestone: cur.id, ...(nx ? { nextMilestone: nx.id } : {}) });
+    }
+    if (cur?.left.length) {
+      const t0 = cur.left[0];
+      return step(map, 'brainstorm', `Next on the roadmap: ${cur.id} T${t0.n} ${t0.text} (${cur.title}). Start with /opsx:explore.${more}`, { milestone: cur.id, task: `T${t0.n}` });
+    }
+  }
+  return step(map, 'status', `Nothing open.${more} Run /kit:status to see what's next, or /kit:roadmap to change the order.`);
 }
 
 /** Several items under way (spec skill-routing "Several active changes"): list them; the skill asks which one. */
@@ -144,21 +178,14 @@ function blockedBy(loose, change) {
   return b.length ? { blocked: b } : {};
 }
 
-function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null, leftover = null }) {
-  const s = openspecStep({ active, statusOf, map, verifyOf, decisionsOf, leftover });
+function openspecSuggest({ active, statusOf, map, verifyOf, decisionsOf = () => null }) {
+  const s = openspecStep({ active, statusOf, map, verifyOf, decisionsOf });
   // build-readiness D3: open decisions ride along on any suggestion for the change; never a gate.
   const open = s.change ? openLine(decisionsOf(s.change)) : null;
   return open ? { ...s, open } : s;
 }
 
-function openspecStep({ active, statusOf, map, verifyOf, decisionsOf, leftover }) {
-  // kit-status D6, readiness D1: nothing open -> a message pointing to /kit:status; next never runs it.
-  if (!active.length) {
-    const l = leftover ?? { total: 0 };
-    const items = l.total ? ` ${l.total} item${l.total === 1 ? '' : 's'} left for later (${[l.builds ? `${l.builds} from builds` : null, l.prd ? `${l.prd} PRD question${l.prd === 1 ? '' : 's'}` : null, l.loose ? `${l.loose} loose end${l.loose === 1 ? '' : 's'}` : null].filter(Boolean).join(', ')}).` : '';
-    return step(map, 'status', `Nothing open.${items} Run /kit:status to see what's next, or /kit:roadmap to change the order.`);
-  }
-
+function openspecStep({ active, statusOf, map, verifyOf, decisionsOf }) {
   // Only one change reaches here: several go through the choose step first (kit-status D6).
   const change = active[0];
   const st = statusOf(change.name) ?? {};
@@ -206,6 +233,7 @@ export function format(s) {
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherReady?.length) lines.push(`  other Ready PRDs: ${s.otherReady.join(', ')}`);
   if (s.choose?.length) lines.push(`  choose: ${s.choose.join(', ')}`);
+  if (s.record) lines.push(`  record: ${s.record}`);
   for (const b of s.blocked ?? []) lines.push(`  blocked by: ${b} (/kit:loose-ends)`);
   for (const w of s.warnings ?? []) lines.push(`  WARNING ${w}`);
   return lines.join('\n');
@@ -312,6 +340,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2);
   const di = args.indexOf('--dir');
   const dir = path.resolve(di >= 0 ? args[di + 1] : process.cwd());
+  const ei = args.indexOf('--explore');
+  const explore = ei >= 0 ? args[ei + 1] : null;
   const ci = args.indexOf('--change');
   const change = ci >= 0 ? args[ci + 1] : null;
   const ri = args.indexOf('--registry');
@@ -324,6 +354,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir) });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir), explores: (() => { try { return listRecords(dir); } catch { return []; } })(), explore, roadmap: (() => { try { const p = parseRoadmap(knowledgeDir(dir)); return p.exists ? reportRoadmap(p) : null; } catch { return null; } })() });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
 }

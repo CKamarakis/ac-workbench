@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
 import { parseRoadmap, checkRoadmap, reportRoadmap, gitFindings, FINISHED } from './roadmap.mjs';
 import { readKnowledge } from './next.mjs';
+import { listRecords, OPEN as OPEN_EXPLORE } from './explore.mjs';
 import { readDecisions } from './decisions.mjs';
 import { locate } from './locate.mjs';
 import { readLooseEnds, isOpen as looseOpen } from './loose-ends.mjs';
@@ -128,11 +129,19 @@ function nextAndAfter({ roadmap, report, knowledge, changes, roadmapRel, now }) 
   const used = new Set(changes.map(c => c.name));
   const ready = knowledge.list.prds.filter(p => p.valid && p.status === 'Ready' && !(p.change && used.has(p.change)) && !knowledge.changes.some(c => c.link?.path === `${knowledge.dir}/${p.path}`))
     .map(p => row(p.title, 'ready to propose', 'PRD Ready', `${knowledge.dir}/${p.path}`, { kind: 'prd', age: ageDays(p.updated, now) }));
+  return { next: ready, after: [] };
+}
+
+/** Notes no explore record, PRD or change uses: never rows, one count (explore-stage readiness D1). */
+function unusedNotes(knowledge, explores) {
   // Normalized like knowledge.mjs citing(), so "./notes/x.md" counts as citing notes/x.md (verify C7).
-  const sourced = new Set(knowledge.list.prds.flatMap(p => (p.sources ?? []).map(s => posix(path.normalize(s)))));
-  const notes = knowledge.list.notes.filter(n => !sourced.has(n.path) && !knowledge.changes.some(c => c.notes?.includes(n.path)))
-    .map(n => row(n.title, 'no PRD yet', 'note', `${knowledge.dir}/${n.path}`, { kind: 'note', age: ageDays(n.date, now) }));
-  return { next: [...ready, ...notes], after: [] };
+  const sourced = new Set([...knowledge.list.prds.flatMap(p => p.sources ?? []), ...explores.flatMap(r => r.sources)].map(s => posix(path.normalize(s))));
+  return knowledge.list.notes.filter(n => !sourced.has(n.path) && !knowledge.changes.some(c => c.notes?.includes(n.path))).length;
+}
+
+/** Open explore records as Now rows (explore-stage D7). */
+function exploreRows(explores, kdir) {
+  return explores.filter(r => OPEN_EXPLORE.includes(r.state)).map(r => row(r.title, r.questions.length ? r.questions.map(q => `${q.id} ${q.text}`) : 'ready for a PRD', r.state, `${kdir}/${r.file}`, { kind: 'explore', explore: r.slug }));
 }
 
 function saidRows({ dir, roadmap, roadmapRel, knowledge, changes, archived, now }) {
@@ -245,10 +254,13 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
   const description = DESCRIPTION_FILES.find(f => fs.existsSync(path.join(dir, f))) ?? null;
   const ctx = { dir, roadmap, report, knowledge, changes, archived, roadmapRel, now, last };
   const { next, after } = nextAndAfter(ctx);
-  const nowAll = nowRows(ctx);
+  let explores = [];
+  try { explores = listRecords(dir); } catch { /* no explore folder */ }
+  const nowAll = [...nowRows(ctx), ...exploreRows(explores, knowledge.dir)];
   const sections = {
     now: cap(nowAll),
-    next: cap(next),
+    // With or without a roadmap: notes are never rows, the unused ones one count (verify C8).
+    next: { ...cap(next), unusedNotes: unusedNotes(knowledge, explores) },
     said: cap(saidRows(ctx)),
     loose: looseSection(loose, current),
     after: cap(after),
@@ -259,7 +271,7 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     ...(!git ? [{ source: 'git', fix: '/kit:setup installs it; last commits and branch checks skipped' }] : !isRepo ? [{ source: 'git', fix: 'not a git repository; last commits and branch checks skipped' }] : []),
   ];
   // Every active change, not only those left after the section cap (verify C5).
-  const underWay = nowAll.filter(r => r.kind === 'change');
+  const underWay = nowAll.filter(r => r.kind === 'change' || r.kind === 'explore');
   return {
     dir: posix(dir),
     overview: {
@@ -270,10 +282,10 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     roadmap: roadmap.exists,
     sections,
     mismatches: mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel, loose }),
-    notes: findings?.notes ?? [],
+    notes: [...(findings?.notes ?? []), ...explores.filter(r => r.state === 'unreadable').map(r => r.error)],
     missing,
     handoff: underWay.length
-      ? { underWay: underWay.map(r => ({ item: r.item, change: r.change })), command: '/kit:next' }
+      ? { underWay: underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) })), command: '/kit:next' }
       : { underWay: [], candidates: sections.next.rows.map(r => ({ item: r.item, source: r.source, age: r.age ?? null })), command: '/kit:next' },
   };
 }
@@ -289,9 +301,10 @@ export function format(s) {
   for (const [k, title] of Object.entries(TITLES)) {
     const sec = s.sections[k];
     out.push('', title);
-    if (!sec.rows.length && !sec.counts?.length) out.push(`  ${sec.note ?? '(none)'}`);
+    if (!sec.rows.length && !sec.counts?.length && !sec.unusedNotes) out.push(`  ${sec.note ?? '(none)'}`);
     for (const r of sec.rows) out.push(`  ${r.item} | ${Array.isArray(r.left) ? r.left.join('; ') || '-' : r.left} | ${r.status} | ${r.source}${r.answer ? ` | ${r.answer}` : ''}`);
     if (sec.more) out.push(`  +${sec.more} more`);
+    if (sec.unusedNotes) out.push(`  + ${sec.unusedNotes} note${sec.unusedNotes === 1 ? '' : 's'} nothing has read yet (start an explore: /opsx:explore)`);
     if (sec.counts?.length) out.push(`  + ${sec.counts.map(c => `${c.n} ${c.kind}`).join(', ')} (/kit:loose-ends)`);
   }
   if (s.mismatches.length) {

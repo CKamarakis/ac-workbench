@@ -23,6 +23,8 @@ The strategic view: **which item** to work on. `/kit:next` is the tactical one: 
      - Source as a clickable relative link. In We said we'd do, add the `answer` command (e.g. `/kit:prd`) after the source.
      - A section with `more` gets a "+N more" row. An empty section: one line (`note`, e.g. "none yet", or "none").
      - Loose ends: the rows are the important ones and those blocking current work; then one line with the `counts` per kind (e.g. "+ 3 idea, 2 cleanup") and `/kit:loose-ends`.
+     - Now can hold explore rows (`kind: explore`): Left is the open questions, or "ready for a PRD".
+     - Next with `unusedNotes`: one line "N notes nothing has read yet (start an explore: `/opsx:explore`)". Never list notes as rows.
      - When rows have an `age` and there's no roadmap, show it as a hint ("waited 16 days"). Never sort or pick by it.
    - **Doesn't match:** only when `mismatches` isn't empty. One line each: what, the sources involved, the fix. Never say which source is right.
    - **Missing:** one line per `missing` entry, with its fix. When `roadmap` is false, mention once that `/kit:roadmap` can set the order (optional).

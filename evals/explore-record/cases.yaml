@@ -1,0 +1,36 @@
+# Eval cases for /kit:explore-record (spec: explore-record). Deterministic: the script in a sandbox, plus the skill's rules.
+skill: explore-record
+vars:
+  ex: '{{kit}}/scripts/explore.mjs'
+
+cases:
+  - id: save-then-list
+    description: A saved record lists with its state and open questions
+    setup:
+      files:
+        knowledge/notes/a.md: "---\ntitle: A\n---\n"
+        rec.json: '{"title":"Kit status","sources":["notes/a.md"],"decisions":["one command"],"questions":["one or two tables?"]}'
+    checks:
+      - { kind: command-exit, command: 'node "{{ex}}" save --dir . --slug kit-status --file rec.json', expect: 0 }
+      - kind: command-exit
+        command: node "{{ex}}" list --dir .
+        expect: 0
+        stdout_match: 'kit-status  exploring  Kit status  \(Q1 open\)'
+      - { kind: file-exists, path: knowledge/explore/kit-status.md }
+
+  - id: unknown-source-refused
+    description: A source that is not a note is refused and nothing is written
+    setup:
+      files:
+        rec.json: '{"title":"X","sources":["notes/missing.md"]}'
+    checks:
+      - { kind: command-exit, command: 'node "{{ex}}" save --dir . --slug x --file rec.json', expect: 1 }
+
+  - id: skill-saves-by-default-and-shows
+    description: The skill saves at the end of an explore without asking, shows what it wrote, and can undo
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/explore-record/SKILL.md', pattern: 'default: save, no question' }
+      - { kind: content-match, path: '{{kit}}/skills/explore-record/SKILL.md', pattern: 'Show what was written' }
+      - { kind: content-match, path: '{{kit}}/skills/explore-record/SKILL.md', pattern: 'undo --slug' }
+      - { kind: content-match, path: '{{kit}}/skills/explore-record/SKILL.md', pattern: 'Nothing decided and no question raised: save nothing' }
+      - { kind: content-match, path: '{{kit}}/skills/explore-record/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/explore\.mjs' }

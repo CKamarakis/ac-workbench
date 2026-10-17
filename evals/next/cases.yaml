@@ -62,8 +62,8 @@ cases:
         expect: 0
         stdout_match: '^Next: /opsx:propose\r?\n  why:   PRD "gift-cards" is Ready[\s\S]*prd:   knowledge/prds/gift-cards\.md'
 
-  - id: notes-only-suggests-prd
-    description: Notes but no PRD and no change -> /kit:prd
+  - id: notes-only-no-prd-step
+    description: Notes alone never lead to /kit:prd (explore-stage); with no roadmap it is "Nothing open"
     setup:
       files:
         knowledge/notes/2026-10-06-idea.md: "---\ntitle: Idea\n---\n"
@@ -71,7 +71,19 @@ cases:
       - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
       - kind: command-exit
         command: node "{{next}}" --dir .
-        stdout_match: '^Next: /kit:prd\r?\n  why:   1 note'
+        stdout_match: '^Next: /kit:status\r?\n  why:   Nothing open\.'
+
+  - id: explore-record-ready-suggests-prd
+    description: An explore record with no open questions -> /kit:prd naming the record
+    setup:
+      files:
+        knowledge/notes/2026-10-06-idea.md: "---\ntitle: Idea\n---\n"
+        knowledge/explore/idea.md: "---\ntitle: Idea\nsources:\n  - notes/2026-10-06-idea.md\n---\n\n## Decisions\n\n- keep it small\n\n## Open questions\n\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:prd\r?\n  why:   Explore "Idea" has no open questions[\s\S]*record: explore/idea\.md'
 
   - id: skill-reports-prd-and-never-writes-status
     description: The skill names the PRD and leaves status changes to /kit:prd and the user
@@ -106,3 +118,10 @@ cases:
       - kind: command-exit
         command: node "{{next}}" --dir .
         stdout_match: '^Next: /kit:verify[\s\S]*then:  /opsx:archive'
+
+  - id: skill-explore-and-roadmap-steps
+    description: The next skill handles explore steps, asks which explore, names roadmap steps without writing, never steps on notes
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: '--explore <slug>' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'never tick, finish or start a milestone yourself' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'Notes never come up as a step' }

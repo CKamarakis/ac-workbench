@@ -122,3 +122,9 @@ cases:
     description: The skill offers PRDs in list order, most recently updated first (followups 4.1)
     checks:
       - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'most recently updated first\*\* \(it already sorts them' }
+
+  - id: prd-offers-ready-explore-record-first
+    description: The PRD skill offers a ready explore record first, drafts from its decisions, then links it (explore-stage)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'Explore records first' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'explore\.mjs" link-prd' }

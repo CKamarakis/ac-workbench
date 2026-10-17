@@ -16,10 +16,12 @@ If it prints `error:`, show it and stop. Don't do the step by hand.
 ## Draft a PRD from chosen notes
 
 1. **List the notes:** `list --json`. It never includes `archive/`.
-2. **Shortlist.** Pick the notes relevant to the user's idea, and show each with a **one-line reason** ("mentions the checkout steps"). Skip the clearly unrelated ones.
+2. **Explore records first** (explore-stage): run `node "${CLAUDE_PLUGIN_ROOT}/scripts/explore.mjs" list --json`. If a record is `ready-for-prd`, offer it first: drafting from it uses its **decisions** as the main input and its `sources` (notes) as the PRD's sources. A record still `exploring` has open questions: say so, and offer to continue `/opsx:explore` instead. With no record (or the user declines), shortlist notes as below.
+   **Shortlist.** Pick the notes relevant to the user's idea, and show each with a **one-line reason** ("mentions the checkout steps"). Skip the clearly unrelated ones.
    - If no note is relevant, say so, and offer to draft from the prompt alone with empty sources.
 3. **The user picks one or more notes.** Ask with a **multi-select**: several notes can feed one PRD. Draft only from the notes they pick plus what they said. Ask about real gaps first, in one short batch: skip anything the notes already answer.
 4. **Create the file:** `new-prd --title "<title>" --sources <path,path>`. It starts as `Draft` from the template, and refuses to overwrite.
+   - Drafted from an explore record: then link it, `node "${CLAUDE_PLUGIN_ROOT}/scripts/explore.mjs" link-prd --dir . --slug <record> --prd prds/<slug>.md`. The record is then closed (`in-prd`); later changes go into the PRD.
 5. **Fill each section** with `section-get` (for the hash) and then `section-set` (see below), section by section. Since the file is new, you can fill all sections after one yes on the whole draft.
    - **Anything not in the picked notes or the user's words is not a fact.** Mark it "Assumption:" or list it under Open questions. Never invent users, numbers or quotes.
    - Keep it short and plain: one or two pages, every line useful for deciding or building.

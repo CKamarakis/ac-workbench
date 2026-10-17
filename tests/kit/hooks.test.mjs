@@ -107,3 +107,23 @@ test('C8: the archive reminder says the project uses the living docs, not that a
   assert.match(r, /uses the living docs/);
   assert.doesNotMatch(r, /has a docs page/);
 });
+
+// ---------- explore-stage 3.3: reminder hook (spec explore-record "Reminder when the next stage starts") ----------
+import { reminder as exploreReminder } from '../../plugins/kit/hooks/explore-reminder.mjs';
+
+test('explore reminder: next-stage prompts in a kit project get one line; others and non-kit folders get nothing', () => {
+  const kit = tmpDir('kit-hooks-explore-');
+  fs.mkdirSync(path.join(kit, '.claude'), { recursive: true });
+  fs.writeFileSync(path.join(kit, '.claude', 'kit.json'), '{}');
+  for (const p of ['/kit:prd', '/opsx:propose loose-ends', '  /kit:next --change x']) assert.match(exploreReminder({ prompt: p }, kit), /^Kit reminder: if this session explored something/);
+  assert.equal(exploreReminder({ prompt: 'what does this function do?' }, kit), null);
+  assert.equal(exploreReminder({ prompt: '/kit:prdx' }, kit), null);
+  assert.equal(exploreReminder({ prompt: '/kit:prd' }, tmpDir('kit-hooks-plain-')), null);
+  const run = (input, dir) => spawnSync(process.execPath, [path.join(hooks, 'explore-reminder.mjs')], { input, env: { ...process.env, CLAUDE_PROJECT_DIR: dir }, encoding: 'utf8' });
+  let r = run(JSON.stringify({ hook_event_name: 'UserPromptSubmit', prompt: '/kit:prd' }), kit);
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /\/kit:explore-record/);
+  r = run('not json', kit);
+  assert.equal(r.status, 0, 'never blocks on bad input');
+  assert.equal(r.stdout, '');
+});

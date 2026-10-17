@@ -1,5 +1,5 @@
 {
-  "description": "Kit quality gate (inert outside kit projects): archive gate.",
+  "description": "Kit hooks (inert outside kit projects): archive gate; reminder to save an explore record before the next stage.",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,17 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/archive-gate.mjs\"",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/explore-reminder.mjs\"",
+            "timeout": 10
           }
         ]
       }

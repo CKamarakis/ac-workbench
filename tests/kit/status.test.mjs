@@ -126,8 +126,10 @@ test('no roadmap: Next from Ready PRDs (newest first) then notes no PRD or chang
   const before = fs.readdirSync(d, { recursive: true }).sort();
   const s = run(d);
   assert.equal(s.roadmap, false);
-  assert.deepEqual(s.sections.next.rows.map(r => [r.item, r.kind]), [['Alpha', 'prd'], ['An idea', 'note']]);
-  assert.equal(s.sections.next.rows[1].age, 16);
+  // explore-stage readiness D1: notes are never rows; the unused ones are one count.
+  assert.deepEqual(s.sections.next.rows.map(r => [r.item, r.kind]), [['Alpha', 'prd']]);
+  assert.equal(s.sections.next.unusedNotes, 1);
+  assert.match(format(s), /\+ 1 note nothing has read yet \(start an explore: \/opsx:explore\)/);
   assert.equal(s.sections.now.rows.length, 0);
   assert.ok(s.missing.some(m => m.source === 'roadmap' && /\/kit:roadmap/.test(m.fix)));
   assert.equal(s.handoff.candidates[0].item, 'Alpha');
@@ -307,4 +309,41 @@ test('loose-ends verify C3: an unreadable loose-ends.md keeps its real path', ()
   assert.match(s.sections.loose.note, /can't be read/);
   const m = projectStatus(d, { git: null, openspec: true, now: NOW });
   assert.deepEqual(m.mismatches, []);
+});
+
+// ---------- explore-stage 2.2 (spec project-status "Facts from their owners", "Status without a roadmap") ----------
+import { save as exploreSave } from '../../plugins/kit/scripts/explore.mjs';
+
+test('explore under way: a Now row with its open questions; the handoff names it', () => {
+  const d = project({ 'knowledge/notes/a.md': note('A', '2026-10-01') });
+  exploreSave(d, { slug: 'kit-status', title: 'Kit status', sources: ['notes/a.md'], questions: ['one command or two', 'status vs roadmap report'] });
+  const s = run(d);
+  const r = s.sections.now.rows.find(x => x.kind === 'explore');
+  assert.deepEqual([r.item, r.left, r.status, r.source], ['Kit status', ['Q1 one command or two', 'Q2 status vs roadmap report'], 'exploring', 'knowledge/explore/kit-status.md']);
+  assert.deepEqual(s.handoff.underWay, [{ item: 'Kit status', explore: 'kit-status' }]);
+});
+
+test('unused notes as one line: notes an explore read are not counted', () => {
+  const d = project({
+    'knowledge/prds/p.md': prd('Ready one', 'Ready'),
+    ...Object.fromEntries([1, 2, 3, 4, 5, 6].map(n => [`knowledge/notes/n${n}.md`, note(`N${n}`, '2026-10-01')])),
+  });
+  exploreSave(d, { slug: 'x', title: 'X', sources: ['notes/n6.md'], questions: ['q'] });
+  const s = run(d);
+  assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Ready one']);
+  assert.equal(s.sections.next.unusedNotes, 5);
+});
+
+test('explore-stage verify C8: with a roadmap, unused notes are still one count line', () => {
+  const d = withRoadmap({ files: { 'knowledge/notes/n1.md': note('N1', '2026-10-01'), 'knowledge/notes/n2.md': note('N2', '2026-10-01') } });
+  const s = run(d);
+  assert.equal(s.sections.next.unusedNotes, 2);
+  assert.equal(s.sections.next.rows[0].item, 'Toughbubble proof');
+});
+
+test('explore-stage verify C1: an unreadable explore record is a note, not a row', () => {
+  const d = project({ 'knowledge/explore/bad.md': '---\ntitle: [broken\n---\n' });
+  const s = run(d);
+  assert.equal(s.sections.now.rows.length, 0);
+  assert.ok(s.notes.some(n => /explore\/bad\.md can't be read/.test(n)));
 });

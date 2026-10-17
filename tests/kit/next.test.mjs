@@ -153,27 +153,11 @@ test('archived change -> suggest marking the PRD Shipped (nothing written)', () 
   assert.match(s.reason, /archived: mark PRD "gift-cards" Shipped \(only on your yes\)/);
 });
 
-test('notes but no PRD and no active change -> /kit:prd', () => {
-  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes: [{ path: 'notes/a.md', title: 'A' }] }) });
-  assert.equal(s.use, '/kit:prd');
-  assert.match(s.reason, /1 note\(s\) in knowledge\/notes no change uses yet \("A"\)/);
-  assert.match(s.reason, /archive it if it's already handled \(\/kit:capture\)/);
-});
-
-test('notes a change already cites are not counted: all cited -> no /kit:prd', () => {
-  const notes = [{ path: 'notes/a.md', title: 'A' }, { path: 'notes/b.md', title: 'B' }];
-  const changes = [{ name: 'old', archived: true, link: null, notes: ['notes/a.md', 'notes/b.md'] }];
-  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes, changes }) });
-  assert.notEqual(s.use, '/kit:prd');
-  const one = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes, changes: [{ ...changes[0], notes: ['notes/a.md'] }] }) });
-  assert.equal(one.use, '/kit:prd');
-  assert.match(one.reason, /^1 note\(s\) .*\("B"\)/);
-});
-
-test('more than three fresh notes -> three titles and a count', () => {
-  const notes = ['A', 'B', 'C', 'D', 'E'].map(t => ({ path: `notes/${t}.md`, title: t }));
+test('explore-stage: notes alone never lead to a suggestion (no /kit:prd, nothing about notes)', () => {
+  const notes = ['A', 'B', 'C'].map(t => ({ path: `notes/${t}.md`, title: t }));
   const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: K({ notes }) });
-  assert.match(s.reason, /5 note\(s\) .*\("A", "B", "C" and 2 more\)/);
+  assert.notEqual(s.use, '/kit:prd');
+  assert.doesNotMatch(s.reason, /note/i);
 });
 
 test('no knowledge folder -> same suggestion as before', () => {
@@ -416,4 +400,71 @@ test('a loose end blocking the change rides along as a reminder; the step is unc
 test('verify C2: an unreadable loose-ends.md is a warning in next, not silence', () => {
   const s = suggest({ openspec: os0, statusOf: () => null, map, looseWarning: "knowledge/loose-ends.md exists but its data can't be read" });
   assert.match(format(s), /WARNING knowledge\/loose-ends\.md exists but its data can't be read/);
+});
+
+// ---------- explore-stage 2.1 (spec skill-routing "Next-step suggestion") ----------
+import { outsideChange } from '../../plugins/kit/scripts/next.mjs';
+const xmap = laneMap({
+  phases: ['capture', 'prd', 'roadmap', ...registry.phases],
+  tools: [...registry.tools, { name: 'kit', status: 'adopted', phases: ['capture', 'prd', 'roadmap'], skills: { capture: '/kit:capture', prd: '/kit:prd', roadmap: '/kit:roadmap' } }],
+});
+const rec = (slug, questions = [], prd = null) => ({ slug, title: slug.replace(/-/g, ' '), file: `explore/${slug}.md`, questions, prd, state: prd ? 'in-prd' : questions.length ? 'exploring' : 'ready-for-prd' });
+const RM = (rows, current, next = null) => ({ exists: true, current, next, rows });
+const row = (id, title, status, left, total = left.length + 1) => ({ id, title, status, total, done: total - left.length, left: left.map((text, i) => ({ n: i + 2, text })) });
+
+test('explore with open questions -> /opsx:explore naming them', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, explores: [rec('kit-status', [{ id: 'Q1', text: 'one command or two' }, { id: 'Q2', text: 'status vs roadmap report' }])] });
+  assert.equal(s.use, '/opsx:explore');
+  assert.match(s.reason, /Explore "kit status" still has open questions: Q1 one command or two; Q2 status vs roadmap report/);
+  assert.match(format(s), /record: explore\/kit-status\.md/);
+});
+
+test('explore ready for a PRD -> /kit:prd naming it; an explore in a PRD is not open', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, explores: [rec('kit-status'), rec('old', [], 'prds/old.md')] });
+  assert.equal(s.use, '/kit:prd');
+  assert.match(s.reason, /Explore "kit status" has no open questions: write the PRD from it/);
+});
+
+test('several open explores -> choose; --explore picks one', () => {
+  const explores = [rec('a-one', [{ id: 'Q1', text: 'x' }]), rec('b-two')];
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, explores });
+  assert.equal(s.phase, 'choose');
+  assert.deepEqual(s.choose, ['a-one', 'b-two']);
+  assert.equal(suggest({ openspec: os0, statusOf: () => null, map: xmap, explores, explore: 'b-two' }).use, '/kit:prd');
+});
+
+test('an active change wins over open explores', () => {
+  const s = suggest({ openspec: { root: {}, changes: [change('add-x', 1, 4)] }, statusOf: () => ({ isPlanningComplete: true }), map: xmap, explores: [rec('kit-status')] });
+  assert.equal(s.use, '/opsx:apply');
+});
+
+test('nothing in a flow, roadmap -> the next open task; start with /opsx:explore', () => {
+  const roadmap = RM([row('M12a', 'Kit workflow', 'active', ['/kit:next offers explore or PRD'], 4)], 'M12a');
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, roadmap });
+  assert.equal(s.use, '/opsx:explore');
+  assert.match(s.reason, /^Next on the roadmap: M12a T2 \/kit:next offers explore or PRD \(Kit workflow\)\. Start with \/opsx:explore\./);
+});
+
+test('current milestone all done -> says so, names the next one, points to /kit:roadmap; writes nothing', () => {
+  const roadmap = RM([row('M12a', 'Kit workflow', 'active', [], 4), row('M12', 'Toughbubble proof', 'planned', ['x'])], 'M12a', 'M12');
+  const s = outsideChange({ map: xmap, roadmap, leftover: { total: 0 } });
+  assert.equal(s.use, '/kit:roadmap');
+  assert.equal(s.reason, 'M12a Kit workflow is done. Next: M12 Toughbubble proof. Mark M12a done with /kit:roadmap, then start with /opsx:explore.');
+});
+
+test('nothing in a flow and no roadmap -> "Nothing open" (status)', () => {
+  assert.equal(outsideChange({ map, roadmap: null }).use, '/kit:status');
+});
+
+// ---------- explore-stage verify C1, C6 ----------
+test('verify C6: --explore with an unknown name says so, even with one open explore', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, explores: [rec('kit-status')], explore: 'board-phon' });
+  assert.equal(s.phase, 'choose');
+  assert.match(s.reason, /No open explore named "board-phon"/);
+});
+
+test('verify C1: an unreadable record is a warning and never counts as open', () => {
+  const s = suggest({ openspec: os0, statusOf: () => null, map: xmap, explores: [{ slug: 'bad', state: 'unreadable', error: "explore/bad.md can't be read: x", questions: [] }, rec('good')] });
+  assert.equal(s.use, '/kit:prd');
+  assert.match(format(s), /WARNING explore\/bad\.md can't be read/);
 });

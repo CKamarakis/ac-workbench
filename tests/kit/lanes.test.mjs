@@ -165,3 +165,9 @@ test('the routing block carries the end-of-step loose ends rule', () => {
   const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
   assert.match(block, /- Loose ends: during a step .*At the end of the step, offer them once as one numbered list through `\/kit:loose-ends` \(`knowledge\/loose-ends\.md`\)/);
 });
+
+// explore-stage 3.1 (spec skill-routing "Explore rule in the routing block")
+test('the routing block carries the explore rule naming /kit:explore-record', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
+  assert.match(block, /- Explore: a flow starts at `\/opsx:explore` .*Notes are input an explore reads, never a step of their own\. .*with `\/kit:explore-record` by default, without asking/);
+});

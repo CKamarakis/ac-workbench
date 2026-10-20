@@ -7,7 +7,7 @@ description: Suggest the next workflow step for this project (which skill or com
 
 Tells the user the next step and the skill to use, with a one-line reason. The owners come from the kit's lane map, so the answer follows the registry and is never guessed.
 
-It checks the project's PRDs (in the knowledge folder) before the OpenSpec state: a Ready PRD with no change, a PRD that changed since its change was planned, an archived change whose PRD may be done or may continue in another change, or notes with no PRD yet.
+It checks the project's PRDs (in the knowledge folder) before the OpenSpec state: a Ready PRD with no change, a PRD that changed since its change was planned, or an archived change whose PRD may be done or may continue in another change. It says nothing about notes: notes are read when you start an explore or a PRD.
 
 ## Steps
 

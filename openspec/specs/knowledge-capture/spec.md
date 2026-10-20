@@ -65,21 +65,6 @@ The capture skill SHALL save the user's text (typed, dictated with `/voice`, or 
 - **WHEN** the user provides an image file with a note
 - **THEN** the image is stored under `knowledge/assets/`, and the note links to it with a relative path
 
-### Requirement: Offer to update a matching PRD after capture
-After a note is saved, the capture skill SHALL check the project's PRDs that are not `Shipped` (excluding `archive/`). If the note plausibly belongs to one or more of them (by title, tags, topic or content), it SHALL name them with a one-line reason and offer to update one with the note through the PRD skill's per-section update. Nothing in a PRD SHALL change unless the user says yes. If no PRD matches, the skill SHALL say nothing about PRDs.
-
-#### Scenario: Late addition to a PRD
-- **WHEN** the user captures "gift cards also need an expiry date" and `prds/gift-cards.md` is `Ready`
-- **THEN** after saving the note, the skill offers to update `gift-cards` with it, and changes nothing until the user agrees
-
-#### Scenario: PRD already being built
-- **WHEN** the matching PRD is `Building`
-- **THEN** the offer also says that updating it will make `/kit:next` flag the change for review
-
-#### Scenario: No matching PRD
-- **WHEN** no PRD relates to the new note
-- **THEN** the skill only reports the saved note
-
 ### Requirement: Move and archive notes on request
 The kit SHALL move or archive notes only when the user asks. Archived files SHALL go to `archive/` and SHALL NOT be deleted. Before a note that a PRD cites as a source is moved or archived, the kit SHALL tell the user which PRDs cite it. After the move, it SHALL update those PRDs' source paths so that no PRD points at a missing file.
 

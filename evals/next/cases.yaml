@@ -131,3 +131,9 @@ cases:
     description: On "Nothing here yet" the skill gives /kit:capture and /opsx:explore, each with what it's for
     checks:
       - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'Next is `/kit:capture` \("Nothing here yet", a new project\)' }
+  - id: quiet-about-notes
+    description: 'The skill says nothing about notes; the status skill shows a plain count (flexible-handoffs)'
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'It says nothing about notes' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'notes with no PRD yet', negate: true }
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'one plain line "N notes"' }

@@ -64,9 +64,8 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Write nothing until the user confirms or edits the title' }
       - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'name those PRDs to the user before moving' }
       - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Never read, list or shortlist anything under `archive/`' }
-      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Offer a PRD update' }
-      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'per-section update' }
-      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'If nothing matches, say nothing about PRDs' }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: 'Offer a PRD update', negate: true }
+      - { kind: content-match, path: '{{kit}}/skills/capture/SKILL.md', pattern: "Capture only saves: don't offer PRD changes" }
 
   - id: title-proposed-from-dictation
     description: Given a dictated note with no title, the skill proposes a title and waits
@@ -79,20 +78,6 @@ cases:
             description: Proposes one short, specific title (e.g. "Gift card purchase flow") before writing
           - name: waits-for-yes
             description: Writes no file until the user confirms or edits the title
-
-  - id: offers-prd-update-after-late-note
-    description: A late addition matching a Ready PRD gets an offer to update it, with nothing changed before a yes (task 3.3)
-    input:
-      prompt: "/kit:capture gift cards also need an expiry date, 12 months"
-    checks:
-      - kind: rubric
-        criteria:
-          - name: offers-matching-prd
-            description: After saving the note, names prds/gift-cards.md with a one-line reason and asks whether to update it
-          - name: no-change-without-yes
-            description: The PRD file is unchanged until the user agrees, and then only via per-section proposals
-          - name: silent-when-no-match
-            description: For a note unrelated to any PRD, says nothing about PRDs
 
   - id: import-transcript-from-notes
     description: A .txt dropped into notes/ shows as not imported, then is replaced by a dated note with the same text (followups 3.2)

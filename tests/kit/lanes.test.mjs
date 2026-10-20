@@ -75,14 +75,15 @@ test('validator prints the lane map and needs-review flags for an updated tool',
 test('prd-pipeline 5.2: routing block names the knowledge folder and the PRD handoff', () => {
   const block = routingBlock(laneMap(fixture('resolved-overlap')), { kitVersion: '0.0.0-test', knowledgeDir: 'knowledge' });
   assert.match(block, /### Knowledge and PRDs/);
-  assert.match(block, /`\/opsx:propose`: if a PRD in `knowledge\/prds\/` has `status: Ready`/);
+  assert.match(block, /`\/opsx:propose`: take one PRD from `knowledge\/prds\/` as the main input/);
   assert.match(block, /`PRD: knowledge\/prds\/<slug>\.md @ <commit>`/);
   assert.ok(block.endsWith(BLOCK_END));
 });
 
-test('followups 4.2: routing rule offers several Ready PRDs newest first', () => {
+test('prd-authoring: Several PRDs, Draft PRD (most recent by default, never a stop)', () => {
   const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
-  assert.match(block, /If there are several, ask which one, listing them most recently updated first/);
+  assert.match(block, /else the most recently updated one with no `change` \(say which, and name the others so the user can switch\)/);
+  assert.match(block, /isn't `Ready` gets a one-line note, never a stop/);
 });
 
 test('followups 5.7: routing block carries the library docs rule (npx, no sign-in)', () => {

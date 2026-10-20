@@ -261,20 +261,13 @@ export function format(s) {
   return lines.join('\n');
 }
 
-/** Knowledge list plus every change's PRD link and the notes its proposal or design cites (active and archived), for prdSuggest. */
+/** Knowledge list plus every change's PRD link (active and archived), for prdSuggest. */
 export function readKnowledge(dir) {
   const kdir = knowledgeDir(dir);
   const rel = path.relative(dir, kdir).split(path.sep).join('/');
   const list = listKnowledge(kdir);
   const changes = [];
-  const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
   const root = path.join(dir, 'openspec', 'changes');
-  // Cited by its whole file name with .md (or its path), not as part of another word and not as a bare word (L11);
-  // a path cut short with "…" doesn't count. One pattern per note, built once per run (L12).
-  const patterns = (list.notes ?? []).map(n => ({
-    path: n.path,
-    re: new RegExp(`(^|[^\\w-])${path.posix.basename(n.path, '.md').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.md(?![\\w-])`),
-  }));
   const scan = (base, archived) => {
     let entries = [];
     try { entries = fs.readdirSync(base, { withFileTypes: true }); } catch { return; }
@@ -282,10 +275,7 @@ export function readKnowledge(dir) {
       if (!e.isDirectory() || (!archived && e.name === 'archive')) continue;
       let text = null;
       try { text = fs.readFileSync(path.join(base, e.name, 'proposal.md'), 'utf8'); } catch { /* no proposal yet */ }
-      // A change with no proposal contributes only its design (C9).
-      const cites = (text ?? '') + read(path.join(base, e.name, 'design.md'));
-      const notes = patterns.filter(p => p.re.test(cites)).map(p => p.path);
-      changes.push({ name: archived ? e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : e.name, archived, link: prdLink(text), notes });
+      changes.push({ name: archived ? e.name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : e.name, archived, link: prdLink(text) });
     }
   };
   scan(root, false);

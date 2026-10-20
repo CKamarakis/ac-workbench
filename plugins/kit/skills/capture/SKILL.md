@@ -31,12 +31,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" <command> --dir . [--json]
    - **Pointer note:** pass the link or path as `--source`, and in the body write one or two lines on what it holds. Don't download or copy the pointed-to content.
    - **Image:** pass it with `--asset`. It's copied into `assets/` and linked from the note.
    - Same date and title as an existing note: the helper adds `-2`. It never overwrites.
-5. **Reply** with the path it printed, in one line.
-6. **Offer a PRD update.** Run `list --json` and look at the PRDs whose status isn't `Shipped`. If the new note plausibly belongs to one or more (title, tags, topic or content), name them, each with a one-line reason, and offer: "Update *<slug>* with this note now?"
-   - On a yes, continue with `/kit:prd`'s **per-section update** for that PRD, using this note as a new source. Nothing in the PRD changes without a yes per section.
-   - If the PRD is `Building`, add that updating it will make `/kit:next` flag its change for review.
-   - If nothing matches, say nothing about PRDs.
-7. **Stray files.** If `list` shows files under "not imported yet" (`.txt` in `notes/`), mention them once and offer to import them (below).
+5. **Reply** with the path it printed, in one line. Capture only saves: don't offer PRD changes. The user brings notes into a PRD with `/kit:prd` when they want to (spec: knowledge-capture, flexible-handoffs).
+6. **Stray files.** If `list` shows files under "not imported yet" (`.txt` in `notes/`), mention them once and offer to import them (below).
 
 ## Import a file (transcript, notes from elsewhere)
 
@@ -51,7 +47,7 @@ For a `.txt` or `.md` file the user points to, or one listed as "not imported ye
    node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" import --dir . --file <path> --title "<title>" [--tags a,b] [--topic <folder>]
    ```
    The text is kept exactly as it is. Don't summarise, reword or clean it up.
-4. Reply with the new path, then continue with step 6 above (offer a PRD update).
+4. Reply with the new path.
 
 ## Archive or move notes
 

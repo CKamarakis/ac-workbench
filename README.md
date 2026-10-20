@@ -86,7 +86,7 @@ After the install above, run `/kit:start` once in the project folder (again only
 
 | Skill | What it does |
 |---|---|
-| `/kit:capture` | Save an idea, dictation, link or screenshot as a note; import a `.txt` transcript; archive or move notes. Offers to update a matching PRD |
+| `/kit:capture` | Save an idea, dictation, link or screenshot as a note; import a `.txt` transcript; archive or move notes. It only saves: bring notes into a PRD with `/kit:prd` when you want |
 | `/kit:prd` | Draft a PRD from the notes you pick, update it section by section (never overwriting your edits), and mark it Ready |
 | `/kit:status` | Where the project stands, in plain words: what it is, what's built, a table of Now / Next / We said we'd do / Loose ends / After with sources, and anything that doesn't match between the roadmap, PRDs, OpenSpec and git. Names the item to work on; read-only, works without a roadmap |
 | `/kit:next` | The next step inside the current item and which skill to use, from your PRDs and OpenSpec state. With nothing open it points you to `/kit:status`; with several changes active it asks which one |

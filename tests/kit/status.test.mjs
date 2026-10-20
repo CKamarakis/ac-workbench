@@ -169,10 +169,11 @@ test('no roadmap: Next from Ready PRDs (newest first) then notes no PRD or chang
   const before = fs.readdirSync(d, { recursive: true }).sort();
   const s = run(d);
   assert.equal(s.roadmap, false);
-  // explore-stage readiness D1: notes are never rows; the unused ones are one count.
+  // Notes are never rows; flexible-handoffs D7: a plain count of all notes, no call to action.
   assert.deepEqual(s.sections.next.rows.map(r => [r.item, r.kind]), [['Alpha', 'prd']]);
-  assert.equal(s.sections.next.unusedNotes, 1);
-  assert.match(format(s), /\+ 1 note nothing has read yet \(start an explore: \/opsx:explore\)/);
+  assert.equal(s.sections.next.noteCount, 2);
+  assert.match(format(s), /\+ 2 notes\n/);
+  assert.doesNotMatch(format(s), /nothing has read|start an explore/);
   assert.equal(s.sections.now.rows.length, 0);
   assert.ok(s.missing.some(m => m.source === 'roadmap' && /\/kit:roadmap/.test(m.fix)));
   assert.equal(s.handoff.candidates[0].item, 'Alpha');
@@ -304,14 +305,6 @@ test('verify C5: the handoff lists every active change, past the section cap', (
   assert.equal(s.handoff.underWay.length, 6);
 });
 
-test('verify C7: a PRD citing "./notes/x.md" counts as using notes/x.md', () => {
-  const d = project({
-    'knowledge/notes/2026-10-01-x.md': note('X', '2026-10-01'),
-    'knowledge/prds/p.md': prd('P', 'Draft').replace('sources: []', 'sources:\n  - ./notes/2026-10-01-x.md'),
-  });
-  assert.deepEqual(run(d).sections.next.rows.map(r => r.item), []);
-});
-
 // ---------- loose-ends 3.1 (spec project-status "Facts from their owners", "Mismatches shown, never resolved") ----------
 import { add as looseAdd, important as looseImportant, block as looseBlock } from '../../plugins/kit/scripts/loose-ends.mjs';
 
@@ -367,21 +360,22 @@ test('explore under way: a Now row with its open questions; the handoff names it
   assert.deepEqual(s.handoff.underWay, [{ item: 'Kit status', explore: 'kit-status' }]);
 });
 
-test('unused notes as one line: notes an explore read are not counted', () => {
+test('project-status: Unused notes as one line (a plain count; notes an explore read count too)', () => {
   const d = project({
     'knowledge/prds/p.md': prd('Ready one', 'Ready'),
-    ...Object.fromEntries([1, 2, 3, 4, 5, 6].map(n => [`knowledge/notes/n${n}.md`, note(`N${n}`, '2026-10-01')])),
+    ...Object.fromEntries([1, 2, 3, 4, 5].map(n => [`knowledge/notes/n${n}.md`, note(`N${n}`, '2026-10-01')])),
   });
-  exploreSave(d, { slug: 'x', title: 'X', sources: ['notes/n6.md'], questions: ['q'] });
+  exploreSave(d, { slug: 'x', title: 'X', sources: ['notes/n5.md'], questions: ['q'] });
   const s = run(d);
   assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Ready one']);
-  assert.equal(s.sections.next.unusedNotes, 5);
+  assert.equal(s.sections.next.noteCount, 5);
+  assert.match(format(s), /\+ 5 notes\n/);
 });
 
-test('explore-stage verify C8: with a roadmap, unused notes are still one count line', () => {
+test('explore-stage verify C8: with a roadmap, notes are still one count line', () => {
   const d = withRoadmap({ files: { 'knowledge/notes/n1.md': note('N1', '2026-10-01'), 'knowledge/notes/n2.md': note('N2', '2026-10-01') } });
   const s = run(d);
-  assert.equal(s.sections.next.unusedNotes, 2);
+  assert.equal(s.sections.next.noteCount, 2);
   assert.equal(s.sections.next.rows[0].item, 'Acme proof');
 });
 

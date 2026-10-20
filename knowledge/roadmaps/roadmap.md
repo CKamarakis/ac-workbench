@@ -42,6 +42,7 @@ Kit plumbing that makes it repeatable: registry (`toolkit.yaml`), `/kit:setup`, 
 - a prototype lane (only if wanted later)
 - GitHub CI on three systems
 - a "what's waiting" list in `/kit:next`
+- a notes service, on request: new, orphaned or old notes, and what they could add to a PRD (the user, 2026-10-20; `/kit:next` and capture stay quiet about notes in v1)
 - small teams (2+ people in one repo: `decisions.md` and the committed docs page conflict across branches; `/kit:next` assumes one person; untested)
 
 ## Principles
@@ -78,9 +79,10 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-Kit 0.20.1 (2026-10-20). The repo restarted public with one commit: the M13 T7 privacy read found the real test project named across files and commits, so the tree was scrubbed (test project = "Acme"), the old repo is a private archive, and a word-list guard blocks real names at commit.
-M12 T2: a real feature was built in the test app's copy; T2 is ticked once the user gives time and /cost.
-Next: M13 release prep, one task at a time: T6 judgment evals (go through the 36 cases with the user), then T1, T3, T4, T5, T2 (screenshot from the user).
+Kit 0.21.0 (2026-10-20): flexible-handoffs. Enter the kit at any step; handoffs stay right. /kit:capture only saves, /kit:status shows a plain notes count, /kit:next says nothing about notes, propose takes one PRD (most recent or the user's pick, never a stop).
+The repo restarted public with one commit (M13 T7 done); a word-list guard blocks real names at commit.
+M13 T6 is now the test sheet (docs/test-sheet.md), run by hand on a real project's copy; the 36 written cases are parked.
+Next: M13 T1, T3, T4 (quick), then T6 (the user runs the sheet), T2 (screenshot), T5 (CHANGELOG, tag). M12 T2 waits for time and /cost.
 
 ## Waiting on you
 

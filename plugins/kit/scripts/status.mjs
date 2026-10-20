@@ -169,13 +169,6 @@ function nextAndAfter({ roadmap, report, knowledge, changes, roadmapRel, now }) 
   return { next: ready, after: [] };
 }
 
-/** Notes no explore record, PRD or change uses: never rows, one count (explore-stage readiness D1). */
-function unusedNotes(knowledge, explores) {
-  // Normalized like knowledge.mjs citing(), so "./notes/x.md" counts as citing notes/x.md (verify C7).
-  const sourced = new Set([...knowledge.list.prds.flatMap(p => p.sources ?? []), ...explores.flatMap(r => r.sources)].map(s => posix(path.normalize(s))));
-  return knowledge.list.notes.filter(n => !sourced.has(n.path) && !knowledge.changes.some(c => c.notes?.includes(n.path))).length;
-}
-
 /** Open explore records as Now rows (explore-stage D7). */
 function exploreRows(explores, kdir) {
   return explores.filter(r => OPEN_EXPLORE.includes(r.state)).map(r => row(r.title, r.questions.length ? r.questions.map(q => `${q.id} ${q.text}`) : 'ready for a PRD', r.state, `${kdir}/${r.file}`, { kind: 'explore', explore: r.slug }));
@@ -297,8 +290,8 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
   const nowAll = [...nowRows(ctx), ...exploreRows(explores, knowledge.dir)];
   const sections = {
     now: cap(nowAll),
-    // With or without a roadmap: notes are never rows, the unused ones one count (verify C8).
-    next: { ...cap(next), unusedNotes: unusedNotes(knowledge, explores) },
+    // With or without a roadmap: notes are never rows, only a plain count (flexible-handoffs D7).
+    next: { ...cap(next), noteCount: knowledge.list.notes.length },
     said: cap(saidRows(ctx)),
     loose: looseSection(loose, current),
     after: cap(after),
@@ -342,10 +335,11 @@ export function format(s) {
   for (const [k, title] of Object.entries(TITLES)) {
     const sec = s.sections[k];
     out.push('', title);
-    if (!sec.rows.length && !sec.counts?.length && !sec.unusedNotes) out.push(`  ${sec.note ?? '(none)'}`);
+    if (!sec.rows.length && !sec.counts?.length && !sec.noteCount) out.push(`  ${sec.note ?? '(none)'}`);
     for (const r of sec.rows) out.push(`  ${r.item} | ${Array.isArray(r.left) ? r.left.join('; ') || '-' : r.left} | ${r.status} | ${r.source}${r.answer ? ` | ${r.answer}` : ''}`);
     if (sec.more) out.push(`  +${sec.more} more`);
-    if (sec.unusedNotes) out.push(`  + ${sec.unusedNotes} note${sec.unusedNotes === 1 ? '' : 's'} nothing has read yet (start an explore: /opsx:explore)`);
+    // flexible-handoffs D7: a plain count, no call to action.
+    if (sec.noteCount) out.push(`  + ${sec.noteCount} note${sec.noteCount === 1 ? '' : 's'}`);
     if (sec.counts?.length) out.push(`  + ${sec.counts.map(c => `${c.n} ${c.kind}`).join(', ')} (/kit:loose-ends)`);
   }
   if (s.mismatches.length) {

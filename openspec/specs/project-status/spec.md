@@ -45,7 +45,7 @@ The status skill SHALL open with what the project is, from `PRODUCT.md`, `docs/p
 ### Requirement: Facts from their owners
 Each section SHALL be filled from the source that owns its facts:
 - Now: active OpenSpec changes (with their tasks left and the last commit), open explore records (`exploring`, with their open questions, or `ready-for-prd`), and the roadmap's current milestone when a roadmap exists;
-- Next: the roadmap order when a roadmap exists; otherwise `Ready` PRDs with no change; notes are never rows: with or without a roadmap, the notes no explore record, PRD or change uses are one count line after Next;
+- Next: the roadmap order when a roadmap exists; otherwise `Ready` PRDs with no change; notes are never rows: with or without a roadmap, one plain count line after Next gives how many notes there are, with no call to action;
 - We said we'd do: the roadmap's Waiting on you, PRD open questions, open decisions in active changes, and open decisions in archived changes;
 - Loose ends: the open items of the loose ends file: as rows, the ones marked important and the ones blocking the current milestone or an active change, important first; every other open item, except `accepted` ones, as one count line per kind;
 - After: the roadmap's remaining open milestones after Next.
@@ -89,17 +89,17 @@ Every row SHALL name its source. The skill SHALL use only the facts the script r
 - **AND** the handoff names it as the item under way
 
 #### Scenario: Unused notes as one line
-- **GIVEN** no roadmap, one Ready PRD and 5 notes no explore record, PRD or change uses
+- **GIVEN** no roadmap, one Ready PRD and 5 notes
 - **WHEN** the user runs `/kit:status`
-- **THEN** Next shows the Ready PRD as a row and one line "5 notes nothing has read yet (start an explore: /opsx:explore)"
+- **THEN** Next shows the Ready PRD as a row and one line "5 notes", with no suggestion to read them
 
 ### Requirement: Status without a roadmap
-When the project has no roadmap, status SHALL still show the overview, Now from active changes and Next from Ready PRDs, with unused notes as one count line, and SHALL add one line saying `/kit:roadmap` can set the order. It SHALL NOT create a roadmap.
+When the project has no roadmap, status SHALL still show the overview, Now from active changes and Next from Ready PRDs, with the notes as one plain count line, and SHALL add one line saying `/kit:roadmap` can set the order. It SHALL NOT create a roadmap.
 
 #### Scenario: Acme-like project
 - **GIVEN** a project with `PRODUCT.md`, PRDs, notes, archived changes, no active change and no roadmap
 - **WHEN** the user runs `/kit:status`
-- **THEN** the overview and Built are filled, Now says nothing is under way, Next lists the Ready PRDs and one count line for the notes nothing has read yet, and one line mentions `/kit:roadmap`
+- **THEN** the overview and Built are filled, Now says nothing is under way, Next lists the Ready PRDs and one plain count line for the notes, and one line mentions `/kit:roadmap`
 - **AND** no file is created
 
 ### Requirement: Several items under way
@@ -167,19 +167,6 @@ Status SHALL end with one line naming the item to work on and the command `/kit:
 - **GIVEN** no active change, no roadmap, no Ready PRD and no notes without a PRD, and it isn't a new project (it has an archived change, a PRD or a note)
 - **WHEN** the user runs `/kit:status`
 - **THEN** the last line says nothing is under way or queued and suggests `/kit:capture` or `/kit:roadmap`
-
-### Requirement: A note counts as used when its file is named
-A change SHALL count as using a note only when its proposal or design names the note's file with `.md` (`2026-10-08-acme-canvas.md`) or its path (`notes/2026-10-08-acme-canvas.md`). A word that only matches the note's name without `.md` SHALL NOT count.
-
-#### Scenario: Bare word
-- **GIVEN** a note `notes/auth.md` and a proposal that says "the auth flow"
-- **WHEN** status counts the notes nothing has read yet
-- **THEN** `notes/auth.md` is counted as not read
-
-#### Scenario: Named with .md
-- **GIVEN** a design that says "from `knowledge/notes/auth.md`"
-- **WHEN** status counts the notes nothing has read yet
-- **THEN** `notes/auth.md` is counted as read
 
 ### Requirement: Blank context doc isn't the description
 Status SHALL NOT describe the project from `docs/project-context.md` while it is still the kit's blank template; it SHALL use the next description file instead. When no file describes the project, it SHALL say "Project not described yet" and name `docs/project-context.md` as the place to fill.

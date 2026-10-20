@@ -1,0 +1,487 @@
+{
+  "skill": "ready",
+  "date": "2026-10-20T21:14:13.135Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 7900,
+  "summary": {
+    "pass": 12,
+    "fail": 0,
+    "pending": 12
+  },
+  "cases": [
+    {
+      "id": "scan-reports-tbd-with-line",
+      "outcome": "pass",
+      "duration_ms": 1830,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-no-package-json",
+      "outcome": "pass",
+      "duration_ms": 1821,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-planning-incomplete",
+      "outcome": "pass",
+      "duration_ms": 1863,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "later-stays-open-and-ready-done",
+      "outcome": "pass",
+      "duration_ms": 808,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/decisions.md matches /readiness check: \\d{4}-\\d\\d-\\d\\d/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "unknown-kind-rejected",
+      "outcome": "pass",
+      "duration_ms": 226,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 2 (expected 2)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 5,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /\\*\\*It warns and never blocks\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /AskUserQuestion/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /\\*\\*\"Later\"\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /copy the \\*\\*whole\\*\\* requirement block/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /openspec validate <name> --strict/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /Don't edit a file for an item until the user has picked an answer/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /Don't edit `decisions.md` by hand/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "triggers-in-description",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /^description: .*ready to build/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /^description: .*before /opsx:apply/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /^description: .*Warns, never blocks/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "trigger-is-it-ready",
+      "outcome": "pending",
+      "duration_ms": 8,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-ready",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "trigger-check-before-apply",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-ready",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "non-trigger-verify",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-verify",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "non-trigger-whats-next",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-next",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "finds-missing-error-case",
+      "outcome": "pending",
+      "duration_ms": 107,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "gap-failed-upload",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "asks-with-later",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-edit-before-answer",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "finds-prd-spec-difference",
+      "outcome": "pending",
+      "duration_ms": 112,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "difference-quotes-both",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "recommends-reusing-dependency",
+      "outcome": "pending",
+      "duration_ms": 127,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "reuse-recommended",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "inventory-purpose-reuse",
+      "outcome": "pending",
+      "duration_ms": 15,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "names-tiptap",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "safeguards-step-in-skill",
+      "outcome": "pass",
+      "duration_ms": 9,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /\\*\\*reach\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /Never rate from a word alone/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /ready\\.mjs\" safeguards/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "safeguards-cli-writes-section",
+      "outcome": "pass",
+      "duration_ms": 254,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/design.md matches /^## Safeguards/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "safeguards-keyword-alone-stays-low",
+      "outcome": "pending",
+      "duration_ms": 105,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "safety-low",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "reasons-shown",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-subagents",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "safeguards-shared-module-medium",
+      "outcome": "pending",
+      "duration_ms": 131,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "reach-medium",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "recommends-worktree-and-review",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "ui-review-rules-in-skill",
+      "outcome": "pass",
+      "duration_ms": 10,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /\\*\\*UI review\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /code that generates pages users see/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /empty, loading, error, permission and overflow/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /--ui-why/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "web-ui-cli",
+      "outcome": "pass",
+      "duration_ms": 252,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "ui-review-word-alone",
+      "outcome": "pending",
+      "duration_ms": 101,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "no-ui-review",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "missing-empty-state-gap",
+      "outcome": "pending",
+      "duration_ms": 98,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "empty-state-gap",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "ui-review-recommended",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "worktree-needs-committed-plan",
+      "outcome": "pass",
+      "duration_ms": 10,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /git status --porcelain -- openspec/changes/<name>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /won't see this plan until it's committed/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/ready/SKILL.md matches /Don't commit, except the plan commit in step 9, on a yes/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

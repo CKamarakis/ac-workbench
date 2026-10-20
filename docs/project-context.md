@@ -133,7 +133,7 @@ Explored 2026-10-02 to 2026-10-06 (`/opsx:explore`). **Built 2026-10-06** as cha
 - `/kit:start` creates `knowledge/` and adds the routing line. `/kit:next` reads PRD status and git history.
 - Out of v1: Notion, Asana, Google Docs, any MCP, review panel, cross-project sharing, automatic status write-back.
 - Tests run in a throwaway folder or a Acme copy.
-- Added after the live trial: after saving a note, `/kit:capture` offers to update a matching PRD (late additions are normal).
+- Added after the live trial, then removed on 2026-10-20 (flexible-handoffs): `/kit:capture` offered to update a matching PRD after each note. Now capture only saves; the user brings notes into a PRD with `/kit:prd` when they choose.
 - Follow-ups (change `prd-pipeline-followups`, kit 0.3.0, 2026-10-07):
   - PRDs listed newest-updated first;
   - `.txt` transcripts imported as notes;

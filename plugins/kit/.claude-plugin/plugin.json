@@ -1,6 +1,19 @@
 {
   "name": "kit",
-  "version": "0.21.0",
-  "description": "Personal Claude Code kit: project starter, next-step routing, feedback inbox, harness review",
-  "author": { "name": "CKamarakis" }
+  "version": "0.21.1",
+  "description": "Claude Code kit for building products: turn notes into a PRD and an OpenSpec change, check the plan before you build, and run tests and reviews before you archive. Sets up its tools per project.",
+  "author": {
+    "name": "CKamarakis"
+  },
+  "homepage": "https://github.com/CKamarakis/ac-workbench#readme",
+  "repository": "https://github.com/CKamarakis/ac-workbench",
+  "license": "MIT",
+  "keywords": [
+    "openspec",
+    "prd",
+    "product",
+    "planning",
+    "workflow",
+    "quality-gates"
+  ]
 }

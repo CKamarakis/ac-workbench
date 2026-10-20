@@ -1,11 +1,14 @@
 {
   "name": "ac-workbench",
-  "owner": { "name": "CKamarakis" },
+  "description": "A Claude Code kit for building products: notes to PRD to OpenSpec change, a readiness check before building, tests and reviews before archiving.",
+  "owner": {
+    "name": "CKamarakis"
+  },
   "plugins": [
     {
       "name": "kit",
       "source": "./plugins/kit",
-      "description": "Personal Claude Code kit: project starter, notes to PRD to OpenSpec, next-step routing, tool registry"
+      "description": "Claude Code kit for building products: turn notes into a PRD and an OpenSpec change, check the plan before you build, and run tests and reviews before you archive. Sets up its tools per project."
     }
   ]
 }

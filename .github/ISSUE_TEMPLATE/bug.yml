@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in the kit didn't work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Don't paste secrets** (keys, passwords, `.env` contents) or details of a private project you'd rather keep private: describe them generically instead ("a Next.js app", "the test project").
+  - type: input
+    id: kit-version
+    attributes:
+      label: Kit version
+      description: Run `/kit:ping` in Claude Code and paste the version it prints.
+      placeholder: "kit ok: 0.21.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Other]
+    validations:
+      required: true
+  - type: input
+    id: claude-version
+    attributes:
+      label: Claude Code version
+      description: Output of `claude --version`.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you ran
+      description: The commands or prompts, in order (e.g. `/kit:start`, then `/kit:next`).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Paste error output if there was any (check it for secrets and private paths first).
+    validations:
+      required: true

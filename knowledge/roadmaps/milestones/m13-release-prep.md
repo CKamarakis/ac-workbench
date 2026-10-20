@@ -5,16 +5,17 @@ status: planned
 changes:
   - public-repo-scrub
   - flexible-handoffs
+  - release-basics
 ---
 
 v1 phase D: everything a stranger needs to install and trust the kit.
 
 ## Tasks
 
-- [ ] T1 MIT license
+- [x] T1 MIT license
 - [ ] T2 README for strangers (who, quickstart, screenshot, status, limits, coming next, happy path)
-- [ ] T3 GitHub issue templates
-- [ ] T4 Honest plugin descriptions
+- [x] T3 GitHub issue templates
+- [x] T4 Honest plugin descriptions
 - [ ] T5 CHANGELOG and tags
 - [ ] T6 Test sheet (docs/test-sheet.md) run once on a real project's copy
 - [x] T7 Privacy read of the public repo

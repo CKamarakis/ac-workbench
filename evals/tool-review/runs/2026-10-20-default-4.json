@@ -1,0 +1,115 @@
+{
+  "skill": "tool-review",
+  "date": "2026-10-20T21:40:00.126Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 475,
+  "summary": {
+    "pass": 3,
+    "fail": 0,
+    "pending": 2
+  },
+  "cases": [
+    {
+      "id": "record-hold-only-date",
+      "outcome": "pass",
+      "duration_ms": 240,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "toolkit.yaml matches /reviewed_on: 2026-10-18/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "toolkit.yaml matches /reviewed_version: 1\\.13\\.2/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "record-update-needs-version",
+      "outcome": "pass",
+      "duration_ms": 229,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 2 (expected 2)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/tool-review/SKILL.md matches /release notes first, always/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/tool-review/SKILL.md matches /npm run smoke/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/tool-review/SKILL.md matches /offer to roll the tool back/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/tool-review/SKILL.md matches /ask separately whether to uninstall/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "trigger-tool-review",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-tool-review",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "update-with-failing-smoke",
+      "outcome": "pending",
+      "duration_ms": 2,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "version-kept",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "rollback-offered",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

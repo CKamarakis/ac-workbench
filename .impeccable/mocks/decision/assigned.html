@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Docs sync — patent sketch</title>
+<style>
+:root{--g:#f6f6f3;--ink:#15171c;--mute:#5d6270;--rule:#c8cbd2;--code:#0b5d47;--hatch:repeating-linear-gradient(135deg,#15171c 0 1px,transparent 1px 6px)}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--g);color:var(--ink);font:16px/1.6 "Iowan Old Style","Palatino Linotype",Georgia,serif;display:grid;grid-template-columns:264px 1fr 360px}
+.lab{font:600 11px/1.3 "Arial Narrow","Helvetica Neue",Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.inid{font:12px ui-monospace,Consolas,monospace;color:var(--code)}
+nav{border-right:1px solid var(--rule);padding:28px 22px;overflow:hidden}
+nav h1{font:700 15px/1.2 "Arial Narrow",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+nav .search{margin:18px 0 22px;border:1px solid var(--ink);padding:7px 10px;font:13px Arial,sans-serif;color:var(--mute)}
+nav ol{list-style:none;padding:0;font:14px/1.5 Arial,sans-serif}
+nav li{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--rule)}
+nav li.on{font-weight:700}
+nav li .n{font:12px ui-monospace,Consolas,monospace;color:var(--mute);width:28px}
+.stamp{font:700 10px/1 Arial,sans-serif;letter-spacing:.12em;border:1.5px solid var(--ink);padding:3px 5px;background:var(--hatch);background-clip:padding-box}
+.stamp b{background:var(--g);padding:0 3px}
+main{padding:0;overflow:hidden;position:relative}
+.front{border-bottom:2px solid var(--ink);padding:26px 56px 20px 88px;display:grid;grid-template-columns:1fr 1fr;gap:6px 40px}
+.front h2{grid-column:1/3;font:700 30px/1.15 "Iowan Old Style",Georgia,serif;margin:4px 0 10px}
+.front div{font:13px/1.5 Arial,sans-serif}
+.col{position:relative;padding:22px 56px 0 88px;max-width:780px}
+.ln{position:absolute;left:44px;font:11px ui-monospace,Consolas,monospace;color:var(--mute)}
+.claim{margin-bottom:22px}
+.claim h3{font:700 18px/1.3 Georgia,serif;margin-bottom:6px}
+.claim h3 .n{font:13px ui-monospace,Consolas,monospace;color:var(--code);margin-right:10px}
+.wherein{margin:10px 0 0 0;border-left:1px solid var(--ink);padding-left:16px}
+.wherein .name{font-style:italic;color:var(--mute);font-size:14px;margin-bottom:4px}
+.row{display:grid;grid-template-columns:62px 1fr;font-size:15px;line-height:1.55}
+.row b{font:700 11px/2.1 "Arial Narrow",Arial,sans-serif;letter-spacing:.12em}
+aside{border-left:1px solid var(--rule);padding:28px 26px;overflow:hidden;font-size:15px}
+aside section{margin-bottom:24px}
+aside p{margin-top:6px}
+aside .ref{border-top:1px solid var(--ink);padding-top:8px;margin-top:8px;font:14px/1.45 Arial,sans-serif}
+</style></head><body>
+<nav>
+  <div class="lab">kit · living docs</div>
+  <h1>ac-workbench</h1>
+  <div class="search">Search claims and scenarios…</div>
+  <div class="lab" style="margin-bottom:6px">Foundations · Tools</div>
+  <ol>
+    <li><span><span class="n">01</span>Build readiness</span><span class="stamp"><b>1 UNDECIDED</b></span></li>
+    <li class="on"><span><span class="n">02</span>Docs sync</span></li>
+    <li><span><span class="n">03</span>Flow recommendation</span></li>
+    <li><span><span class="n">04</span>Knowledge capture</span></li>
+    <li><span><span class="n">05</span>PRD authoring</span></li>
+    <li><span><span class="n">06</span>Project starter</span></li>
+    <li><span><span class="n">07</span>Quality gates</span></li>
+    <li><span><span class="n">08</span>Skill routing</span></li>
+  </ol>
+</nav>
+<main>
+  <div class="front">
+    <div class="lab"><span class="inid">(19)</span> Living docs · ac-workbench</div><div class="lab" style="text-align:right"><span class="inid">(10)</span> Sub-feature 02 of 11</div>
+    <h2><span class="inid">(54)</span> Docs sync</h2>
+    <div><span class="inid">(57)</span> Brings a change's specs and design up to date with what was actually built, before archive.</div>
+    <div><span class="inid">(22)</span> Last changed 2026-10-12 by <u>build-readiness</u><br><span class="inid">(60)</span> 5 claims · 11 scenarios · History →</div>
+  </div>
+  <div class="col">
+    <span class="ln" style="top:24px">5</span><span class="ln" style="top:148px">10</span><span class="ln" style="top:272px">15</span><span class="ln" style="top:396px">20</span>
+    <div class="claim"><h3><span class="n">1.</span>Docs sync sources</h3>
+      <p>The docs sync runs as part of the verify step for one change. It gathers the decisions the build recorded, the commits since the change's artifacts were last edited, the change's diff, and the dependencies added or removed.</p>
+      <div class="wherein"><div class="name">wherein, docs stopped early:</div>
+        <div class="row"><b>GIVEN</b><span>a change whose design and specs were last committed on 2026-10-10, followed by 29 code commits</span></div>
+        <div class="row"><b>WHEN</b><span>the docs sync runs</span></div>
+        <div class="row"><b>THEN</b><span>it reports “docs last updated 2026-10-10; 29 code commits since”</span></div>
+      </div></div>
+    <div class="claim"><h3><span class="n">2.</span>Sort what was built</h3>
+      <p>Each item found is sorted into a behavior, a decision with depth, or how the build ran.</p></div>
+  </div>
+</main>
+<aside>
+  <section><div class="lab">Description · why</div><p>The apply receipt is overwritten on every iteration, so the build's rulings vanish unless the sync moves them into the specs before archive.</p></section>
+  <section><div class="lab">References cited</div><div class="ref">Foundation: <b>Specs are the living record</b> — archive merges deltas; whatever is wrong at archive becomes the record.</div></section>
+  <section><div class="lab">Related application data</div><div class="ref"><span class="inid">2026-10-12</span> build-readiness — readiness check and docs sync</div></section>
+  <section><div class="lab">Undecided</div><div class="ref"><span class="stamp"><b>UNDECIDED</b></span> Block or warn on docs drift? <span style="color:var(--mute)">since 2026-10-12</span></div></section>
+</aside>
+</body></html>

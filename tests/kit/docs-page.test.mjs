@@ -1,0 +1,131 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { renderPage } from '../../plugins/kit/scripts/docs-page.mjs';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const model = () => JSON.parse(fs.readFileSync(path.join(here, 'fixtures', 'docs', 'model.json'), 'utf8'));
+const count = (s, re) => (s.match(re) ?? []).length;
+
+test('user stories are numbered and each is its own list item', () => {
+  const html = renderPage(model());
+  assert.equal(count(html, /<li class="story">/g), 2);
+  assert.match(html, /<span class="story-n">1<\/span>/);
+  assert.match(html, /<span class="story-n">2<\/span>/);
+  assert.match(html, /<span class="kw">AND<\/span>/);
+});
+
+test('tree nodes carry sort data; default sort is last updated, newest first, server-side too', () => {
+  const html = renderPage(model());
+  assert.match(html, /data-path="canvas\/saving" data-name="saving" data-created="2026-10-12" data-updated="2026-10-12"/);
+  assert.match(html, /<option value="updated" selected>/);
+  assert.match(html, /data-dir="desc"/);
+  // canvas (updated 10-12) before account (no date); saving (10-12) before stickies (10-10)
+  assert.ok(html.indexOf('data-path="canvas"') < html.indexOf('data-path="account"'));
+  assert.ok(html.indexOf('data-path="canvas/saving"') < html.indexOf('data-path="canvas/stickies"'));
+});
+
+test('From PRD shows title and status; undecided count in the tree and on the page', () => {
+  const html = renderPage(model());
+  assert.match(html, /From PRD[\s\S]*Canvas[\s\S]*Shipped/);
+  assert.match(html, /<span class="badge" title="1 undecided">1<\/span>/);
+  assert.match(html, /Should a corrupt board load as empty\?/);
+  assert.match(html, /Keep full undo history on each save\?/);
+});
+
+test('why, card links, replaced card, orphan why, history, tools, warnings', () => {
+  const html = renderPage(model());
+  assert.match(html, /href="#foundations\/acme-canvas"/);
+  assert.match(html, /Replaced by[\s\S]*acme-canvas/);
+  assert.match(html, /Notes without a requirement[\s\S]*Gone requirement/);
+  assert.match(html, /Boards need to feel instant/);
+  assert.match(html, /TipTap[\s\S]*@tiptap\/react/);
+  assert.match(html, /class="tool dev"/);
+  assert.match(html, /spec could not be read/);
+});
+
+test('renderPage is pure and offline', () => {
+  const a = renderPage(model()), b = renderPage(model());
+  assert.equal(a, b);
+  assert.ok(!/https?:\/\//.test(a), 'no URLs');
+  assert.ok(!/<link\b|\bsrc=/.test(a), 'nothing loaded');
+  assert.match(a, /<meta name="kit-docs-archive" content="2026-10-12-b">/);
+});
+
+test('markup in names and text is escaped', () => {
+  const m = model();
+  m.pages['canvas/stickies'].requirements[0].name = 'A <b>"x"</b> & y';
+  m.pages['canvas/stickies'].requirements[0].text = '<script>alert(1)</script>';
+  const html = renderPage(m);
+  assert.ok(!html.includes('<script>alert'));
+  assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.match(html, /A &lt;b&gt;&quot;x&quot;&lt;\/b&gt; &amp; y/);
+});
+
+test('empty project says no specs yet', () => {
+  const m = model();
+  Object.assign(m, { empty: true, tree: [], pages: {} });
+  assert.match(renderPage(m), /No specs yet/);
+});
+
+// Task 6 fixes chosen by the user: readable text, card links, collapsible products
+import { inlineMd } from '../../plugins/kit/scripts/docs-page.mjs';
+test('requirement text renders basic Markdown safely', () => {
+  const html = inlineMd('The sync SHALL gather:\n- **gaps**: missing `empty` cases;\n- <b>raw</b> stays text\n\nSecond paragraph.');
+  assert.equal(html, '<p>The sync SHALL gather:</p><ul><li><b>gaps</b>: missing <code>empty</code> cases;</li><li>&lt;b&gt;raw&lt;/b&gt; stays text</li></ul><p>Second paragraph.</p>');
+});
+
+test('card links match the card anchor, product cards included', () => {
+  const html = renderPage(model());
+  assert.match(html, /href="#foundations\/acme-canvas"/);
+  assert.match(html, /data-card="canvas\/acme-canvas"/);
+});
+
+test('products open and close', () => {
+  const html = renderPage(model());
+  assert.match(html, /<details open><summary>Canvas[^<]*<span class="badge"[^>]*>1<\/span><\/summary><ul data-tree>/);
+});
+
+// Final review fixes
+test('final: spec pages cannot collide with the fixed views', () => {
+  const m = model();
+  m.tree.push({ name: 'Tools', path: 'tools', hasSpec: true, created: null, updated: null, undecided: 0, children: [] });
+  m.pages.tools = { title: 'Tools', crumb: ['Tools'], purpose: '', prd: null, how: null, requirements: [], orphanWhy: [], history: [], undecided: [], warnings: [] };
+  const html = renderPage(m);
+  assert.equal(count(html, /data-page="tools"/g), 1);
+  assert.match(html, /data-page="spec:tools"/);
+  assert.match(html, /href="#spec\/tools"/);
+  assert.match(html, /href="#spec\/canvas\/stickies"/);
+});
+
+test('final: a malformed hash cannot break the page script', () => {
+  assert.match(renderPage(model()), /try\{h=decodeURIComponent\(raw\)\}catch\(e\)\{h=raw\}/);
+});
+
+test('final: archived changes without spec changes are listed', () => {
+  const m = model();
+  m.noSpecChanges = [{ folder: '2026-10-08-design-trial', date: '2026-10-08', change: 'design-trial', why: 'Try design tools.' }];
+  assert.match(renderPage(m), /design-trial[\s\S]*no spec changes/);
+});
+
+// Verify advisory fixes (code review C5, C7)
+test('C7: ** inside a code span stays literal', () => {
+  assert.equal(inlineMd('Use `a**b**c` here and **bold**.'), '<p>Use <code>a**b**c</code> here and <b>bold</b>.</p>');
+});
+
+test('C5: product cards are anchored by product and slug; short links still resolve', () => {
+  const m = model();
+  m.cards.push({ slug: 'acme-canvas', product: 'notes', title: 'Notes canvas', status: 'current', replacedBy: null, sections: {} });
+  const html = renderPage(m);
+  assert.match(html, /data-card="canvas\/acme-canvas"/);
+  assert.match(html, /data-card="notes\/acme-canvas"/);
+  assert.equal(count(html, /id="card-acme-canvas"/g), 0);
+  assert.match(html, /\.slice\(-\('\/'\+t\)\.length\)===/);
+});
+
+// kit-followups 5.2: following a link into a collapsed product opens it
+test('the page script opens every collapsed product around the current link', () => {
+  assert.match(renderPage(model()), /links\[j\]\.setAttribute\('aria-current','page'\);for\(var p=links\[j\]\.parentElement;p;p=p\.parentElement\)if\(p\.tagName==='DETAILS'\)p\.open=true;/);
+});

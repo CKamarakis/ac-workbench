@@ -1,0 +1,298 @@
+{
+  "skill": "ready",
+  "date": "2026-10-14T19:57:59.501Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 11159,
+  "summary": {
+    "pass": 7,
+    "fail": 0,
+    "pending": 8
+  },
+  "cases": [
+    {
+      "id": "scan-reports-tbd-with-line",
+      "outcome": "pass",
+      "duration_ms": 2917,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-no-package-json",
+      "outcome": "pass",
+      "duration_ms": 3018,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-planning-incomplete",
+      "outcome": "pass",
+      "duration_ms": 2996,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "later-stays-open-and-ready-done",
+      "outcome": "pass",
+      "duration_ms": 1364,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/decisions.md matches /readiness check: \\d{4}-\\d\\d-\\d\\d/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "unknown-kind-rejected",
+      "outcome": "pass",
+      "duration_ms": 361,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 2 (expected 2)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 6,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /\\*\\*It warns and never blocks\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /AskUserQuestion/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /\\*\\*\"Later\"\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /copy the \\*\\*whole\\*\\* requirement block/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /openspec validate <name> --strict/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /Don't edit a file for an item until the user has picked an answer/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /Don't edit `decisions.md` by hand/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "triggers-in-description",
+      "outcome": "pass",
+      "duration_ms": 4,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /^description: .*ready to build/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /^description: .*before /opsx:apply/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/ready/SKILL.md matches /^description: .*Warns, never blocks/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "trigger-is-it-ready",
+      "outcome": "pending",
+      "duration_ms": 4,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-ready",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "trigger-check-before-apply",
+      "outcome": "pending",
+      "duration_ms": 4,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-ready",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "non-trigger-verify",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-verify",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "non-trigger-whats-next",
+      "outcome": "pending",
+      "duration_ms": 4,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "routes-to-next",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "finds-missing-error-case",
+      "outcome": "pending",
+      "duration_ms": 150,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "gap-failed-upload",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "asks-with-later",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-edit-before-answer",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "finds-prd-spec-difference",
+      "outcome": "pending",
+      "duration_ms": 140,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "difference-quotes-both",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "recommends-reusing-dependency",
+      "outcome": "pending",
+      "duration_ms": 166,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "reuse-recommended",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "inventory-purpose-reuse",
+      "outcome": "pending",
+      "duration_ms": 22,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "names-tiptap",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

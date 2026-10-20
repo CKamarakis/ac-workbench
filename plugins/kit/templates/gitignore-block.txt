@@ -1,0 +1,6 @@
+# kit:start (managed by the kit; edit outside this block)
+# Personal Claude Code settings (not shared)
+.claude/settings.local.json
+# Worktrees for builds whose Safeguards choose one (/kit:ready)
+.claude/worktrees/
+# kit:end

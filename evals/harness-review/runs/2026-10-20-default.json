@@ -1,0 +1,189 @@
+{
+  "skill": "harness-review",
+  "date": "2026-10-20T15:33:33.384Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 2928,
+  "summary": {
+    "pass": 4,
+    "fail": 0,
+    "pending": 3
+  },
+  "cases": [
+    {
+      "id": "scan-plain-project",
+      "outcome": "pass",
+      "duration_ms": 1555,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-broken-settings",
+      "outcome": "pass",
+      "duration_ms": 414,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "scan-writes-nothing",
+      "outcome": "pass",
+      "duration_ms": 656,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules-in-text",
+      "outcome": "pass",
+      "duration_ms": 8,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/harness-review/SKILL.md matches /Never create, change or delete a file/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/harness-review/SKILL.md matches //doctor prompt-audit/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/harness-review/SKILL.md matches //skill-doctor/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/harness-review/SKILL.md matches /appear as counts only/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/harness-review/checklist.md matches /steps for a recurring task belong in a skill/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "review-format",
+      "outcome": "pending",
+      "duration_ms": 96,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "map-first",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "eight-layers",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "max-three-fixes",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "builtins-pointed",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-kit-mention",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "read-only",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "empty-setup-short",
+      "outcome": "pending",
+      "duration_ms": 100,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "short",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "first-fix-claude-md",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "saved-note-private",
+      "outcome": "pending",
+      "duration_ms": 99,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "note-written",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "personal-as-counts",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+# Eval cases for /kit:prd (spec: prd-authoring). The helper runs for real in the temp sandbox.
+skill: prd
+vars:
+  k: '{{kit}}/scripts/knowledge.mjs'
+
+cases:
+  - id: template-has-format
+    description: The PRD template carries the required frontmatter and the design D9 sections
+    checks:
+      - { kind: content-match, path: '{{kit}}/templates/prd.md', pattern: '^---\r?\ntitle: \{\{title\}\}\r?\nstatus: Draft\r?\nsources: \[\]\r?\n---' }
+      - { kind: content-match, path: '{{kit}}/templates/prd.md', pattern: '## Problem[\s\S]*## Users[\s\S]*## Goals and success measures[\s\S]*## Scope[\s\S]*## Requirements[\s\S]*## UX notes and assets[\s\S]*## Risks[\s\S]*## Open questions' }
+
+  - id: new-prd-from-notes
+    description: A new PRD starts as Draft with its sources and the template sections, and is never overwritten
+    setup:
+      files:
+        knowledge/notes/2026-10-06-flow.md: "---\ntitle: Flow\n---\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" new-prd --dir . --title "Gift cards" --sources notes/2026-10-06-flow.md
+        stdout_match: 'created prds/gift-cards\.md \(status Draft\)'
+      - { kind: content-match, path: knowledge/prds/gift-cards.md, pattern: 'status: Draft\r?\nsources:\r?\n  - notes/2026-10-06-flow\.md' }
+      - { kind: command-exit, command: 'node "{{k}}" new-prd --dir . --title "Gift cards"', expect: 1 }
+
+  - id: section-conflict-protects-user-edits
+    description: A section edited by the user after section-get is not overwritten (exit 3, file unchanged)
+    setup:
+      files:
+        knowledge/prds/x.md: "---\ntitle: X\nstatus: Draft\nsources: []\n---\n\n## Scope\n\nOriginal\n"
+        edit.js: "const fs=require('fs');const f='knowledge/prds/x.md';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('Original','User edit'))"
+        hash.js: "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>require('fs').writeFileSync('h.txt',JSON.parse(s).hash))"
+        set.js: "const h=require('fs').readFileSync('h.txt','utf8');const r=require('child_process').spawnSync(process.execPath,[process.argv[2],'section-set','--dir','.','--file','prds/x.md','--heading','Scope','--text','Agent text','--expect',h],{encoding:'utf8'});process.stdout.write(r.stdout);process.exit(r.status)"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" section-get --dir . --file prds/x.md --heading Scope --json | node hash.js' }
+      - { kind: command-exit, command: node edit.js }
+      - { kind: command-exit, command: 'node set.js "{{k}}"', expect: 3, stdout_match: '^CONFLICT' }
+      - { kind: content-match, path: knowledge/prds/x.md, pattern: 'User edit' }
+      - { kind: content-match, path: knowledge/prds/x.md, pattern: 'Agent text', negate: true }
+
+  - id: prd-check-reports-not-guesses
+    description: prd-check names a bad status and a missing source, and exits non-zero
+    setup:
+      files:
+        knowledge/prds/bad.md: "---\ntitle: Bad\nstatus: Done\nsources:\n  - notes/gone.md\n---\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" prd-check --dir .
+        expect: 1
+        stdout_match: 'INVALID prds/bad\.md: invalid status "Done"[\s\S]*source not found: notes/gone\.md'
+
+  - id: status-only-valid-values
+    description: set-field accepts the five statuses only
+    setup:
+      files:
+        knowledge/prds/x.md: "---\ntitle: X\nstatus: Draft\nsources: []\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" set-field --dir . --file prds/x.md --key status --value Done', expect: 1 }
+      - { kind: command-exit, command: 'node "{{k}}" set-field --dir . --file prds/x.md --key status --value Ready', stdout_match: 'status Draft -> Ready' }
+
+  - id: skill-rules
+    description: The skill covers each prd-authoring requirement
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'one-line reason' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'multi-select\*\*: several notes can feed one PRD' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'is not a fact\.(\*\*)? Mark it "Assumption:" or list it under Open questions' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'ask yes or no for each one' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '--expect <hash>' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'PRD: <knowledge>/prds/<slug>\.md @ <commit>' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: "The status changes only on the user's yes" }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '\*\*Requirements as stories:\*\* "Given <starting state>, when <the user does X>, then <what they see>"' }
+
+  - id: draft-writes-stories
+    description: 'A draft from the note "dragging a sticky moves it; letting go saves the position" has at least one Given/When/Then story'
+    setup:
+      files:
+        knowledge/notes/2026-10-12-sticky-drag.md: "---\ntitle: Sticky drag\ndate: 2026-10-12\n---\nDragging a sticky moves it; letting go saves the position.\n"
+    input:
+      prompt: "/kit:prd sticky dragging"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: story-form
+            description: The Requirements section has at least one line of the form "Given …, when …, then …" taken from the note (e.g. given a sticky, when I drag it and let go, then it stays there after a reload)
+          - name: plain-where-fitting
+            description: Rules without a starting state (if any) stay short plain statements, not forced stories
+
+  - id: open-questions-now-or-later
+    description: 'A draft with open questions keeps them out of the end report and asks "now or later?"; Later leaves them in the PRD'
+    setup:
+      files:
+        knowledge/notes/2026-10-12-sidebar.md: "---\ntitle: Sidebar\ndate: 2026-10-12\n---\nHide the sidebar for more room. Open question: how this works with the file tree.\n"
+    input:
+      prompt: "/kit:prd hide the sidebar"
+    checks:
+      - kind: content-match
+        path: '{{kit}}/skills/prd/SKILL.md'
+        pattern: 'Open questions, now or later'
+      - kind: rubric
+        criteria:
+          - name: separate-step
+            description: The end report doesn't list the open questions; a separate question asks whether to go through them now or later
+          - name: options-when-now
+            description: On "now", each question comes with concrete options, a recommendation first, and a Later option
+          - name: later-keeps-them
+            description: On "later", nothing is written, the questions stay under Open questions, and the reply says /kit:next will remind
+
+  - id: shortlist-and-gaps
+    description: With notes on checkout and onboarding, "gift cards" shortlists checkout notes with reasons and marks gaps
+    input:
+      prompt: "/kit:prd gift cards"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: shortlist-reasons
+            description: Shows relevant notes only, each with a one-line reason, and waits for the pick
+          - name: gaps-marked
+            description: Facts missing from the picked notes (e.g. target users) appear as assumptions or open questions, not as facts
+          - name: no-overwrite
+            description: On a later update, proposes per section and writes only approved sections
+
+  - id: skill-offers-prds-newest-first
+    description: The skill offers PRDs in list order, most recently updated first (followups 4.1)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'most recently updated first\*\* \(it already sorts them' }
+
+  - id: prd-offers-ready-explore-record-first
+    description: The PRD skill offers a ready explore record first, drafts from its decisions, then links it (explore-stage)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'Explore records first' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'explore\.mjs" link-prd' }
+
+  # ui-flow-with-impeccable 1.4 (spec: prd-authoring "Shape offered for screens")
+  - id: shape-offer-rules-in-skill
+    description: The skill offers /impeccable shape only for web-ui PRDs with a screen and no shape field, and records the answer
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '\*\*Shape offer\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'ready\.mjs" web-ui' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: '--key shape --value declined' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'Never offer it again for this PRD' }
+
+  - id: shape-field-set
+    description: set-field accepts shape done or declined, and refuses anything else
+    setup:
+      files:
+        knowledge/prds/board.md: "---\ntitle: Board\nstatus: Draft\nsources: []\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" set-field --dir . --file prds/board.md --key shape --value declined
+        stdout_match: 'shape \(none\) -> declined'
+      - kind: command-exit
+        command: node "{{k}}" set-field --dir . --file prds/board.md --key shape --value maybe
+        expect: 1
+
+  - id: shape-offered-for-a-screen
+    description: A web-ui PRD with a board screen gets the shape offer once
+    setup:
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        knowledge/notes/2026-10-18-board.md: "---\ntitle: Board\ndate: 2026-10-18\n---\nA board screen where users drag stickies.\n"
+    input:
+      prompt: "/kit:prd draft a PRD from the board note"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: offers-shape
+            description: After drafting, offers /impeccable shape once with AskUserQuestion; doesn't run it without a yes
+
+  - id: no-shape-for-background-job
+    description: A web-ui PRD about a background job gets no shape offer
+    setup:
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        knowledge/notes/2026-10-18-job.md: "---\ntitle: Nightly export\ndate: 2026-10-18\n---\nA nightly job exports stickies to CSV. No screen.\n"
+    input:
+      prompt: "/kit:prd draft a PRD from the nightly export note"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-offer
+            description: Makes no /impeccable shape offer
+
+  - id: shape-declined-not-repeated
+    description: A PRD with shape declined isn't offered shape again on an update
+    setup:
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        knowledge/prds/board.md: "---\ntitle: Board\nstatus: Draft\nsources: []\nshape: declined\n---\n\n## Requirements\n\n- Given a board, when I drag a sticky, then it moves.\n"
+    input:
+      prompt: "/kit:prd update the board PRD: stickies can be coloured"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: not-repeated
+            description: Updates the section on a yes and doesn't offer /impeccable shape again

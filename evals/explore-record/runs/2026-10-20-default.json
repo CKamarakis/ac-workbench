@@ -1,0 +1,83 @@
+{
+  "skill": "explore-record",
+  "date": "2026-10-20T15:33:32.714Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 668,
+  "summary": {
+    "pass": 3,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "save-then-list",
+      "outcome": "pass",
+      "duration_ms": 440,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/explore/kit-status.md exists"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "unknown-source-refused",
+      "outcome": "pass",
+      "duration_ms": 226,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-saves-by-default-and-shows",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/explore-record/SKILL.md matches /default: save, no question/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/explore-record/SKILL.md matches /Show what was written/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/explore-record/SKILL.md matches /undo --slug/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/explore-record/SKILL.md matches /Nothing decided and no question raised: save nothing/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/explore-record/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/explore\\.mjs/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

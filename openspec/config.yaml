@@ -1,0 +1,21 @@
+schema: spec-driven
+
+# Project context, shown to AI when creating artifacts.
+context: |
+  Project: ac-workbench, a personal Claude Code kit (formerly prd-pipeline).
+  Full living context, decisions and open ideas: docs/project-context.md. Read it before any proposal.
+  Deliverable: a marketplace repo (.claude-plugin/marketplace.json) whose main plugin is `kit`
+  (plugins/kit: skills, zero-dependency scripts, templates, generated data/toolkit.json).
+  Kit pieces: toolkit registry (toolkit.yaml), skill evals, smoke test, tool setup, skill routing, project starter, /kit:next,
+  capture and PRDs, readiness check, verify gates, living docs, harness review.
+  Order of work and Now: knowledge/roadmaps/roadmap.md (read it first; one file per milestone). Road to v1: M12 prove it on Acme,
+  M13 release readiness, M14 outside test and release; cockpit and other extras come after v1.
+  Local-only and free: no paid services beyond the Claude plan. The kit and its tools are installed per project;
+  only CLIs and plugin marketplaces are machine-wide.
+  Platform: Windows 11, Git Bash + PowerShell; global npm bins are not on the agent shell PATH.
+  First test consumer: Acme (Next.js, already on OpenSpec).
+
+rules:
+  proposal:
+    - Include a visual aid (Mermaid diagram or ASCII flow) for any architecture or workflow change
+    - Mark anything unverified against official docs as "unverified"

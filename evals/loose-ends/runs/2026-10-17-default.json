@@ -1,0 +1,116 @@
+{
+  "skill": "loose-ends",
+  "date": "2026-10-17T20:04:14.151Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 965,
+  "summary": {
+    "pass": 4,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "add-then-list-grouped",
+      "outcome": "pass",
+      "duration_ms": 600,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "file-exists",
+          "pass": true,
+          "detail": "knowledge/loose-ends.md exists"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "batch-add-all-or-nothing",
+      "outcome": "pass",
+      "duration_ms": 222,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "unknown-kind-refused",
+      "outcome": "pass",
+      "duration_ms": 141,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-one-question-yes-only-owners",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /ask \\*\\*once\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /Write only on the user's yes/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /Leave out what has an owner/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /Don't rank/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /Nothing put aside: ask nothing/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/loose-ends/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/loose-ends\\.mjs/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

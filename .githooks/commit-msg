@@ -1,0 +1,3 @@
+#!/bin/sh
+# Block real project names in the commit message (spec: repo-privacy). Enabled with core.hooksPath .githooks.
+sh "$(dirname "$0")/private-words.sh" message "$1"

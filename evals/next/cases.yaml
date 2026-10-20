@@ -1,0 +1,133 @@
+# Eval cases for /kit:next (spec: skill-routing "Next-step suggestion"). Real openspec runs in the sandbox.
+skill: next
+vars:
+  next: '{{kit}}/scripts/next.mjs'
+  apply: '{{kit}}/scripts/start-apply.mjs'
+
+cases:
+  - id: no-openspec-suggests-start
+    description: A folder without OpenSpec gets /kit:start
+    checks:
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /kit:start[\s\S]*why:'
+
+  - id: fresh-kit-project-offers-first-steps
+    description: Right after /kit:start on a new project the suggestion is /kit:capture, naming /opsx:explore too (first-run-guidance, skill-routing "First step on a new project"; replaces the kit-status D6 "Nothing open" pointer, which left new users in a loop)
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /kit:capture\r?\n  why:   Nothing here yet\. Start with /kit:capture to save ideas and notes, or /opsx:explore to explore an idea you already have\.[\s\S]*owner: kit'
+
+  - id: several-active-changes-ask-which
+    description: Two active changes and none named -> both listed to choose from; --change gives that change's step
+    setup:
+      files:
+        openspec/changes/notes-search/proposal.md: "# Proposal\n"
+        openspec/changes/task-board/proposal.md: "# Proposal\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: 'Next: pick a change[\s\S]*choose: (notes-search, task-board|task-board, notes-search)'
+      - kind: command-exit
+        command: node "{{next}}" --dir . --change task-board
+        expect: 0
+        stdout_match: 'task-board'
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'never run it automatically' }
+
+  - id: skill-offers-but-does-not-run
+    description: The skill reports the suggestion and leaves the decision to the user
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Don't run the suggested step yourself" }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/next\.mjs' }
+
+  - id: ready-prd-suggests-propose
+    description: After /kit:start, a Ready PRD with no change gets /opsx:propose naming it (prd-pipeline 6.2)
+    setup:
+      files:
+        knowledge/prds/gift-cards.md: "---\ntitle: Gift cards\nstatus: Ready\nsources: []\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{apply}}" --dir . --type none --home home
+        expect: 0
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        expect: 0
+        stdout_match: '^Next: /opsx:propose\r?\n  why:   PRD "gift-cards" is Ready[\s\S]*prd:   knowledge/prds/gift-cards\.md'
+
+  - id: notes-only-no-prd-step
+    description: Notes alone never lead to /kit:prd (explore-stage); with no roadmap it is "Nothing open"
+    setup:
+      files:
+        knowledge/notes/2026-10-06-idea.md: "---\ntitle: Idea\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:status\r?\n  why:   Nothing open\.'
+
+  - id: explore-record-ready-suggests-prd
+    description: An explore record with no open questions -> /kit:prd naming the record
+    setup:
+      files:
+        knowledge/notes/2026-10-06-idea.md: "---\ntitle: Idea\n---\n"
+        knowledge/explore/idea.md: "---\ntitle: Idea\nsources:\n  - notes/2026-10-06-idea.md\n---\n\n## Decisions\n\n- keep it small\n\n## Open questions\n\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:prd\r?\n  why:   Explore "Idea" has no open questions[\s\S]*record: explore/idea\.md'
+
+  - id: skill-reports-prd-and-never-writes-status
+    description: The skill names the PRD and leaves status changes to /kit:prd and the user
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'checks the project.s PRDs' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: "Never change a PRD's status here" }
+
+  - id: newest-ready-prd-named-first
+    description: With two Ready PRDs, the most recently updated one is named and the other is listed (followups 4.3)
+    setup:
+      files:
+        knowledge/prds/alpha.md: "---\ntitle: Alpha\nstatus: Ready\nsources: []\n---\n"
+        knowledge/prds/zulu.md: "---\ntitle: Zulu\nstatus: Ready\nsources: []\n---\n"
+        touch.js: "const fs=require('fs');const t=new Date('2020-01-01T00:00:00Z');fs.utimesSync('knowledge/prds/alpha.md',t,t)"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - { kind: command-exit, command: node touch.js }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: 'PRD "zulu" is Ready[\s\S]*other Ready PRDs: alpha'
+
+  - id: tasks-done-suggests-verify
+    description: A change with all tasks done and no verify report gets /kit:verify, then /opsx:archive (quality-gates 5.3)
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# Proposal\n\n## Why\n\nTest.\n\n## What Changes\n\n- x\n"
+        openspec/changes/add-x/design.md: "# Design\n\nx\n"
+        openspec/changes/add-x/specs/x/spec.md: "# Spec Delta\n\n## Purpose\n\nA test capability for the next-step eval sandbox.\n\n## ADDED Requirements\n\n### Requirement: X\nThe system SHALL x.\n\n#### Scenario: X\n- **WHEN** x\n- **THEN** x\n"
+        openspec/changes/add-x/tasks.md: "# Tasks\n\n## 1. X\n\n- [x] 1.1 Done\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{apply}}" --dir . --type none --home home', expect: 0 }
+      - kind: command-exit
+        command: node "{{next}}" --dir .
+        stdout_match: '^Next: /kit:verify[\s\S]*then:  /opsx:archive'
+
+  - id: skill-explore-and-roadmap-steps
+    description: The next skill handles explore steps, asks which explore, names roadmap steps without writing, never steps on notes
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: '--explore <slug>' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'never tick, finish or start a milestone yourself' }
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'Notes never come up as a step' }
+
+  # first-run-guidance (code review C9): the reply guide covers the new-project answer
+  - id: skill-gives-both-first-steps
+    description: On "Nothing here yet" the skill gives /kit:capture and /opsx:explore, each with what it's for
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/next/SKILL.md', pattern: 'Next is `/kit:capture` \("Nothing here yet", a new project\)' }

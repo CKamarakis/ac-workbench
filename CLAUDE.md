@@ -1,0 +1,32 @@
+# ac-workbench
+
+A personal Claude Code kit (marketplace repo, plugin `kit`). Public repo.
+
+## Start every session here
+
+1. Read the roadmap: `node plugins/kit/scripts/roadmap.mjs report --dir .` (files in `knowledge/roadmaps/`: north star, order, **Now**, Waiting on you; drift rules in `drift-log.md`).
+2. Work only on Now and the current milestone's tasks. Anything else: stop, add a drift entry with its reason (`/kit:roadmap`), and ask the user. Reorders and scope changes are the user's decision.
+3. Planning lives in OpenSpec (`openspec/changes/`). The roadmap and the OpenSpec change are updated together, in one commit.
+
+## Rules
+
+- **Kit and tools per project.** Never enable the kit, workflow plugins, MCPs or tool configs at user scope or in global config; only CLIs and plugin marketplaces are machine-wide (roadmap principle 2). `claude plugin install` defaults to `--scope user`, so always pass `--scope project`.
+- **Never touch real projects for tests.** Use throwaway folders, or a copy of the project. Throwaway folders go in `../temp` (the `temp` folder next to this repo), never the system temp folder.
+- **Real projects stay private.** The repo is public. A real project used for a test is "Acme" (or "the test app") in anything committed, commit messages included: never its name, features, file names or local paths. Detailed trial notes about it go in `private/` (gitignored); `evals/trials/` gets only the kit findings, about Acme. The pre-commit and commit-msg hooks block words listed in `.private-words` (gitignored, one per line, whole word); add any new real name there.
+- **Before a tool becomes a default:** read its full docs, trial it, and record the verdict and evidence in `toolkit.yaml` (`npm run registry`).
+- Mark anything not checked against official docs as **unverified**.
+- **Smoke test:** when verifying a change that touches kit files, run `npm run smoke:check` and tell the user what it says. Before a release or tag, run `npm run smoke` (it must pass).
+- **Tool updates:** after updating a tool (e.g. OpenSpec), run `npm run smoke`; when it passes, set that tool's `reviewed_version` in `toolkit.yaml` to the new version (it means "tested with") and run `npm run registry`. Read the release notes first for a major version.
+- Commits pass the hooks: gitleaks (secrets) and the private-words check (`git config core.hooksPath .githooks`, once per clone).
+
+## Commands
+
+```bash
+npm test                    # unit tests
+npm run evals               # eval cases for every kit skill
+npm run registry            # validate toolkit.yaml, write plugins/kit/data/toolkit.json, print lane map
+npm run smoke               # whole kit end to end in a throwaway project, no AI (on request; ~20 s here)
+npm run smoke:check         # kit files changed since the last passing smoke run: run recommended or not needed
+```
+
+Windows: `openspec`, `gh`, `jq`, `gitleaks` may not be on the agent's PATH. Kit scripts find them via `plugins/kit/scripts/locate.mjs`. From PowerShell, prepend `$env:APPDATA\npm` for `openspec`.

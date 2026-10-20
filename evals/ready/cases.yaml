@@ -1,0 +1,320 @@
+# Eval cases for /kit:ready (spec: build-readiness). Scripts run for real in the sandbox; the judgment
+# cases are prompt + rubric and stay pending until scored (--scores), as for the other skills.
+skill: ready
+vars:
+  r: '{{kit}}/scripts/ready.mjs'
+  dz: '{{kit}}/scripts/decisions.mjs'
+
+cases:
+  - id: scan-reports-tbd-with-line
+    description: A TBD in a requirement is reported with its file and line
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/tasks.md: "- [ ] 1.1 x\n"
+        openspec/changes/add-x/specs/upload/spec.md: "## ADDED Requirements\n\n### Requirement: Upload\nSize limit TBD.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" scan --dir . --change add-x
+        stdout_match: 'specs/upload/spec\.md:4\s+\[TBD\]'
+
+  - id: scan-no-package-json
+    description: Without package.json the tool check is reported as skipped
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/tasks.md: "- [ ] 1.1 x\n"
+        openspec/changes/add-x/specs/a/spec.md: "## ADDED Requirements\n\n### Requirement: A\nThe app SHALL a.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" scan --dir . --change add-x
+        stdout_match: 'no package\.json - tool check skipped'
+
+  - id: scan-planning-incomplete
+    description: A change without specs or tasks is not checked, and the next artifact is named
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" scan --dir . --change add-x
+        stdout_match: "planning isn't complete; next artifact: specs"
+
+  - id: later-stays-open-and-ready-done
+    description: A "later" item is counted as open, and ready-done records the check with the open count
+    setup:
+      git_init: true
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{dz}}" add --dir . --change add-x --kind gap --text "What shows when an upload fails?" --from "specs/upload/spec.md:4" --options "Broken-image tile|Error toast|Later" --recommended "Broken-image tile"', stdout_match: 'added D1' }
+      - { kind: command-exit, command: 'node "{{dz}}" later --dir . --change add-x --id D1' }
+      - { kind: command-exit, command: 'node "{{dz}}" ready-done --dir . --change add-x', stdout_match: '1 decision still open since \d{4}-\d\d-\d\d' }
+      - { kind: content-match, path: openspec/changes/add-x/decisions.md, pattern: 'readiness check: \d{4}-\d\d-\d\d' }
+
+  - id: unknown-kind-rejected
+    description: 'An unknown decision kind is refused with error:'
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{dz}}" add --dir . --change add-x --kind wish --text q --from x', expect: 2 }
+
+  - id: skill-rules
+    description: The skill warns and never blocks, asks in one batch with Later, writes only on an answer, and validates
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '\*\*It warns and never blocks\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'AskUserQuestion' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '\*\*"Later"\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'copy the \*\*whole\*\* requirement block' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'openspec validate <name> --strict' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: "Don't edit a file for an item until the user has picked an answer" }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: "Don't edit `decisions.md` by hand" }
+
+  - id: triggers-in-description
+    description: The description names the moments it should trigger on (ready to build, before apply) so routing finds it
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '^description: .*ready to build' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '^description: .*before /opsx:apply' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '^description: .*Warns, never blocks' }
+
+  - id: trigger-is-it-ready
+    description: '"Is this change ready to build?" routes to /kit:ready'
+    input:
+      prompt: "Is the add-upload change ready to build?"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: routes-to-ready
+            description: Uses /kit:ready (not /kit:verify or /opsx:apply)
+
+  - id: trigger-check-before-apply
+    description: '"Check the plan before I apply" routes to /kit:ready'
+    input:
+      prompt: "Before I run apply, check the plan for anything I still need to decide"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: routes-to-ready
+            description: Uses /kit:ready
+
+  - id: non-trigger-verify
+    description: '"Verify the change" does not route to /kit:ready'
+    input:
+      prompt: "All tasks are done, verify add-upload before archive"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: routes-to-verify
+            description: Uses /kit:verify, not /kit:ready
+
+  - id: non-trigger-whats-next
+    description: '"What''s next" goes to /kit:next, which may then suggest /kit:ready'
+    input:
+      prompt: "What's next?"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: routes-to-next
+            description: Uses /kit:next first; does not run /kit:ready on its own
+
+  - id: finds-missing-error-case
+    description: A planted spec with uploads but no failed-upload scenario gets a gap item about failed uploads
+    setup:
+      git_init: true
+      files:
+        openspec/changes/add-upload/proposal.md: "# Proposal\n\nAdd image upload to notes.\n"
+        openspec/changes/add-upload/tasks.md: "- [ ] 1.1 Upload\n"
+        openspec/changes/add-upload/specs/upload/spec.md: "## ADDED Requirements\n\n### Requirement: Upload an image\nThe editor SHALL upload a dropped image and show it in the note.\n\n#### Scenario: Drop an image\n- **GIVEN** an open note\n- **WHEN** the user drops a PNG\n- **THEN** the image appears in the note\n"
+    input:
+      prompt: "/kit:ready add-upload"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: gap-failed-upload
+            description: Lists a gap item asking what happens when an upload fails (or the file is too big / wrong type)
+          - name: asks-with-later
+            description: Asks with options, one recommended, and a Later option
+          - name: no-edit-before-answer
+            description: Writes nothing to the spec before the user picks an answer
+
+  - id: finds-prd-spec-difference
+    description: A planted PRD/spec disagreement (5,000 vs 1,000 items) is a difference item quoting both
+    setup:
+      git_init: true
+      files:
+        knowledge/prds/boards.md: "---\ntitle: Boards\nstatus: Building\nchange: add-boards\n---\n## Requirements\n\n- Given a board, when it holds up to 5,000 items, then panning stays smooth.\n"
+        openspec/changes/add-boards/proposal.md: "# Proposal\n\nPRD: knowledge/prds/boards.md @ uncommitted\n"
+        openspec/changes/add-boards/tasks.md: "- [ ] 1.1 Boards\n"
+        openspec/changes/add-boards/specs/board/spec.md: "## ADDED Requirements\n\n### Requirement: Board size\nA board SHALL hold up to 1,000 items.\n\n#### Scenario: Full board\n- **GIVEN** a board with 1,000 items\n- **WHEN** the user adds one more\n- **THEN** it is refused with a message\n"
+    input:
+      prompt: "/kit:ready add-boards"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: difference-quotes-both
+            description: Lists a difference item quoting 5,000 (PRD) and 1,000 (spec) with both paths
+
+  - id: recommends-reusing-dependency
+    description: A planted plan to add a second drag-and-drop library recommends reusing @dnd-kit/core
+    setup:
+      git_init: true
+      files:
+        package.json: '{ "dependencies": { "@dnd-kit/core": "^6.3.1", "next": "16.0.0" } }'
+        openspec/changes/add-reorder/proposal.md: "# Proposal\n\nReorder cards by dragging.\n"
+        openspec/changes/add-reorder/design.md: "# Design\n\n## Decisions\n\n- Add `react-beautiful-dnd` for dragging cards.\n"
+        openspec/changes/add-reorder/tasks.md: "- [ ] 1.1 npm install react-beautiful-dnd\n"
+        openspec/changes/add-reorder/specs/cards/spec.md: "## ADDED Requirements\n\n### Requirement: Reorder cards\nCards SHALL be reordered by dragging.\n\n#### Scenario: Drag\n- **WHEN** the user drags a card above another\n- **THEN** the order changes\n"
+    input:
+      prompt: "/kit:ready add-reorder"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: reuse-recommended
+            description: A new-tool item names @dnd-kit/core and recommends reusing it over react-beautiful-dnd
+
+  - id: inventory-purpose-reuse
+    description: A planned rich-text editor is matched against the tools inventory's purposes (kit-docs, build-readiness "Purpose found in the inventory")
+    setup:
+      files:
+        package.json: '{"dependencies":{"@tiptap/react":"2"}}'
+        knowledge/docs/tools.md: "## Rich text\n\n### TipTap\n- packages: @tiptap/react\n- for: rich text in stickies\n"
+        openspec/changes/add-notes/proposal.md: "# Proposal\n\nRich notes.\n"
+        openspec/changes/add-notes/tasks.md: "- [ ] 1.1 Add Lexical for the note editor\n"
+        openspec/changes/add-notes/design.md: "# Design\n\nUse Lexical as the rich-text editor for notes.\n"
+        openspec/changes/add-notes/specs/notes/spec.md: "## ADDED Requirements\n\n### Requirement: Rich notes\nThe app SHALL format note text.\n\n#### Scenario: Bold\n- **WHEN** the user presses Ctrl+B\n- **THEN** the selection is bold\n"
+    input:
+      prompt: "/kit:ready add-notes"
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'knowledge/docs/tools.md' }
+      - kind: rubric
+        criteria:
+          - name: names-tiptap
+            description: The new-tool item names TipTap, says the inventory already has it for rich text, and recommends reusing it over Lexical
+
+  # build-safeguards 2.2 (spec: build-readiness "Safeguards picked per change")
+  - id: safeguards-step-in-skill
+    description: The skill rates reach, undo and safety, never from a word alone, and writes through ready.mjs safeguards
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '\*\*reach\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'Never rate from a word alone' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'ready\.mjs" safeguards' }
+
+  - id: safeguards-cli-writes-section
+    description: ready.mjs safeguards writes the Safeguards section with the recommendation
+    setup:
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/tasks.md: "- [ ] 1.1 x\n"
+        openspec/changes/add-x/design.md: "# Design\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" safeguards --dir . --change add-x --reach medium --reach-why "shared module" --undo low --undo-why "git revert" --safety low --safety-why "nothing sensitive"
+        stdout_match: 'recommended: scenario-to-test check, worktree for the build, review against the spec'
+      - { kind: content-match, path: 'openspec/changes/add-x/design.md', pattern: '^## Safeguards' }
+
+  - id: safeguards-keyword-alone-stays-low
+    description: '"Session start" in the proposal does not raise safety'
+    setup:
+      git_init: true
+      files:
+        openspec/changes/start-hint/proposal.md: "# Proposal\n\nShow a one-line hint at session start when the roadmap has no Now line.\n"
+        openspec/changes/start-hint/design.md: "# Design\n\nA new text line in the start skill. No scripts change.\n"
+        openspec/changes/start-hint/tasks.md: "- [ ] 1.1 Add the hint line to skills/start/SKILL.md\n"
+        openspec/changes/start-hint/specs/start/spec.md: "## ADDED Requirements\n\n### Requirement: Hint\nThe start skill SHALL show a hint when Now is empty.\n\n#### Scenario: Empty Now\n- **WHEN** Now is empty\n- **THEN** the hint is shown\n"
+    input:
+      prompt: "/kit:ready start-hint"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: safety-low
+            description: Safety is rated low; the reason doesn't treat "session start" as sessions or permissions
+          - name: reasons-shown
+            description: Each of reach, undo and safety has a one-line reason
+          - name: no-subagents
+            description: Doesn't recommend building with subagents
+
+  - id: safeguards-shared-module-medium
+    description: A task that changes a module other scripts import is rated reach medium, with a worktree and the spec review recommended
+    setup:
+      git_init: true
+      files:
+        lib/shared.mjs: "export const x = 1;\n"
+        a.mjs: "import { x } from './lib/shared.mjs';\n"
+        b.mjs: "import { x } from './lib/shared.mjs';\n"
+        openspec/changes/rename-x/proposal.md: "# Proposal\n\nRename x in lib/shared.mjs.\n"
+        openspec/changes/rename-x/design.md: "# Design\n\nRename the export in lib/shared.mjs.\n"
+        openspec/changes/rename-x/tasks.md: "- [ ] 1.1 Rename x in lib/shared.mjs\n"
+        openspec/changes/rename-x/specs/shared/spec.md: "## ADDED Requirements\n\n### Requirement: Name\nThe module SHALL export y.\n\n#### Scenario: Export\n- **WHEN** imported\n- **THEN** y is there\n"
+    input:
+      prompt: "/kit:ready rename-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: reach-medium
+            description: Reach is medium because other files import lib/shared.mjs (found with ready.mjs importers or by reading)
+          - name: recommends-worktree-and-review
+            description: The recommendation includes a worktree and the review against the spec
+
+  # ui-flow-with-impeccable 2.2 (spec: build-readiness "UI review safeguard", "UI states and copy in the gap check")
+  - id: ui-review-rules-in-skill
+    description: The skill adds ui-review only for named UI files in a web-ui project, and checks UI states and copy
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '\*\*UI review\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'code that generates pages users see' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'empty, loading, error, permission and overflow' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: '--ui-why' }
+
+  - id: web-ui-cli
+    description: ready.mjs web-ui says web-ui from kit.json
+    setup:
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" web-ui --dir .
+        stdout_match: '^web-ui: \.claude/kit\.json says project_type: web-ui'
+
+  - id: ui-review-word-alone
+    description: 'In a web-ui project, "the button label" in the proposal with a script-only plan adds no ui-review'
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        openspec/changes/fix-export/proposal.md: "# Proposal\n\nThe export script misses the button label text in the CSV.\n"
+        openspec/changes/fix-export/design.md: "# Design\n\nChange scripts/export.mjs to include the label column.\n"
+        openspec/changes/fix-export/tasks.md: "- [ ] 1.1 scripts/export.mjs: add the label column\n"
+        openspec/changes/fix-export/specs/export/spec.md: "## ADDED Requirements\n\n### Requirement: Label column\nThe export SHALL include labels.\n\n#### Scenario: Labels\n- **WHEN** I export\n- **THEN** labels are in the CSV\n"
+    input:
+      prompt: "/kit:ready fix-export"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-ui-review
+            description: Does not recommend ui-review; the plan only changes a script
+
+  - id: missing-empty-state-gap
+    description: A web-ui change that adds a board screen without an empty-board scenario gets that gap
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        openspec/changes/add-board/proposal.md: "# Proposal\n\nAdd a board screen with stickies.\n"
+        openspec/changes/add-board/design.md: "# Design\n\nNew page src/app/board/page.tsx and component src/components/Sticky.tsx.\n"
+        openspec/changes/add-board/tasks.md: "- [ ] 1.1 src/app/board/page.tsx\n- [ ] 1.2 src/components/Sticky.tsx\n"
+        openspec/changes/add-board/specs/board/spec.md: "## ADDED Requirements\n\n### Requirement: Board\nThe board SHALL show stickies.\n\n#### Scenario: Stickies shown\n- **GIVEN** two stickies\n- **WHEN** I open the board\n- **THEN** both are shown\n"
+    input:
+      prompt: "/kit:ready add-board"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: empty-state-gap
+            description: Lists the empty board (no stickies) as a gap
+          - name: ui-review-recommended
+            description: Recommends ui-review, naming src/app/board/page.tsx and src/components/Sticky.tsx as the reason
+  - id: worktree-needs-committed-plan
+    description: 'With a worktree chosen and an uncommitted plan, the close offers to commit the plan; the one commit exception (build-prereqs)'
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: 'git status --porcelain -- openspec/changes/<name>' }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: "won't see this plan until it's committed" }
+      - { kind: content-match, path: '{{kit}}/skills/ready/SKILL.md', pattern: "Don't commit, except the plan commit in step 9, on a yes" }

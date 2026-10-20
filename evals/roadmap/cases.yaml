@@ -1,0 +1,86 @@
+# Eval cases for /kit:roadmap (spec: roadmap). Scripts run for real in the sandbox; the judgment
+# cases are prompt + rubric and stay pending until scored (--scores), as for the other skills.
+skill: roadmap
+vars:
+  r: '{{kit}}/scripts/roadmap.mjs'
+
+cases:
+  - id: no-roadmap-is-fine
+    description: A project without a roadmap gets a note that it's optional, exit 0
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" check --dir .
+        stdout_match: 'No roadmap here \(optional\)'
+
+  - id: finish-moves-to-done
+    description: Finishing a milestone moves its file to done/ and keeps its ID in the order
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n\n## Now\n\nWorking on M1.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-first.md: "---\nid: M1\ntitle: First\nstatus: active\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Done\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" status --id M1 --to done --dir .
+        stdout_match: 'M1: active -> done \(moved to done/\)'
+      - { kind: content-match, path: 'knowledge/roadmaps/done/m1-first.md', pattern: 'status: done' }
+      - kind: command-exit
+        command: node "{{r}}" check --dir .
+        stdout_match: 'in good condition'
+
+  - id: report-blocking-now
+    description: The report puts the current milestone's decision under Blocking now and counts later ones
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M2\n- M3\n\n## Now\n\nM1.\n\n## Waiting on you\n\n- [M1] Which layout? (proposed 2026-10-17)\n- [M3] Which host? (proposed 2026-10-17)\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-a.md: "---\nid: M1\ntitle: A\nstatus: active\n---\n\nG.\n\n- [ ] T1 a\n"
+        knowledge/roadmaps/milestones/m2-b.md: "---\nid: M2\ntitle: B\nstatus: planned\n---\n\nG.\n"
+        knowledge/roadmaps/milestones/m3-c.md: "---\nid: M3\ntitle: C\nstatus: planned\n---\n\nG.\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" report --dir .
+        stdout_match: 'Blocking now \(1\)\s+M1  Which layout\?[\s\S]*Later \(1\)\s+M3  Which host\?'
+
+  - id: triggers-in-description
+    description: The description names the moments it should trigger on so routing finds it
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: '^description: .*roadmap' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: '^description: .*reprioritise' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: '^description: .*archived' }
+
+  - id: create-only-on-yes
+    description: With no roadmap, the skill offers to create one and writes nothing before a yes
+    input:
+      prompt: "/kit:roadmap  (answer: no, not now)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: says-optional
+            description: Says a roadmap is optional and what it is for
+          - name: writes-nothing
+            description: After "no", no knowledge/roadmaps/ folder exists
+
+  - id: proposes-reorder-only
+    description: The agent thinks the order is wrong; it proposes with a reason and changes nothing without a yes
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M2\n\n## Now\n\nM1.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-polish.md: "---\nid: M1\ntitle: Polish colours\nstatus: planned\n---\n\nNicer colours.\n"
+        knowledge/roadmaps/milestones/m2-login-fix.md: "---\nid: M2\ntitle: Fix broken login\nstatus: planned\n---\n\nUsers can't log in.\n"
+    input:
+      prompt: "/kit:roadmap show me the roadmap  (answer: no to any change)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: proposes-with-reason
+            description: May suggest M2 before M1, with its reason
+          - name: order-unchanged
+            description: knowledge/roadmaps/roadmap.md still lists M1 before M2
+
+  - id: never-hand-edits
+    description: Writes go through the script; the skill says so
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'Never edit the roadmap files by hand' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'Order and scope are the user' }

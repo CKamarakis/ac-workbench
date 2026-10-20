@@ -1,0 +1,100 @@
+# Eval cases for /kit:docs (spec: living-docs). Scripts run for real in the sandbox; the judgment
+# cases are prompt + rubric and stay pending until scored (--scores), as for the other skills.
+skill: docs
+vars:
+  d: '{{kit}}/scripts/docs.mjs'
+
+cases:
+  - id: scan-stale-note
+    description: A note older than the newest archived change touching its capability is listed as stale
+    setup:
+      files:
+        openspec/specs/canvas/stickies/spec.md: "## Requirements\n\n### Requirement: Drag\nThe app SHALL drag.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+        knowledge/docs/canvas/stickies.md: "## Why\n"
+        openspec/changes/archive/2099-01-01-later/proposal.md: "## Why\nA change from the future, so the note is older.\n"
+        openspec/changes/archive/2099-01-01-later/specs/canvas/stickies/spec.md: "## ADDED Requirements\n\n### Requirement: Drop\nThe app SHALL drop.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    checks:
+      - kind: command-exit
+        command: node "{{d}}" scan --dir .
+        stdout_match: 'notes stale: canvas/stickies \(since 2099-01-01-later\)'
+
+  - id: build-no-specs
+    description: A project without specs still builds a page that says so
+    setup:
+      files:
+        knowledge/foundations/local-first.md: "---\ntitle: Local first\n---\n\n## In short\nData stays on the device.\n"
+    checks:
+      - kind: command-exit
+        command: node "{{d}}" build --dir .
+        stdout_match: 'wrote knowledge.docs.index\.html: 0 specs'
+      - { kind: content-match, path: 'knowledge/docs/index.html', pattern: 'No specs yet' }
+      - { kind: content-match, path: 'knowledge/docs/index.html', pattern: 'Local first' }
+
+  - id: triggers-in-description
+    description: The description names the moments it should trigger on so routing finds it
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: '^description: .*docs page' }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: '^description: .*foundation card' }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: '^description: .*tools inventory' }
+
+  - id: nothing-missing-no-questions
+    description: With no missing or stale notes and no unlisted tools, nothing is asked and the page is rebuilt
+    setup:
+      files:
+        openspec/specs/a/spec.md: "## Requirements\n\n### Requirement: A\nThe app SHALL a.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+        knowledge/docs/a.md: "## Why\n"
+    input:
+      prompt: "/kit:docs"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-questions
+            description: Asks the user nothing
+          - name: rebuilt
+            description: Runs docs.mjs build and reports the page was rebuilt
+
+  - id: skip-writes-nothing
+    description: A draft the user skips is not written
+    setup:
+      files:
+        openspec/specs/a/spec.md: "## Requirements\n\n### Requirement: A\nThe app SHALL a.\n\n#### Scenario: s\n- **WHEN** a\n- **THEN** b\n"
+    input:
+      prompt: "/kit:docs  (answer: skip for every draft)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: shows-drafts-first
+            description: Shows each draft with the path it would be written to, before asking
+          - name: skip-writes-nothing
+            description: After "skip", no knowledge/docs/a.md is written
+
+  - id: preference-choice-no-why
+    description: A small preference decision gets no "why" entry
+    setup:
+      files:
+        openspec/specs/theme/spec.md: "## Requirements\n\n### Requirement: Accent colour\nThe app SHALL use a blue accent.\n\n#### Scenario: s\n- **WHEN** the app opens\n- **THEN** buttons are blue\n"
+        openspec/changes/archive/2026-10-01-theme/proposal.md: "## Why\nThe user liked blue better than green.\n"
+        openspec/changes/archive/2026-10-01-theme/specs/theme/spec.md: "## ADDED Requirements\n\n### Requirement: Accent colour\nThe app SHALL use a blue accent.\n\n#### Scenario: s\n- **WHEN** the app opens\n- **THEN** buttons are blue\n"
+    input:
+      prompt: "/kit:docs"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-why-for-preference
+            description: The drafted note for theme has no "why" entry for the accent colour (an empty Why section is fine)
+
+  - id: never-commits
+    description: The skill never commits
+    input:
+      prompt: "/kit:docs, then we're done"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-commit
+            description: Runs no git commit
+
+  - id: drafts-shown-in-full
+    description: Drafts are shown in full in the message, never in an option preview (the preview box cuts long text; user, 2026-10-14)
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Show every draft in full in your message first" }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Never put draft text in an option preview" }

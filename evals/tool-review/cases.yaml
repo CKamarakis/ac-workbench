@@ -1,0 +1,58 @@
+# Eval cases for /kit:tool-review (spec: tool-review). Scripts run for real in the sandbox with no network lookups needed:
+# record works offline; scan's lookups are covered by unit tests with injected lookups (tests/kit/tool-review.test.mjs).
+skill: tool-review
+vars:
+  tr: '{{kit}}/scripts/tool-review.mjs'
+
+cases:
+  - id: record-hold-only-date
+    description: Hold changes only reviewed_on
+    setup:
+      files:
+        toolkit.yaml: "tools:\n  - name: openspec\n    source: npm:@fission-ai/openspec\n    status: adopted\n    reviewed_version: 1.13.2\n    reviewed_on: 2026-09-01\n    verdicts:\n      - date: 2026-10-01\n        status: adopted\n        rationale: default\n"
+    checks:
+      - kind: command-exit
+        command: node "{{tr}}" record --dir . --name openspec --action hold --date 2026-10-18
+        stdout_match: 'openspec: hold recorded'
+      - { kind: content-match, path: toolkit.yaml, pattern: 'reviewed_on: 2026-10-18' }
+      - { kind: content-match, path: toolkit.yaml, pattern: 'reviewed_version: 1\.13\.2' }
+
+  - id: record-update-needs-version
+    description: An update without a version is refused (reviewed_version is set only after the smoke test)
+    setup:
+      files:
+        toolkit.yaml: "tools:\n  - name: openspec\n    source: npm:@fission-ai/openspec\n    status: adopted\n    reviewed_version: 1.13.2\n    reviewed_on: 2026-09-01\n    verdicts: []\n"
+    checks:
+      - kind: command-exit
+        command: node "{{tr}}" record --dir . --name openspec --action update
+        expect: 2
+
+  - id: skill-rules
+    description: The skill reads release notes for a major, runs smoke before reviewed_version, and asks per tool
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/tool-review/SKILL.md', pattern: 'release notes first, always' }
+      - { kind: content-match, path: '{{kit}}/skills/tool-review/SKILL.md', pattern: 'npm run smoke' }
+      - { kind: content-match, path: '{{kit}}/skills/tool-review/SKILL.md', pattern: 'offer to roll the tool back' }
+      - { kind: content-match, path: '{{kit}}/skills/tool-review/SKILL.md', pattern: 'ask separately whether to uninstall' }
+
+  - id: trigger-tool-review
+    description: '"Are my tools up to date?" routes to /kit:tool-review'
+    input:
+      prompt: "Are the kit's tools still up to date? Anything new worth using?"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: routes-to-tool-review
+            description: Uses /kit:tool-review (not /kit:setup or /kit:harness-review)
+
+  - id: update-with-failing-smoke
+    description: 'Update with a failing smoke test: reviewed_version stays, the user is told and offered a rollback'
+    input:
+      prompt: "/kit:tool-review - I chose update for openspec 1.14.3, but npm run smoke fails after the update"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: version-kept
+            description: Does not run record --action update; reviewed_version stays 1.13.2
+          - name: rollback-offered
+            description: Tells the user the smoke failure and offers to roll openspec back

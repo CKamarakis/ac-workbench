@@ -1,0 +1,158 @@
+{
+  "skill": "next",
+  "date": "2026-10-14T18:10:14.546Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 28394,
+  "summary": {
+    "pass": 8,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "no-openspec-suggests-start",
+      "outcome": "pass",
+      "duration_ms": 249,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "fresh-kit-project-suggests-brainstorm-owner",
+      "outcome": "pass",
+      "duration_ms": 5601,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-offers-but-does-not-run",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Don't run the suggested step yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/next\\.mjs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "ready-prd-suggests-propose",
+      "outcome": "pass",
+      "duration_ms": 5487,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "notes-only-suggests-prd",
+      "outcome": "pass",
+      "duration_ms": 5484,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-reports-prd-and-never-writes-status",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /checks the project.s PRDs/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/next/SKILL.md matches /Never change a PRD's status here/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "newest-ready-prd-named-first",
+      "outcome": "pass",
+      "duration_ms": 5832,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "tasks-done-suggests-verify",
+      "outcome": "pass",
+      "duration_ms": 5736,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

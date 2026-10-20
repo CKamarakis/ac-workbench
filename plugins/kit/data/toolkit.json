@@ -1,0 +1,986 @@
+{
+  "version": 1,
+  "phases": [
+    "capture",
+    "prd",
+    "brainstorm",
+    "artifacts",
+    "plan",
+    "ready",
+    "build",
+    "verify",
+    "review",
+    "ui-polish",
+    "close",
+    "docs",
+    "roadmap",
+    "status",
+    "loose-ends",
+    "assess",
+    "kit-issues"
+  ],
+  "project_types": {
+    "web-ui": {
+      "tests": [
+        {
+          "script": "test",
+          "required": true
+        },
+        {
+          "script": "test:integration",
+          "required": false
+        }
+      ],
+      "missing_required": "hard",
+      "advisory": []
+    },
+    "none": {
+      "tests": [
+        {
+          "script": "test",
+          "required": false
+        }
+      ],
+      "missing_required": "advisory",
+      "advisory": []
+    }
+  },
+  "situations": [
+    {
+      "when": "I have an idea or a note to keep",
+      "phase": "capture",
+      "use": "/kit:capture"
+    },
+    {
+      "when": "I want to turn notes into a PRD",
+      "phase": "prd",
+      "use": "/kit:prd"
+    },
+    {
+      "when": "I have a new idea or feature",
+      "phase": "brainstorm",
+      "use": "/opsx:explore"
+    },
+    {
+      "when": "I'm ready to write it down as a change",
+      "phase": "artifacts",
+      "use": "/opsx:propose"
+    },
+    {
+      "when": "the plan is done; check it is ready to build",
+      "phase": "ready",
+      "use": "/kit:ready"
+    },
+    {
+      "when": "the plan is done and I want to build",
+      "phase": "build",
+      "use": "/opsx:apply"
+    },
+    {
+      "when": "I'm about to commit",
+      "use": "gitleaks pre-commit hook (runs automatically)"
+    },
+    {
+      "when": "I want to see or change the project's goals, order and what's waiting",
+      "phase": "roadmap",
+      "use": "/kit:roadmap"
+    },
+    {
+      "when": "I am back after a while, or want to pick the next item",
+      "phase": "status",
+      "use": "/kit:status"
+    },
+    {
+      "when": "I left small things behind, or want to see or clean up what is left",
+      "phase": "loose-ends",
+      "use": "/kit:loose-ends"
+    },
+    {
+      "when": "I want a check-up of this project's Claude Code setup",
+      "phase": "assess",
+      "use": "/kit:harness-review"
+    },
+    {
+      "when": "the kit itself got in my way",
+      "phase": "kit-issues",
+      "use": "github.com/CKamarakis/ac-workbench/issues"
+    }
+  ],
+  "tools": [
+    {
+      "name": "openspec",
+      "source": "npm:@fission-ai/openspec",
+      "tier": "global",
+      "reason": "Spec-driven change workflow (explore, proposal, specs, design, tasks, apply, archive); the kit's default workflow",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "openspec --version",
+      "install": {
+        "all": "npm install -g @fission-ai/openspec"
+      },
+      "rubric": {
+        "problem_fit": "Structured, reviewable planning that lives in the repo",
+        "overlap": "Superpowers has planning skills for the same phases; they stay skipped (see its entry)",
+        "context_cost": "Low; skills load on demand",
+        "run_cost": "Free CLI; only Claude usage while working",
+        "trust": "Active open-source project (Fission-AI)",
+        "reversibility": "Delete openspec/ and .claude/ generated files",
+        "license": "MIT"
+      },
+      "reviewed_version": "1.14.3",
+      "reviewed_on": "2026-10-19",
+      "phases": [
+        "brainstorm",
+        "artifacts",
+        "plan",
+        "build",
+        "verify",
+        "close"
+      ],
+      "skills": {
+        "brainstorm": "/opsx:explore",
+        "artifacts": "/opsx:propose",
+        "plan": "/opsx:continue",
+        "build": "/opsx:apply",
+        "verify": "openspec validate --strict + the change's tests",
+        "close": "/opsx:archive"
+      },
+      "overlaps": [
+        "kit"
+      ],
+      "skip_skills": [
+        "openspec validate as the whole verify step"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-09-29",
+          "status": "trial",
+          "rationale": "In use for this repo's planning"
+        },
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "A/B trial - same result as SuperSpec at about 1/4 of the time and 1/5 of the cost; default workflow",
+          "evidence": "evals/registry/runs/2026-10-01-openspec.json"
+        }
+      ]
+    },
+    {
+      "name": "superspec",
+      "source": "github:danielhanold/superspec",
+      "tier": "project",
+      "reason": "OpenSpec schema that wires in Superpowers (worktree, subagent TDD, verify) for big or risky changes",
+      "recommend": "no",
+      "recommend_why": "Plain OpenSpec covers most changes; use SuperSpec for a big or risky one (payments, auth, data migration)",
+      "cost": "uses-claude-quota",
+      "status": "dropped",
+      "scope": "project",
+      "check": "openspec schemas",
+      "check_match": "superspec",
+      "interactive": true,
+      "install": {
+        "all": "copy openspec/schemas/superspec from github.com/danielhanold/superspec, then openspec init --tools claude --profile custom --force with XDG_CONFIG_HOME pointed at a throwaway config"
+      },
+      "install_note": "Multi-step and project-only - follow evals/trials/workflow-ab-setup.md (never change the global OpenSpec config). Automating it is a follow-up.",
+      "rubric": {
+        "problem_fit": "Strong process (isolation, audit trail, verify report), asks instead of guessing",
+        "overlap": "Same phases as OpenSpec spec-driven; used per change, never as the default",
+        "context_cost": "High; 165 requests and 13 subagents for a small change",
+        "run_cost": "About 5x plain OpenSpec on the trial task",
+        "trust": "Small MIT project; schema v4",
+        "reversibility": "Remove openspec/schemas/superspec and switch the change schema back",
+        "license": "MIT"
+      },
+      "reviewed_version": "e1c8f41",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "A/B trial - equal result, about 4x the time and 5x the cost on a small, tightly specified change; re-test on a big or risky one",
+          "evidence": "evals/registry/runs/2026-10-01-superspec.json"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "trial",
+          "rationale": "M6 review (user) - first real big build (the Acme canvas feature) used SuperSpec; still in user testing, no comparison run. Re-judge once it is archived",
+          "evidence": "evals/trials/usage-review-1.md"
+        },
+        {
+          "date": "2026-10-18",
+          "status": "dropped",
+          "rationale": "Its value is Superpowers' build discipline, which OpenSpec can call per change; the keyword judge that picked it was unreliable. /kit:ready now picks safeguards (worktree, spec review, subagents) per change",
+          "evidence": "evals/trials/workflow-ab.md; openspec/changes/build-safeguards (explore record knowledge/explore/build-safeguards.md)"
+        }
+      ]
+    },
+    {
+      "name": "superpowers",
+      "source": "github:obra/superpowers",
+      "tier": "project",
+      "reason": "Subagent-driven development and test-first per change; added when /kit:ready's safeguards choose them",
+      "recommend": "no",
+      "recommend_why": "Only needed when a change's safeguards choose a subagent build or test-first; /kit:ready offers it then",
+      "cost": "uses-claude-quota",
+      "status": "trial",
+      "scope": "project",
+      "plugin": "superpowers@claude-plugins-official",
+      "check": "claude plugin list --json",
+      "check_match": "\"id\": \"superpowers@claude-plugins-official\"[^}]*\"projectEnabled\": true",
+      "install": {
+        "all": "claude plugin install superpowers@claude-plugins-official --scope project --json"
+      },
+      "rubric": {
+        "problem_fit": "Build discipline (TDD, small commits, worktrees)",
+        "overlap": "Brainstorming and plan writing overlap OpenSpec and stay skipped; the kit calls only the build skills",
+        "context_cost": "Medium; session-start hook and many skills",
+        "run_cost": "Uses Claude quota; subagents add requests",
+        "trust": "Widely used; past Windows hook bugs, none seen here",
+        "reversibility": "Remove from the project's enabledPlugins",
+        "license": "MIT"
+      },
+      "reviewed_version": "7.0.0",
+      "reviewed_on": "2026-10-18",
+      "overlaps": [
+        "openspec"
+      ],
+      "skip_skills": [
+        "superpowers:brainstorming",
+        "superpowers:writing-plans",
+        "superpowers:executing-plans"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Windows smoke test passed (start, input, skills, per-project scoping); value shown in the SuperSpec build phase",
+          "evidence": "evals/trials/superpowers-smoke.md"
+        },
+        {
+          "date": "2026-10-18",
+          "status": "trial",
+          "rationale": "Kept without SuperSpec - its build skills are called from OpenSpec when /kit:ready's safeguards choose them; updated to 7.0.0 (smoke passed); installed from claude-plugins-official, whose catalog pins the v7.0.0 tag (identical commit)",
+          "evidence": "openspec/changes/build-safeguards"
+        }
+      ]
+    },
+    {
+      "name": "gitleaks",
+      "source": "winget:Gitleaks.Gitleaks",
+      "tier": "global",
+      "reason": "Blocks commits that contain secrets; needed because the kit repo is public",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "gitleaks version",
+      "install": {
+        "win32": "winget install --id Gitleaks.Gitleaks -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install gitleaks",
+        "linux": "brew install gitleaks"
+      },
+      "rubric": {
+        "problem_fit": "Catches tokens and keys before they reach a public repo",
+        "overlap": "The feedback skill's text scrub covers a different case (text, not commits)",
+        "context_cost": "None; runs as a git hook outside Claude",
+        "run_cost": "Free; about 1 s per commit",
+        "trust": "Widely used, maintained",
+        "reversibility": "Unset core.hooksPath",
+        "license": "MIT"
+      },
+      "reviewed_version": "8.30.1",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-09-29",
+          "status": "adopted",
+          "rationale": "Hook blocked a fake token and passed clean commits; full history scan found no leaks",
+          "evidence": "openspec/changes/kit-local-mvp/tasks.md (task 1.6)"
+        }
+      ]
+    },
+    {
+      "name": "git",
+      "source": "winget:Git.Git",
+      "tier": "global",
+      "reason": "Version control; the Windows Git (Git\\cmd) is also what `claude plugin install` needs to clone plugins",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "git --version",
+      "install": {
+        "win32": "winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install git",
+        "linux": "brew install git"
+      },
+      "rubric": {
+        "problem_fit": "Required by every project and by plugin installs",
+        "overlap": "None",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Standard tool",
+        "reversibility": "Uninstall via winget",
+        "license": "GPL-2.0"
+      },
+      "reviewed_version": "2.55.0.5",
+      "reviewed_on": "2026-10-19",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Baseline requirement; Git\\cmd works for plugin installs where Git Bash's git does not",
+          "evidence": "evals/trials/plugin-cli.md"
+        }
+      ]
+    },
+    {
+      "name": "gh",
+      "source": "winget:GitHub.cli",
+      "tier": "global",
+      "reason": "GitHub CLI for the repo, releases and the private feedback inbox",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "gh --version",
+      "install": {
+        "win32": "winget install --id GitHub.cli -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install gh",
+        "linux": "brew install gh"
+      },
+      "rubric": {
+        "problem_fit": "Repo creation, issues (feedback inbox), release downloads",
+        "overlap": "None",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Official GitHub tool",
+        "reversibility": "Uninstall via winget",
+        "license": "MIT"
+      },
+      "reviewed_version": "2.102.0",
+      "reviewed_on": "2026-10-19",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Used to create and publish the kit repo; needed by /kit:feedback"
+        }
+      ]
+    },
+    {
+      "name": "jq",
+      "source": "winget:jqlang.jq",
+      "tier": "global",
+      "reason": "JSON on the command line; its only use was SuperSpec's setup scripts",
+      "cost": "free",
+      "status": "dropped",
+      "scope": "machine",
+      "check": "jq --version",
+      "install": {
+        "win32": "winget install --id jqlang.jq -e --silent --accept-package-agreements --accept-source-agreements --disable-interactivity",
+        "darwin": "brew install jq",
+        "linux": "brew install jq"
+      },
+      "rubric": {
+        "problem_fit": "No remaining use since SuperSpec was dropped",
+        "overlap": "Node can do the same in kit scripts",
+        "context_cost": "None",
+        "run_cost": "Free",
+        "trust": "Standard tool",
+        "reversibility": "Uninstall via winget",
+        "license": "MIT"
+      },
+      "reviewed_version": "1.8.2",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Installed for the SuperSpec trial; tiny and widely used"
+        },
+        {
+          "date": "2026-10-18",
+          "status": "dropped",
+          "rationale": "Its only use was SuperSpec's setup scripts; no kit script needs it. Not uninstalled from machines that have it",
+          "evidence": "openspec/changes/build-safeguards"
+        }
+      ]
+    },
+    {
+      "name": "kit",
+      "source": "github:CKamarakis/ac-workbench",
+      "tier": "global",
+      "reason": "This kit - /kit:setup, /kit:start, /kit:next, /kit:capture, /kit:prd, /kit:ready, /kit:verify, /kit:docs, /kit:harness-review; enabled per project, like every other tool (user, 2026-10-14)",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "project",
+      "plugin": "kit@ac-workbench",
+      "check": "node -e \"const f=require('fs');for(const p of ['.claude/settings.json','.claude/settings.local.json'])try{process.stdout.write(f.readFileSync(p,'utf8'))}catch{}\"",
+      "check_match": "\"kit@ac-workbench\":\\s*true",
+      "install": {
+        "all": "claude plugin install kit@ac-workbench --scope project --json"
+      },
+      "install_why": "the kit isn't enabled in this project's settings yet; if you also have a user-level kit, remove it once every kit project has its own, with `claude plugin uninstall kit@ac-workbench --scope user`",
+      "rubric": {
+        "problem_fit": "Bootstraps and routes everything else",
+        "overlap": "None",
+        "context_cost": "Low; a few skills",
+        "run_cost": "Free",
+        "trust": "Own code, public repo, gitleaks-checked",
+        "reversibility": "claude plugin uninstall kit@ac-workbench --scope project",
+        "license": "Own work"
+      },
+      "reviewed_version": "0.1.0",
+      "reviewed_on": "2026-10-01",
+      "phases": [
+        "capture",
+        "prd",
+        "ready",
+        "verify",
+        "docs",
+        "roadmap",
+        "status",
+        "loose-ends",
+        "assess",
+        "kit-issues"
+      ],
+      "skills": {
+        "capture": "/kit:capture",
+        "prd": "/kit:prd",
+        "ready": "/kit:ready",
+        "verify": "/kit:verify",
+        "docs": "/kit:docs",
+        "roadmap": "/kit:roadmap",
+        "status": "/kit:status",
+        "loose-ends": "/kit:loose-ends",
+        "assess": "/kit:harness-review",
+        "kit-issues": "github.com/CKamarakis/ac-workbench/issues"
+      },
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "adopted",
+          "rationale": "Installed from the local directory marketplace in dev mode; ping skill verified",
+          "evidence": "evals/trials/plugin-install-check.md"
+        }
+      ]
+    },
+    {
+      "name": "claude-code-builtins",
+      "source": "built into Claude Code",
+      "tier": "global",
+      "reason": "Claude Code's own /code-review and /security-review commands; the review owner and an input to /kit:verify",
+      "cost": "uses-claude-quota",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "claude --version",
+      "install": "none",
+      "install_note": "Part of Claude Code",
+      "rubric": {
+        "problem_fit": "Reviews a diff for bugs and security issues at an effort level you choose",
+        "overlap": "None; the review phase had no owner",
+        "context_cost": "Only when run",
+        "run_cost": "Uses your Claude plan; higher effort levels use more tokens",
+        "trust": "Anthropic, shipped with Claude Code",
+        "reversibility": "Nothing installed",
+        "license": "Part of Claude Code"
+      },
+      "reviewed_version": "Claude Code 2026-10",
+      "reviewed_on": "2026-10-07",
+      "phases": [
+        "review"
+      ],
+      "skills": {
+        "review": "/code-review"
+      },
+      "verdicts": [
+        {
+          "date": "2026-10-07",
+          "status": "adopted",
+          "rationale": "Built in, no install; owner of the review phase and an input to /kit:verify (quality-gates)",
+          "evidence": "openspec/changes/quality-gates/design.md"
+        }
+      ]
+    },
+    {
+      "name": "ac-workbench-marketplace",
+      "source": "github:CKamarakis/ac-workbench",
+      "tier": "global",
+      "reason": "Makes the kit available to install per project; registering a marketplace enables nothing by itself",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "machine",
+      "check": "claude plugin marketplace list --json",
+      "check_match": "\"ac-workbench\"",
+      "install": {
+        "all": "claude plugin marketplace add CKamarakis/ac-workbench"
+      },
+      "rubric": {
+        "problem_fit": "Needed for per-project kit installs",
+        "overlap": "None",
+        "context_cost": "None until the kit is enabled in a project",
+        "run_cost": "Free",
+        "trust": "Own repo, public, gitleaks-checked",
+        "reversibility": "claude plugin marketplace remove ac-workbench (also uninstalls the kit everywhere)",
+        "license": "Own work"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-14",
+      "verdicts": [
+        {
+          "date": "2026-10-14",
+          "status": "adopted",
+          "rationale": "Split from the kit entry when the kit moved to per-project installs (change kit-per-project)"
+        }
+      ]
+    },
+    {
+      "name": "superpowers-marketplace",
+      "source": "github:obra/superpowers-marketplace",
+      "tier": "global",
+      "reason": "Makes Superpowers available to install per project; registering a marketplace enables nothing by itself",
+      "cost": "free",
+      "status": "dropped",
+      "scope": "machine",
+      "check": "claude plugin marketplace list --json",
+      "check_match": "\"superpowers-marketplace\"",
+      "install": {
+        "all": "claude plugin marketplace add obra/superpowers-marketplace --scope user"
+      },
+      "rubric": {
+        "problem_fit": "Needed for per-project Superpowers installs (subagent build)",
+        "overlap": "None",
+        "context_cost": "None until a plugin from it is enabled",
+        "run_cost": "Free",
+        "trust": "Superpowers author's marketplace",
+        "reversibility": "claude plugin marketplace remove superpowers-marketplace",
+        "license": "MIT"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Follows the Superpowers trial status"
+        },
+        {
+          "date": "2026-10-18",
+          "status": "dropped",
+          "rationale": "Superpowers now installs from claude-plugins-official (same v7.0.0 commit); nothing else uses this marketplace. Not removed from machines that have it",
+          "evidence": "openspec/changes/build-safeguards"
+        }
+      ]
+    },
+    {
+      "name": "playwright-cli",
+      "source": "npm:@playwright/cli",
+      "tier": "project-type:web-ui",
+      "reason": "Browser checks for web UI projects - on demand only, through /kit:verify when the user asks (not on every verify)",
+      "install_why": "Its command (playwright-cli) is installed once for the whole machine, like git: it's idle until a browser check calls it, and the skill expects that command. Each project only gets the skill. Without it, every browser step would need a permission prompt (tested 2026-10-08)",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "project",
+      "check": "playwright-cli --version && node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/playwright-cli'))\"",
+      "install": {
+        "all": "npm install -g @playwright/cli@latest && playwright-cli install --skills"
+      },
+      "install_note": "Verified 2026-10-01 (sandbox) - the CLI (0.1.22) is a machine-wide npm install (a CLI, inert until called); `playwright-cli install --skills` adds .claude/skills/playwright-cli to the project and uses the installed Chrome. A small helper (winldd) goes to the shared Playwright cache in AppData/Local/ms-playwright.",
+      "rubric": {
+        "problem_fit": "Lets the agent check real pages and flows",
+        "overlap": "Playwright MCP does the same with more tokens; Claude in Chrome is for the user's own browser",
+        "context_cost": "Low; its docs say CLI + skills is more token-efficient than the MCP for coding agents",
+        "run_cost": "Free",
+        "trust": "Microsoft project",
+        "reversibility": "npm uninstall -g @playwright/cli; remove the skills folder",
+        "license": "Apache-2.0"
+      },
+      "reviewed_version": "0.1.22",
+      "reviewed_on": "2026-10-19",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Not needed until a web UI project uses the kit; package name unverified"
+        },
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Full README read; package @playwright/cli verified; CLI + skills preferred over MCP; trial on the first web-ui project",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "adopted",
+          "rationale": "M4 trial - logged in and drove protected pages on Windows (desktop + 390px), measured and screenshotted real issues the code reviews could only suspect (37px expand bar, mobile drawer ignores Escape); compact snapshots, cheap per check; used on demand by design. User confirmed",
+          "evidence": "evals/trials/design-trial.md"
+        }
+      ]
+    },
+    {
+      "name": "context7",
+      "source": "github:upstash/context7",
+      "tier": "global",
+      "reason": "Up-to-date, version-specific library docs for the agent (fewer hallucinated APIs)",
+      "cost": "free-tier",
+      "status": "trial",
+      "scope": "project",
+      "check": "node --version",
+      "install": "none",
+      "install_note": "Nothing to install - the agent calls npx -y ctx7@latest library|docs when it needs docs (no sign-in). Verified 2026-10-07 - lookups (ctx7 library, ctx7 docs) work logged out; only ctx7 setup forces a browser sign-in, even with -y, so the kit skips setup and uses a routing rule instead. Limits without a key are unverified; a limit-hit message and the optional sign-in are deferred (roadmap).",
+      "rubric": {
+        "problem_fit": "Fewer stale API answers during build",
+        "overlap": "None; a docs source, not a phase owner",
+        "context_cost": "Low in CLI + Skills mode; docs are fetched on demand",
+        "run_cost": "Free API key (higher rate limits); the backend is a hosted service",
+        "trust": "Upstash; community-contributed library docs (its disclaimer says it can't guarantee accuracy)",
+        "reversibility": "npx ctx7 remove",
+        "license": "MIT"
+      },
+      "reviewed_version": "readme 2026-10-01",
+      "reviewed_on": "2026-10-19",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Not needed for the MVP"
+        },
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Full README read; cheap insurance against outdated APIs; trial on the next build",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-07",
+          "status": "trial",
+          "rationale": "Used through npx with no setup or sign-in (lookups work logged out); the routing block tells the agent when to look up docs",
+          "evidence": "evals/trials/prd-pipeline-live.md"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "trial",
+          "rationale": "M6 A/B (user decision - keep trial, fix the hook) - the rule is followed in a clean context (4/4) but made no measurable difference on typed, installed packages; the library-error hook never fired (chained commands exit 0; PowerShell not matched). Never used in 16 real sessions",
+          "evidence": "evals/trials/context7-ab.md"
+        },
+        {
+          "date": "2026-10-14",
+          "status": "trial",
+          "rationale": "Library-error hook removed (user, kit-followups) - it never fired in real use and the A/B showed no benefit; the routing rule stays",
+          "evidence": "openspec/changes/kit-followups/design.md"
+        }
+      ]
+    },
+    {
+      "name": "lint-hook",
+      "source": "tbd",
+      "tier": "project",
+      "reason": "Always-on lint check, proposed as a first default check",
+      "cost": "free",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Catches style and simple bugs early",
+        "overlap": "Project linters differ by stack; needs a per-type choice",
+        "context_cost": "None if run as a hook",
+        "run_cost": "Free",
+        "trust": "Depends on the linter chosen",
+        "reversibility": "Easy",
+        "license": "Depends on the linter chosen"
+      },
+      "reviewed_version": "none",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Which linter depends on project type; decide when the first typed project uses the starter"
+        }
+      ]
+    },
+    {
+      "name": "notion-mcp",
+      "source": "https://mcp.notion.com/mcp",
+      "tier": "project",
+      "reason": "Context store outside the repo - capture, PRDs and retrieval in Notion (prd-pipeline)",
+      "cost": "free",
+      "status": "later",
+      "scope": "project",
+      "check": "claude mcp get notion",
+      "check_match": "Status:.*[Cc]onnected",
+      "install": {
+        "all": "claude mcp add --transport http notion https://mcp.notion.com/mcp --scope local"
+      },
+      "install_note": "Then run /mcp in Claude Code and finish the OAuth sign-in. Verified 2026-10-01 - `--scope local` is private to you in this project (kept in ~/.claude.json under this project's path, not committed); until sign-in, `claude mcp get notion` shows \"Needs authentication\". The connected status wording is unverified.",
+      "rubric": {
+        "problem_fit": "Keeps long-lived product context in Notion and only pointers and final PRDs in the repo",
+        "overlap": "The Notion plugin bundles the same server; use one of them per project",
+        "context_cost": "Low; hosted server returns Markdown and only the relevant context",
+        "run_cost": "Free plan covers search, fetch, create and update; AI search, meeting notes and agents need Notion AI",
+        "trust": "Official Notion server; OAuth respects your existing Notion permissions",
+        "reversibility": "claude mcp remove notion; revoke under Notion Settings > Connections",
+        "license": "Hosted service (the deprecated local server is MIT)"
+      },
+      "reviewed_version": "docs 2026-10-01",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Official hosted server, per-project scope, core tools on the free plan; adopt once prd-pipeline uses it",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-06",
+          "status": "later",
+          "rationale": "Live spike on the free plan - SQL queries hit the usage limit after about 10 calls; prd-pipeline v1 keeps PRDs as Markdown in knowledge/ instead",
+          "evidence": "evals/trials/notion-spike-2026-10-06.md"
+        }
+      ]
+    },
+    {
+      "name": "notion-plugin",
+      "source": "github:makenotion/claude-code-notion-plugin",
+      "tier": "project",
+      "reason": "Official Notion plugin - hosted MCP plus skills (Knowledge Capture, Spec to Implementation, ...) and /Notion:* commands",
+      "cost": "free",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Its skills may cover parts of prd-pipeline (capture, spec to implementation)",
+        "overlap": "Same MCP server as notion-mcp; its skills overlap whatever prd-pipeline builds",
+        "context_cost": "Unverified; 4 skills with reference files",
+        "run_cost": "Free (same Notion plan limits)",
+        "trust": "Official Notion repo, but no LICENSE file and last push 2026-01-22",
+        "reversibility": "Uninstall the plugin",
+        "license": "None published"
+      },
+      "reviewed_version": "readme 2026-10-01",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Read its skills during the prd-pipeline explore before building our own; no license file yet",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        }
+      ]
+    },
+    {
+      "name": "impeccable",
+      "source": "github:pbakaus/impeccable",
+      "tier": "project-type:web-ui",
+      "reason": "Design guidance for the agent - 24 commands (shape, critique, audit, polish, harden ...) and 61 deterministic checks",
+      "cost": "free",
+      "status": "adopted",
+      "scope": "project",
+      "check": "node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/impeccable'))\"",
+      "install": {
+        "all": "npx -y impeccable install --providers=claude --scope=project"
+      },
+      "project_version": {
+        "file": ".claude/skills/impeccable/SKILL.md",
+        "pattern": "^version: ([0-9.]+)"
+      },
+      "update": "npx -y impeccable update -y --project",
+      "first_use": "When you first do UI polish or a design review, run /impeccable init once (it writes PRODUCT.md)",
+      "install_note": "Verified 2026-10-01 (sandbox) - skill in .claude/skills/impeccable, 4 agents in .claude/agents, hooks in .claude/settings.local.json (personal, gitignored by the kit block), engine binary inside the skill folder. Then run /impeccable init once (writes PRODUCT.md). Its hooks use bash syntax; that they run on Windows is unverified.",
+      "rubric": {
+        "problem_fit": "Avoids generic AI-looking UI; gives a shared design vocabulary",
+        "overlap": "Emil's skills on polish and animation; Impeccable owns ui-polish",
+        "context_cost": "One skill loaded on demand, plus edit hooks",
+        "run_cost": "Free; the deterministic rules run without an LLM",
+        "trust": "Widely used (73k stars), active",
+        "reversibility": "Remove the skill folder and hook manifest",
+        "license": "Apache-2.0"
+      },
+      "reviewed_version": "skill-v4.6.0",
+      "reviewed_on": "2026-10-19",
+      "phases": [
+        "ui-polish"
+      ],
+      "skills": {
+        "ui-polish": "/impeccable critique, /impeccable audit, /impeccable polish"
+      },
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Full README read; per-project install; trial on the first web-ui project",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "adopted",
+          "rationale": "M4 trial on the Acme copy - specific, real findings (2 P1 the M3 code review missed or under-rated), low noise (1 false positive), asks before big steps, works on Windows (hooks + browser detector). Watch scope and cost (~69k output tokens for one warm-up; it added PRODUCT.md, DESIGN.md and a whole-sidebar critique) - name target and scope in the prompt. User confirmed",
+          "evidence": "evals/trials/design-trial.md"
+        }
+      ]
+    },
+    {
+      "name": "emil-skills",
+      "source": "github:emilkowalski/skills",
+      "tier": "project",
+      "reason": "Animation and interface-detail skills (review/improve animations, apple-design, pick-ui-library, mobile-native); for motion-specific work",
+      "recommend": "no",
+      "recommend_why": "A specialist for motion work; add it when a change is about animation, not for every session",
+      "cost": "free",
+      "status": "trial",
+      "scope": "project",
+      "check": "node -e \"process.exitCode = Number(!require('fs').existsSync('.claude/skills/review-animations'))\"",
+      "install": {
+        "win32": "npx -y skills@latest add emilkowalski/skills -a claude-code -s * -y --copy",
+        "all": "npx -y skills@latest add emilkowalski/skills -a claude-code -s '*' -y --copy"
+      },
+      "install_note": "Verified 2026-10-01 (sandbox) - project-level by default (-g would be user-level, never use it); 14 skills copied into .claude/skills (--copy avoids symlinks on Windows; counted 2026-10-08).",
+      "rubric": {
+        "problem_fit": "Strong on motion and the small details agents get wrong",
+        "overlap": "Impeccable owns ui-polish; Emil is used for motion only",
+        "context_cost": "14 skill descriptions in every session when installed; that's why it's on demand",
+        "run_cost": "Free",
+        "trust": "Emil Kowalski (Vercel, Linear), 42k stars",
+        "reversibility": "Remove the skill folders",
+        "license": "MIT"
+      },
+      "reviewed_version": "2d22863",
+      "reviewed_on": "2026-10-19",
+      "phases": [
+        "ui-polish"
+      ],
+      "skills": {
+        "ui-polish": "/review-animations, /improve-animations (motion only)"
+      },
+      "overlaps": [
+        "impeccable"
+      ],
+      "skip_skills": [
+        "emil-design-eng"
+      ],
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "trial",
+          "rationale": "Full README read; motion specialist next to Impeccable; trial on the first web-ui project",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-08",
+          "status": "trial",
+          "rationale": "User decision - not loaded by default (no longer a web-ui type tool); available on demand for motion-specific missions. Whether Impeccable already covers motion is checked during normal work",
+          "evidence": "evals/trials/design-trial.md"
+        }
+      ]
+    },
+    {
+      "name": "task-observer",
+      "source": "github:rebelytics/one-skill-to-rule-them-all",
+      "tier": "global",
+      "reason": "Meta-skill that logs your corrections and proposes improvements to your skills",
+      "cost": "uses-claude-quota",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Keeps kit skills improving from real use",
+        "overlap": "GitHub issues cover kit issues; Claude memory covers small preferences",
+        "context_cost": "Runs in every session (activation via CLAUDE.md or a hook)",
+        "run_cost": "Uses Claude quota while observing",
+        "trust": "3k stars, 69 contributors, security audits listed on skills.sh",
+        "reversibility": "Remove the skill folder and activation line",
+        "license": "CC-BY-4.0"
+      },
+      "reviewed_version": "readme 2026-10-01",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Its own README says it pays off once there are many skills; revisit at the usage review",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        },
+        {
+          "date": "2026-10-12",
+          "status": "later",
+          "rationale": "M6 review - still 9 kit skills and no feedback channel yet (/kit:feedback is M5); corrections so far were caught in trials and code reviews. Revisit with M5",
+          "evidence": "evals/trials/usage-review-1.md"
+        }
+      ]
+    },
+    {
+      "name": "ecc",
+      "source": "github:affaan-m/ecc",
+      "tier": "project",
+      "reason": "Large collection (68 agents, 293 skills, hooks, rules, AgentShield); a source of pieces, not an install",
+      "cost": "free",
+      "status": "later",
+      "rubric": {
+        "problem_fit": "Some pieces fit (AgentShield security scan, TDD rules)",
+        "overlap": "Overlaps almost everything already in the kit",
+        "context_cost": "Very high as a bulk install",
+        "run_cost": "Free",
+        "trust": "Very popular, active",
+        "reversibility": "Has an uninstall script; bulk installs are hard to unwind",
+        "license": "MIT"
+      },
+      "reviewed_version": "readme 2026-10-01 (structure and install sections only)",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "later",
+          "rationale": "Adopt single pieces with recorded source and version, starting with AgentShield in quality-gates; never a bulk install",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        }
+      ]
+    },
+    {
+      "name": "claude-mem",
+      "source": "github:thedotmack/claude-mem",
+      "tier": "global",
+      "reason": "Hook-based automatic memory across sessions",
+      "cost": "uses-claude-quota",
+      "status": "dropped",
+      "rubric": {
+        "problem_fit": "Long projects where context gets lost",
+        "overlap": "Notion (context store) and Claude's built-in memory",
+        "context_cost": "Hooks on every prompt and tool call",
+        "run_cost": "Hosted observer is a 14-day trial, then uses your Anthropic plan unless you subscribe",
+        "trust": "A third-party crypto token (CMEM) is endorsed by the author",
+        "reversibility": "Uninstall; data in ~/.claude-mem",
+        "license": "Apache-2.0"
+      },
+      "reviewed_version": "readme 2026-10-01",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "dropped",
+          "rationale": "Conflicts with \"free to run\" and raises trust concerns; Notion + Claude memory cover the need",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        }
+      ]
+    },
+    {
+      "name": "awesome-design",
+      "source": "github:gztchan/awesome-design",
+      "tier": "global",
+      "reason": "Curated design resource links for the user (not agent input)",
+      "cost": "free",
+      "status": "dropped",
+      "rubric": {
+        "problem_fit": "Inspiration for the user",
+        "overlap": "None",
+        "context_cost": "Not loaded by the agent",
+        "run_cost": "Free",
+        "trust": "Popular list, but last updated 2024-07-04",
+        "reversibility": "N/A",
+        "license": "None published"
+      },
+      "reviewed_version": "readme 2026-10-01",
+      "reviewed_on": "2026-10-01",
+      "verdicts": [
+        {
+          "date": "2026-10-01",
+          "status": "dropped",
+          "rationale": "Not a kit tool - kept as a personal bookmark only",
+          "evidence": "evals/trials/tool-review-2026-10-01.md"
+        }
+      ]
+    }
+  ]
+}

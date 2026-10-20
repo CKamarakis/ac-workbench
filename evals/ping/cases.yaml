@@ -1,0 +1,22 @@
+skill: ping
+cases:
+  - id: prints-version
+    description: The ping script runs from the plugin and prints the kit name and version
+    checks:
+      - kind: command-exit
+        command: node "{{kit}}/scripts/ping.mjs"
+        stdout_match: '^kit ok: kit \d+\.\d+\.\d+'
+  - id: skill-calls-plugin-root
+    description: The skill runs the script through CLAUDE_PLUGIN_ROOT, not a hard-coded path
+    checks:
+      - kind: content-match
+        path: '{{kit}}/skills/ping/SKILL.md'
+        pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/ping\.mjs'
+  - id: no-misleading-env-line
+    description: Ping doesn't print the unset shell variable (it misled an agent into reporting a problem), and the skill explains it
+    checks:
+      - { kind: command-exit, command: 'node "{{kit}}/scripts/ping.mjs" > out.txt' }
+      - { kind: content-match, path: out.txt, pattern: '^skills \(\d+\): ' }
+      - { kind: content-match, path: out.txt, pattern: 'not set', negate: true }
+      - { kind: content-match, path: '{{kit}}/skills/ping/SKILL.md', pattern: "Don't report it as a problem" }
+      - { kind: content-match, path: '{{kit}}/skills/ping/SKILL.md', pattern: 'task 2\.2', negate: true }

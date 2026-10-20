@@ -1,0 +1,73 @@
+{
+  "skill": "ping",
+  "date": "2026-10-18T14:05:07.591Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 1275,
+  "summary": {
+    "pass": 3,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "prints-version",
+      "outcome": "pass",
+      "duration_ms": 404,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-calls-plugin-root",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\.claude\\worktrees\\ui-flow-with-impeccable\\plugins\\kit/skills/ping/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/ping\\.mjs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "no-misleading-env-line",
+      "outcome": "pass",
+      "duration_ms": 868,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "out.txt matches /^skills \\(\\d+\\): /"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "out.txt does not match /not set/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\.claude\\worktrees\\ui-flow-with-impeccable\\plugins\\kit/skills/ping/SKILL.md matches /Don't report it as a problem/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\.claude\\worktrees\\ui-flow-with-impeccable\\plugins\\kit/skills/ping/SKILL.md does not match /task 2\\.2/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

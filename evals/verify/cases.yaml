@@ -1,0 +1,237 @@
+# Eval cases for /kit:verify (spec: quality-gates). The script runs for real in the sandbox (real npm).
+skill: verify
+vars:
+  v: '{{kit}}/scripts/verify.mjs'
+
+cases:
+  - id: passing-tests-pass
+    description: A web-ui project whose test script passes gets result pass and a report
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        expect: 0
+        stdout_match: 'verify add-x: PASS'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '^# Verify: add-x\r?\n\r?\nresult: pass' }
+
+  - id: failing-test-blocks
+    description: A failing required test is HARD, the result is fail, and status says so
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(2)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        expect: 1
+        stdout_match: 'HARD\s+T:test: npm run test failed \(exit 2\)'
+      - kind: command-exit
+        command: node "{{v}}" status --dir . --change add-x
+        stdout_match: 'add-x: fail'
+
+  - id: override-needs-reason
+    description: An override without a reason is refused; with one, the result is overridden
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(1)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{v}}" run --dir . --change add-x', expect: 1 }
+      - { kind: command-exit, command: 'node "{{v}}" override --dir . --change add-x --item T:test --reason " "', expect: 2 }
+      - kind: command-exit
+        command: 'node "{{v}}" override --dir . --change add-x --item T:test --reason "flaky upstream, tracked in #12"'
+        stdout_match: 'OVERRIDDEN'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '\| T:test \| flaky upstream, tracked in #12 \|' }
+
+  - id: skill-rules
+    description: The skill never overrides on its own, shows HARD first, and records findings through the script
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never override on your own' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*HARD items first\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'verify\.mjs" finding --dir \. --change <name> --source security' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: "Don't edit `verify.md` by hand" }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: "If `/security-review` can't run" }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never leave it unrecorded' }
+
+  - id: severity-mapping
+    description: Given a review with an injection finding and a naming nit, only the injection is recorded as high security
+    input:
+      prompt: "/kit:verify add-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: maps-severity
+            description: Exploitable issues are recorded as high security findings; style nits as low code findings
+          - name: no-self-override
+            description: Does not override a HARD item without the user's explicit request and reason
+
+  - id: browser-check-recorded-advisory
+    description: An on-request browser check records its issues as advisory, with screenshots, and the result stays pass (design-trial 1.3)
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{v}}" run --dir . --change add-x', expect: 0 }
+      - kind: command-exit
+        command: 'node "{{v}}" browser --dir . --change add-x --result issues --issue "close button overlaps the image" --issue "no focus trap" --shots browser/open.png'
+        stdout_match: 'PASS[\s\S]*advisory B1: browser check - close button overlaps the image[\s\S]*advisory B2: browser check - no focus trap'
+      - { kind: content-match, path: openspec/changes/add-x/verify.md, pattern: '## Browser check \(on request\)[\s\S]*- browser/open\.png' }
+
+  - id: browser-check-only-on-request
+    description: The skill runs a browser check only when the user asks, and never as HARD
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Only when the user asks\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Never as part of a default verify' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'always advisory and never block' }
+
+  # build-readiness 4.3: docs sync
+  - id: docs-scan-finds-unplanned-dependency
+    description: docs-scan reports when the docs stopped, the receipt items, and a dependency no artifact mentions
+    setup:
+      git_init: true
+      files:
+        package.json: '{ "scripts": { "test": "node -e \"0\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/design.md: "# Design\n\nUse Playwright for the speed test.\n"
+        openspec/changes/add-x/apply.md: "# Apply\n\n## Rulings made during apply\n\n1. The speed test runs its own dev server on port 3101.\n2. A corrupt stored body loads as an empty board.\n"
+    checks:
+      - { kind: command-exit, command: 'git -c user.email=t@t -c user.name=t add . && git -c user.email=t@t -c user.name=t commit -qm docs' }
+      - { kind: command-exit, command: 'node -e "require(''fs'').writeFileSync(''package.json'', JSON.stringify({scripts:{test:''x''},devDependencies:{''fake-indexeddb'':''^6'',playwright:''^1''}}))"' }
+      - kind: command-exit
+        command: node "{{v}}" docs-scan --dir . --change add-x
+        stdout_match: 'apply receipt:\s+2 items[\s\S]*added fake-indexeddb \(unplanned\), playwright;'
+
+  - id: docs-sync-skill-rules
+    description: The docs-sync step sorts, flags, writes only on a yes, and never blocks
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*How the build ran\*\*.*left out' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'is it what you want\?' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Write only on a yes\.\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'The docs sync never adds a HARD item' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'verify\.mjs" docs-sync --dir \. --change <name>' }
+
+  - id: docs-sync-sorts-receipt
+    description: Given a receipt with a process ruling and a "corrupt data loads empty" ruling, the first is left out and the second is flagged
+    setup:
+      git_init: true
+      files:
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/specs/board/spec.md: "## ADDED Requirements\n\n### Requirement: Load a board\nA saved board SHALL load with its items.\n\n#### Scenario: Load\n- **WHEN** the user opens a board\n- **THEN** its items appear\n"
+        openspec/changes/add-x/apply.md: "# Apply\n\n## Rulings made during apply\n\n1. The speed test runs its own dev server on port 3101.\n2. A corrupt stored body loads as an empty board and is logged.\n"
+    input:
+      prompt: "/kit:verify add-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: process-left-out
+            description: The port-3101 ruling is listed as left out (how the build ran), with nothing proposed for it
+          - name: corrupt-flagged
+            description: The corrupt-board ruling is flagged and asked as "is it what you want?" before any spec text is written
+          - name: no-hard
+            description: Nothing from the docs sync becomes a HARD item
+
+  - id: card-for-cross-feature-decision
+    description: A decision with depth that shapes several sub-features is also proposed as a foundation card (kit-docs, docs-sync "Foundation card proposals")
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*also\*\* propose a foundation card' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Only in a project that uses the living docs' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'status: replaced` with `replaced_by`, never deleting it' }
+
+  - id: no-card-for-single-feature
+    description: A decision with depth that affects only one sub-feature goes to design.md only
+    input:
+      prompt: "/kit:verify add-saving — the build split saves into chunks of 5,000 (affects Saving only)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: design-only
+            description: Proposes the split-saves decision for design.md, and proposes no foundation card
+
+  # build-safeguards 3.3 (spec: quality-gates "Scenario-to-test check", "Review against the spec")
+  - id: scenario-without-test-listed
+    description: A delta-spec scenario that no test names is listed as advisory; the result stays pass
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "none" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/specs/board/spec.md: "## ADDED Requirements\n\n### Requirement: Board\nThe board SHALL show stickies.\n\n#### Scenario: Empty board\n- **WHEN** there are no stickies\n- **THEN** a hint is shown\n"
+    checks:
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        expect: 0
+        stdout_match: 'scenario without a test - board: Empty board'
+
+  - id: spec-review-steps-in-skill
+    description: The skill checks scenarios on every change and runs kit:spec-reviewer only when the Safeguards choose it
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*Scenarios\*\* \(every change' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'only when the report.s Safeguards section lists it' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'kit:spec-reviewer' }
+      - { kind: content-match, path: '{{kit}}/agents/spec-reviewer.md', pattern: '^tools: Read, Grep, Glob$' }
+      # kit-debt-fixes L20: no shell, so verify hands it the diff as text
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'The reviewer has no shell, so you get the diff for it' }
+
+  - id: spec-review-not-run-when-not-chosen
+    description: With no Safeguards section, verify doesn't dispatch the spec reviewer and says it wasn't chosen
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "none" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/tasks.md: "- [x] 1.1 done\n"
+    input:
+      prompt: "/kit:verify add-x"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: no-spec-review
+            description: Doesn't dispatch kit:spec-reviewer; says the review against the spec wasn't chosen (no Safeguards section)
+          - name: scenarios-step
+            description: Still runs the scenario step (or says there are no scenarios)
+
+  # ui-flow-with-impeccable 3.2 (spec: quality-gates "UI review at verify")
+  - id: ui-review-step-in-skill
+    description: The skill runs critique + audit on the change's UI files only when chosen, with the fallbacks
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '\*\*UI review\*\* \(only when the report.s Safeguards section lists .ui-review.' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'the change.s UI files as the target' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '--how substitute' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'Impeccable not installed' }
+
+  - id: ui-context-missing-listed
+    description: With ui-review chosen and no DESIGN.md, verify lists the missing file and the command
+    setup:
+      git_init: true
+      files:
+        .claude/kit.json: '{ "project_type": "web-ui" }'
+        package.json: '{ "scripts": { "test": "node -e \"process.exit(0)\"" } }'
+        openspec/changes/add-x/proposal.md: "# P\n"
+        openspec/changes/add-x/design.md: "# Design\n"
+    checks:
+      - kind: command-exit
+        command: node "{{kit}}/scripts/ready.mjs" safeguards --dir . --change add-x --reach low --reach-why "one spec" --undo low --undo-why "revert" --safety low --safety-why "none" --ui-why "src/app/page.tsx"
+        stdout_match: 'UI review \(Impeccable critique \+ audit\)'
+      - kind: command-exit
+        command: node "{{v}}" run --dir . --change add-x
+        stdout_match: 'DESIGN\.md is missing for the UI review: offer /impeccable document first'
+  - id: browser-check-recommended-on-signals
+    description: 'a browser check is recommended (H:browser) on a new page or input handling in web-ui; offered, run only on a yes (browser-check-hint)'
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: '`H:browser`: "a browser check is worth it"' }
+      - { kind: content-match, path: '{{kit}}/skills/verify/SKILL.md', pattern: 'run it only on a yes' }
+      - { kind: content-match, path: '{{kit}}/scripts/verify.mjs', pattern: 'export function browserSignals' }

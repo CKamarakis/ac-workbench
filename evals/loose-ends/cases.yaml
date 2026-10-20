@@ -1,0 +1,48 @@
+# Eval cases for /kit:loose-ends (spec: loose-ends). Deterministic: the script in a sandbox, plus the skill's rules.
+skill: loose-ends
+vars:
+  le: '{{kit}}/scripts/loose-ends.mjs'
+
+cases:
+  - id: add-then-list-grouped
+    description: Items added through the script show grouped, important first, accepted under "nothing to do"
+    checks:
+      - { kind: command-exit, command: 'node "{{le}}" add --dir . --text "Delete the temp clone" --kind cleanup --origin chat', expect: 0 }
+      - { kind: command-exit, command: 'node "{{le}}" add --dir . --text "openspec not on agent PATH" --kind friction --origin chat --important --by agent --reason "costs time every session"', expect: 0 }
+      - { kind: command-exit, command: 'node "{{le}}" add --dir . --text "C9 count repeats reminder lines" --kind accepted --origin review', expect: 0 }
+      - kind: command-exit
+        command: node "{{le}}" list --dir .
+        expect: 0
+        stdout_match: 'must look at \(1\)\r?\n  ! L2 \[friction\] openspec not on agent PATH[\s\S]*might do \(1\)\r?\n    L1 \[cleanup\][\s\S]*nothing to do \(1\)\r?\n    L3 \[accepted\]'
+      - { kind: file-exists, path: knowledge/loose-ends.md }
+
+  - id: batch-add-all-or-nothing
+    description: An end-of-step batch with one bad item writes nothing
+    setup:
+      files:
+        batch.json: '[{"text":"a","kind":"check","origin":"verify"},{"text":"b","kind":"urgent","origin":"chat"}]'
+    checks:
+      - kind: command-exit
+        command: node "{{le}}" add --dir . --batch batch.json
+        expect: 1
+      - kind: command-exit
+        command: >-
+          node -e "process.exit(require('fs').existsSync('knowledge/loose-ends.md') ? 1 : 0)"
+        expect: 0
+
+  - id: unknown-kind-refused
+    description: An unknown kind is refused with the allowed list
+    checks:
+      - kind: command-exit
+        command: node "{{le}}" add --dir . --text x --kind urgent --origin chat
+        expect: 1
+
+  - id: skill-one-question-yes-only-owners
+    description: The skill asks once per step, writes only on a yes, points owned items to their owner, never ranks
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: 'ask \*\*once\*\*' }
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: "Write only on the user's yes" }
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: 'Leave out what has an owner' }
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: "Don't rank" }
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: 'Nothing put aside: ask nothing' }
+      - { kind: content-match, path: '{{kit}}/skills/loose-ends/SKILL.md', pattern: '\$\{CLAUDE_PLUGIN_ROOT\}/scripts/loose-ends\.mjs' }

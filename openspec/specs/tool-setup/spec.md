@@ -1,0 +1,85 @@
+# tool-setup Specification
+
+## Purpose
+One command brings a machine up to the kit's toolset, driven by the registry and safe to re-run, so starting or resuming a project never begins with manual installs.
+
+## Requirements
+
+### Requirement: One command installs the machine toolset from the registry
+The setup command SHALL check every registry entry with status `adopted` or `trial` and scope `machine`, and SHALL install each missing one using the entry's install instructions. Entries with status `dropped` or `later` SHALL NOT be installed. It SHALL end with a summary listing each entry as installed, already present, or failed.
+
+#### Scenario: Fresh machine
+- **WHEN** setup runs on a machine where none of the machine-scope tools are present
+- **THEN** each adopted or trial machine-scope tool is installed and the summary lists it as installed
+
+#### Scenario: Dropped tool not installed
+- **WHEN** a machine-scope registry entry has status `dropped`
+- **THEN** setup does not install it and does not list it as missing
+
+### Requirement: Setup is idempotent
+Running setup again with no registry change SHALL install nothing and SHALL report that nothing needs to be done.
+
+#### Scenario: Second run
+- **WHEN** setup runs twice in a row
+- **THEN** the second run reports every entry as already present and changes nothing
+
+### Requirement: Installs are confirmed and failures are isolated
+Before installing, setup SHALL list what it will install and wait for confirmation. A failed install SHALL be reported with the error and a suggested fix, and SHALL NOT stop the remaining installs.
+
+#### Scenario: One install fails
+- **WHEN** the install of one tool fails and two others are pending
+- **THEN** the two others are still installed and the summary shows the failure with a fix hint
+
+### Requirement: Workflow plugins are never enabled globally
+Machine scope SHALL be limited to command-line tools and known plugin marketplaces. The kit plugin itself is not machine scope: it is installed per project. Registry entries with scope `project`, the kit included, SHALL NOT be enabled in the user-level Claude Code settings by setup; they are enabled per project by the project starter.
+
+#### Scenario: Unrelated repository
+- **WHEN** setup has run and the user opens a Claude Code session in a repository the kit did not set up
+- **THEN** no project-scope workflow plugin from the registry is active in that session, and no kit skill is listed
+
+#### Scenario: Plugin found enabled for every session
+- **WHEN** a project-scope plugin from the registry is enabled in the user-level settings
+- **THEN** setup reports it as a warning with the fix (enable it per project instead) and does not change any settings without confirmation
+
+#### Scenario: Kit found installed at user level
+- **GIVEN** the kit is enabled in the user-level settings
+- **WHEN** setup runs
+- **THEN** it warns that the kit belongs per project, and gives the fix in a safe order: first install the kit at project scope in each project set up with the kit, then remove the user-level install; it changes no settings itself
+
+#### Scenario: Fresh machine gets the marketplace, not the kit
+- **GIVEN** a machine without the kit's marketplace
+- **WHEN** setup runs and the user confirms
+- **THEN** the kit's marketplace is added, and the kit plugin is not installed at user level
+
+### Requirement: Tools outside PATH are detected
+Setup SHALL treat a tool as present when it is installed in a known location outside the shell's PATH (such as the global npm folder or its standard install folder), and SHALL use that location rather than reinstalling. On macOS and Linux the known locations SHALL include the Homebrew folders (`/opt/homebrew/bin`, `/usr/local/bin`, `/home/linuxbrew/.linuxbrew/bin`) and `~/.local/bin`.
+
+#### Scenario: GitHub CLI installed but not on PATH
+- **WHEN** the GitHub CLI is installed in its standard folder but not on the Git Bash PATH
+- **THEN** setup reports it as present and does not reinstall it
+
+#### Scenario: Homebrew tool not on PATH
+- **GIVEN** a Mac where `gitleaks` is in `/opt/homebrew/bin` and that folder is not on the shell's PATH
+- **WHEN** setup runs
+- **THEN** it reports gitleaks as present and does not reinstall it
+
+### Requirement: Setup uses the current platform's install command
+Setup, the project starter and the prerequisite check SHALL take a tool's install command from the registry entry for the current platform, falling back to the entry's `all` command. On Windows the commands SHALL stay as they are today.
+
+#### Scenario: Mac install
+- **GIVEN** a Mac with Homebrew and without `jq`
+- **WHEN** the user runs `/kit:setup` and confirms
+- **THEN** setup runs `brew install jq` and lists jq as installed
+
+#### Scenario: Same command everywhere
+- **GIVEN** a Linux machine without OpenSpec, and an OpenSpec entry with only an `all` install command
+- **WHEN** setup runs
+- **THEN** it installs OpenSpec with that command
+
+### Requirement: Missing Homebrew is reported, not installed
+On macOS and Linux, when a missing tool's install command needs Homebrew and Homebrew isn't installed, setup SHALL NOT try to install Homebrew. It SHALL list the tool as failed with the hint to install Homebrew from https://brew.sh and re-run setup, and SHALL continue with the other tools.
+
+#### Scenario: Mac without Homebrew
+- **GIVEN** a Mac without Homebrew, missing `gh` and OpenSpec
+- **WHEN** setup runs
+- **THEN** gh fails with "install Homebrew from https://brew.sh, then re-run /kit:setup", and OpenSpec is still installed through npm

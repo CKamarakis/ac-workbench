@@ -1,0 +1,139 @@
+// Lane map: one owning tool (and skill) per workflow phase, from the registry (design D6; spec: skill-routing).
+// Zero dependencies. Usage: node lanes.mjs [registry.json] [--block]
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ACTIVE = ['adopted', 'trial'];
+const RANK = { adopted: 2, trial: 1 };
+export const BLOCK_START = '<!-- kit:routing:start -->';
+export const BLOCK_END = '<!-- kit:routing:end -->';
+
+const asList = v => (Array.isArray(v) ? v : v == null ? [] : [v]);
+
+/**
+ * Owner rule per phase, among active (adopted|trial) entries that list the phase:
+ *   1. a claimant that lists another claimant under `overlaps` defers to it
+ *   2. among the rest, adopted beats trial
+ *   3. still more than one -> conflict (owner null); none -> unowned
+ * Deferring claimants are kept as `alternatives`.
+ */
+export function laneMap(registry) {
+  const active = (registry.tools ?? []).filter(t => ACTIVE.includes(t.status));
+  const lanes = (registry.phases ?? []).map(phase => {
+    const claimants = active.filter(t => asList(t.phases).includes(phase));
+    const names = new Set(claimants.map(t => t.name));
+    let rest = claimants.filter(t => !asList(t.overlaps).some(o => names.has(o) && o !== t.name));
+    if (rest.length > 1) {
+      const top = Math.max(...rest.map(t => RANK[t.status]));
+      rest = rest.filter(t => RANK[t.status] === top);
+    }
+    const owner = rest.length === 1 ? rest[0] : null;
+    const view = t => ({ name: t.name, status: t.status, skill: t.skills?.[phase] ?? null });
+    return {
+      phase,
+      owner: owner ? view(owner) : null,
+      alternatives: claimants.filter(t => t !== owner && !rest.includes(t)).map(view),
+      conflict: rest.length > 1 ? rest.map(t => t.name) : [],
+    };
+  });
+  const skip = active.flatMap(t => asList(t.skip_skills).map(s => ({ tool: t.name, skill: s })));
+  return {
+    lanes,
+    unowned: lanes.filter(l => !l.owner && !l.conflict.length).map(l => l.phase),
+    conflicts: lanes.filter(l => l.conflict.length).map(l => ({ phase: l.phase, tools: l.conflict })),
+    skip,
+  };
+}
+
+export function formatLanes(map) {
+  const w = Math.max(5, ...map.lanes.map(l => l.phase.length));
+  const lines = ['Lane map (phase -> owner: skill)'];
+  for (const l of map.lanes) {
+    const own = l.owner ? `${l.owner.name}${l.owner.status === 'trial' ? ' (trial)' : ''}: ${l.owner.skill ?? '(no skill recorded)'}`
+      : l.conflict.length ? `CONFLICT: ${l.conflict.join(', ')}` : 'unowned';
+    const alt = l.alternatives.length ? `   [alt: ${l.alternatives.map(a => a.name).join(', ')}]` : '';
+    lines.push(`  ${l.phase.padEnd(w)}  ${own}${alt}`);
+  }
+  return lines.join('\n');
+}
+
+/** Knowledge folder and the Ready-PRD handoff to the proposal step (spec: project-starter, prd-authoring). */
+export function knowledgeSection(dir) {
+  const k = dir.replace(/\\/g, '/').replace(/\/+$/, '');
+  return [
+    '### Knowledge and PRDs',
+    '',
+    `- Notes, PRDs and assets live in \`${k}/\` (\`notes/\`, \`prds/\`, \`assets/\`). Never read \`${k}/archive/\`. Capture with \`/kit:capture\`, write PRDs with \`/kit:prd\`.`,
+    `- \`/opsx:propose\`: if a PRD in \`${k}/prds/\` has \`status: Ready\` and no \`change\`, use it as the main input. If there are several, ask which one, listing them most recently updated first (by \`git log -1 --format=%cI -- <file>\`, or the file's date if it has uncommitted changes). Add this line to the proposal: \`PRD: ${k}/prds/<slug>.md @ <commit>\`, where the commit is \`git log -1 --format=%h -- <file>\`, or \`uncommitted\` if the file has uncommitted changes.`,
+    "- After the proposal exists, offer to set the PRD's `change` to the change name and its status to `Building`. Change nothing in the PRD without a yes.",
+    // explore-stage D5 (spec skill-routing "Explore rule in the routing block").
+    `- Explore: a flow starts at \`/opsx:explore\` (capture only saves ideas). Notes are input an explore reads, never a step of their own. At the end of an explore that decided something or raised a question, save or update its explore record (\`${k}/explore/<slug>.md\`) with \`/kit:explore-record\` by default, without asking, and show what was written; the user can drop it. \`/kit:next\` and \`/kit:prd\` read these records.`,
+    // loose-ends D4 (spec skill-routing "Loose ends rule in the routing block").
+    `- Loose ends: during a step (\`/opsx:apply\`, \`/kit:verify\`, \`/opsx:archive\`, or a long chat), collect what you put aside (a check that belongs elsewhere, friction you worked around, debt, a review finding the user kept, cleanup, an idea out of scope). At the end of the step, offer them once as one numbered list through \`/kit:loose-ends\` (\`${k}/loose-ends.md\`); offer "seen again" for one that is already open. Point anything that belongs to a change's decisions, a PRD or the roadmap to that owner instead. Ask nothing when nothing was put aside.`,
+  ];
+}
+
+/** Library docs rule (followups D5c; spec: skill-routing "Library docs rule"). context7 through npx: no install, no sign-in. */
+/** Quality gates (quality-gates spec "Review owners"; build-readiness "Safeguards picked per change"). */
+export function qualityGatesSection() {
+  return [
+    '### Quality gates',
+    '',
+    '- Spec scenarios: when the PRD has Given/When/Then stories, write the scenarios from them; add a `- **GIVEN**` line whenever a behavior depends on a starting state.',
+    '- After planning is complete and before `/opsx:apply`, offer `/kit:ready`: it lists gaps, differences, points to confirm and new tools, and asks the decisions in one batch. It warns and never blocks.',
+    '- At `/opsx:apply`, follow the `## Safeguards` section of the change\'s `design.md`. Worktree chosen: create it from the current branch (`git worktree add .claude/worktrees/<change> -b wt/<change>`), enter it with `EnterWorktree`, give the user its full path, run scripts and CLIs there with literal paths (the isolation refuses commands built from variables), and after `/kit:verify` offer a fast-forward merge back into the branch, on a yes. Subagents chosen: build with Superpowers `subagent-driven-development`, `tasks.md` as the plan. No Safeguards section: build in the current branch, with no worktree and no subagents.',
+    '- Before `/opsx:archive`, run `/kit:verify`. A kit hook blocks the archive until the change has a passing verify report. Failing tests and high-severity security findings block; everything else is advice for the user.',
+    '- Override a blocking item only when the user explicitly asks, with their reason (`/kit:verify` records it).',
+  ];
+}
+
+export function libraryDocsSection() {
+  return [
+    '### Library docs',
+    '',
+    '- Before writing code against a library API you are not sure of for the version in this project (check `package.json`), look up current docs: `npx -y ctx7@latest library <name> "<question>"`, then `npx -y ctx7@latest docs <library-id> "<question>"`. No install or sign-in is needed.',
+    '- After a build, type or test error that comes from a library (for example "is not exported", "has no exported member"), look up the docs before trying another fix.',
+    '- If context7 reports a rate limit, tell the user and continue without it; a free sign-in raises the limit.',
+  ];
+}
+
+/** The managed CLAUDE.md block (spec: skill-routing "Projects receive routing rules"). */
+export function routingBlock(map, { kitVersion, knowledgeDir = null, libraryDocs = false, qualityGates = false } = {}) {
+  const rows = map.lanes.map(l => {
+    const use = l.owner ? (l.owner.skill ? `\`${l.owner.skill}\`` : `${l.owner.name} (no skill recorded)`)
+      : l.conflict.length ? `conflict: ${l.conflict.join(' / ')}, ask` : 'no owner yet, ask';
+    const alt = l.alternatives.map(a => (a.skill ? `\`${a.skill}\` (${a.name}, ${a.status})` : `${a.name} (${a.status})`)).join('; ');
+    return `| ${l.phase} | ${use} | ${alt || '-'} |`;
+  });
+  const skip = map.skip.length ? map.skip.map(s => `- Don't use ${s.skill.includes(' ') ? s.skill : `\`${s.skill}\``} (${s.tool})`).join('\n') : '- (none)';
+  return [
+    BLOCK_START,
+    `## Workflow routing${kitVersion ? ` (kit ${kitVersion})` : ''}`,
+    '',
+    'Managed by the kit: edits inside this block are replaced when `/kit:start` re-syncs.',
+    'Use one owner per phase. Only switch to an alternative when the change is big or risky, and say so.',
+    '',
+    '| Phase | Use | Alternative |',
+    '|---|---|---|',
+    ...rows,
+    '',
+    '**Skip:**',
+    skip,
+    ...(knowledgeDir ? ['', ...knowledgeSection(knowledgeDir)] : []),
+    ...(libraryDocs ? ['', ...libraryDocsSection()] : []),
+    ...(qualityGates ? ['', ...qualityGatesSection()] : []),
+    BLOCK_END,
+  ].join('\n');
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  const file = args.find(a => !a.startsWith('--')) ?? path.join(KIT, 'data', 'toolkit.json');
+  const map = laneMap(JSON.parse(fs.readFileSync(file, 'utf8')));
+  if (args.includes('--block')) {
+    const version = JSON.parse(fs.readFileSync(path.join(KIT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
+    console.log(routingBlock(map, { kitVersion: version, knowledgeDir: 'knowledge', libraryDocs: true, qualityGates: true }));
+  } else console.log(formatLanes(map));
+}

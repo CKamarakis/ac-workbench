@@ -1,0 +1,265 @@
+{
+  "skill": "verify",
+  "date": "2026-10-12T13:29:55.852Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 5817,
+  "summary": {
+    "pass": 8,
+    "fail": 0,
+    "pending": 2
+  },
+  "cases": [
+    {
+      "id": "passing-tests-pass",
+      "outcome": "pass",
+      "duration_ms": 1069,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /^# Verify: add-x\\r?\\n\\r?\\nresult: pass/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "failing-test-blocks",
+      "outcome": "pass",
+      "duration_ms": 1338,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "override-needs-reason",
+      "outcome": "pass",
+      "duration_ms": 1483,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 2 (expected 2)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /\\| T:test \\| flaky upstream, tracked in #12 \\|/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never override on your own/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*HARD items first\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /verify\\.mjs\" finding --dir \\. --change <name> --source security/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Don't edit `verify.md` by hand/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /If `/security-review` can't run/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never leave it unrecorded/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "severity-mapping",
+      "outcome": "pending",
+      "duration_ms": 1,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "maps-severity",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-self-override",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "browser-check-recorded-advisory",
+      "outcome": "pass",
+      "duration_ms": 1185,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "openspec/changes/add-x/verify.md matches /## Browser check \\(on request\\)[\\s\\S]*- browser/open\\.png/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "browser-check-only-on-request",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*Only when the user asks\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /Never as part of a default verify/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /always advisory and never block/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "docs-scan-finds-unplanned-dependency",
+      "outcome": "pass",
+      "duration_ms": 682,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "docs-sync-skill-rules",
+      "outcome": "pass",
+      "duration_ms": 1,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*How the build ran\\*\\*.*left out/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /is it what you want\\?/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /\\*\\*Write only on a yes\\.\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /The docs sync never adds a HARD item/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "../ac-workbench\\plugins\\kit/skills/verify/SKILL.md matches /verify\\.mjs\" docs-sync --dir \\. --change <name>/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "docs-sync-sorts-receipt",
+      "outcome": "pending",
+      "duration_ms": 56,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "process-left-out",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "corrupt-flagged",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-hard",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

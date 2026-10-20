@@ -1,0 +1,39 @@
+---
+name: next
+description: Suggest the next workflow step for this project (which skill or command to run, and why) from its OpenSpec state and the kit's lane map. Use when the user asks what's next, what to do now, where they are, or which skill to use.
+---
+
+# Kit next
+
+Tells the user the next step and the skill to use, with a one-line reason. The owners come from the kit's lane map, so the answer follows the registry and is never guessed.
+
+It checks the project's PRDs (in the knowledge folder) before the OpenSpec state: a Ready PRD with no change, a PRD that changed since its change was planned, an archived change whose PRD may be done or may continue in another change, or notes with no PRD yet.
+
+## Steps
+
+1. Run from the project folder:
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/next.mjs" --dir .
+   ```
+2. Reply in a few lines:
+   - **Next:** the `use` value as the command to run, plus the change name if there is one.
+   - **Why:** the reason line.
+   - `prd`: name the PRD file when the script prints it.
+   - `then`, `next artifact`, the alternative for big or risky changes, other active changes, other Ready PRDs: mention them only when the script prints them.
+   - `open` (decisions still open in the change), `later` (PRD open questions put off for later), `waiting` (a Ready PRD that waits until the active change is done) and `archived` (decisions still open in archived changes): add each as a one-line reminder after the next step. They never replace the next step.
+   - `WARNING` lines (an invalid PRD, a check git couldn't make): show them as is.
+   - `choose` (several changes are active): ask which one with **AskUserQuestion** (one option per change), then run the script again with `--change <name>` and reply with that change's step.
+   - `choose` with "explores are open": ask which explore (one option per record), then run again with `--explore <slug>`.
+   - An explore step (`record:` line): `/opsx:explore` names the open questions to settle; `/kit:prd` means the record is ready to become a PRD.
+   - A roadmap step ("Next on the roadmap: ..." or "... is done. Next: ..."): name it as given. When a milestone is done, offer `/kit:roadmap` to mark it done; never tick, finish or start a milestone yourself.
+   - Notes never come up as a step: a note is input an explore reads.
+   - Next is `/kit:capture` ("Nothing here yet", a new project): give both first steps the reason names, each with what it's for: `/kit:capture` to save ideas and notes, or `/opsx:explore` to explore an idea you already have, plus the count of items left for later if the reason has one.
+   - Next is `/kit:status` ("Nothing open"): say nothing is in progress, give the count of items left for later if the reason has one, and say to run `/kit:status` to see what's next, or `/kit:roadmap` to change the order. Next works inside one item; picking the item is status's job.
+3. Don't run the suggested step yourself. Offer to run it; the user decides. This includes `/kit:status`: never run it automatically.
+   - **Never change a PRD's status here**, not even to Shipped. Offer `/kit:prd` for that; the user says yes there.
+
+## Notes
+
+- "No OpenSpec here yet": suggest `/kit:start`.
+- "no owner yet" for a phase: say so plainly, and that the kit registry decides owners (raise it as an issue at github.com/CKamarakis/ac-workbench/issues).
+- If the script fails (e.g. OpenSpec missing), show the error and suggest `/kit:setup`.

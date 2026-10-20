@@ -79,10 +79,8 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-Kit 0.21.0 (2026-10-20): flexible-handoffs. Enter the kit at any step; handoffs stay right. /kit:capture only saves, /kit:status shows a plain notes count, /kit:next says nothing about notes, propose takes one PRD (most recent or the user's pick, never a stop).
-The repo restarted public with one commit (M13 T7 done); a word-list guard blocks real names at commit.
-M13 T6 is now the test sheet (docs/test-sheet.md), run by hand on a real project's copy; the 36 written cases are parked.
-Next: M13 T1, T3, T4 (quick), then T6 (the user runs the sheet), T2 (screenshot), T5 (CHANGELOG, tag). M12 T2 waits for time and /cost.
+Kit 0.21.1 (2026-10-20). M12 done (T2 closed without time and tokens; findings fixed in 0.20.1). The repo restarted public with one commit; a word-list guard blocks real names at commit.
+M13: T1 license, T3 issue templates, T4 descriptions, T7 privacy done. Left: T6 (the user runs docs/test-sheet.md on an Acme copy, recording time and /cost), T2 README (needs the user's screenshot), T5 CHANGELOG and the v1.0.0-rc.1 tag (asked before it goes public).
 
 ## Waiting on you
 

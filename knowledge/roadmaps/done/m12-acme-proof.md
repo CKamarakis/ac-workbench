@@ -1,7 +1,7 @@
 ---
 id: M12
 title: Acme proof
-status: paused
+status: done
 notes:
   - notes/kit-workflow/2026-10-17-kit-judge-keyword-criteria-are-unreliable.md
 changes:
@@ -15,7 +15,7 @@ v1 phase C: prove the kit on a real project, with time and tokens.
 ## Tasks
 
 - [x] T1 Upgrade Acme to the current kit
-- [ ] T2 One real feature end to end, with time and tokens
+- [x] T2 One real feature end to end, with time and tokens
 - [x] T3 /kit:docs on Canvas
 - [-] T4 SuperSpec verdict (quality per cost); judge criteria with it (dropped 2026-10-18: SuperSpec dropped (drift log 2026-10-18))
 - [x] T5 Browser-check thresholds for /kit:verify from Acme changes

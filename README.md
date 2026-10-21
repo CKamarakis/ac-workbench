@@ -1,61 +1,79 @@
 # ac-workbench
 
-A personal Claude Code kit for building products: from an idea you dictate to a PRD, a plan and working code, with the right tools set up per project and evidence for every tool choice.
+A Claude Code kit for building products. You bring ideas; it helps you and Claude turn them into a PRD, a reviewed plan and working, tested code, with the right tools set up per project.
 
-The repo is a Claude Code plugin marketplace with one plugin, `kit`.
+**Who it's for:** someone who builds products with Claude Code (a product manager, a founder, a solo builder) and wants more than "just ask Claude": a written plan before the build, the open decisions asked before they're made silently, tests and reviews before anything is called done, and a record of *why* things are the way they are.
+
+![The docs page the kit builds for a project: each feature, its user stories and the why behind it](docs/images/docs-page.png)
+
+*The docs page the kit builds for a project (here, for the kit itself): each feature, its user stories, and the reasons behind it.*
+
+## Status
+
+**v1 release candidate.** The kit is used daily by its author and has been run end to end on a real web app.
+- Tested on **Windows** with Claude Code and Node. macOS and Linux install paths exist but haven't been run on a real machine yet.
+- Built for one person per repo.
+- Feedback is welcome: [open an issue](https://github.com/CKamarakis/ac-workbench/issues/new/choose).
+
+## Quickstart
+
+You need [Claude Code](https://code.claude.com), Node and git.
+
+1. **Once per machine,** add the kit's marketplace (this enables nothing by itself):
+   ```bash
+   claude plugin marketplace add CKamarakis/ac-workbench
+   ```
+2. **In your project folder,** install the kit for this project only:
+   ```bash
+   claude plugin install kit@ac-workbench --scope project
+   ```
+3. **Start Claude Code there** and run:
+   ```
+   /kit:setup    first time on this machine: checks and installs git, gh, jq, gitleaks, OpenSpec (asks first)
+   /kit:start    sets up this project: asks the project type, shows every change as a diff, writes on your yes
+   /kit:next     tells you what to do next, any time
+   ```
+
+## The happy path
+
+You can start at any step: an idea, an old PRD, a change half done. Each step knows what to take from the one before.
 
 ```
- idea (/voice or text)
-    |  /kit:capture
-    v
- knowledge/notes/  (context, never a step)
-    |  /opsx:explore   (the flow starts here: think it through, decide)
-    v
- knowledge/explore/<slug>.md  (saved by default: notes read, decisions, open questions; /kit:explore-record)
-    |  no open questions
-    v
- /kit:prd  -->  knowledge/prds/<slug>.md   (you edit freely; status Draft..Ready)
-                                            |  web-ui + a screen: offers /impeccable shape -> brief in UX notes
-                                            |  Ready
-                                            v
-                         /opsx:propose  -->  OpenSpec change
-                                            |
-                         /kit:ready    -->  gaps, differences, points to confirm, new tools
-                                            |  + safeguards: reach / undo / safety -> worktree, spec review (design.md)
-                                            |  + web-ui: UI states and copy; ui-review when the plan names UI files
-                                            |  you decide in one batch ("Later" stays open); never blocks
-                         /opsx:apply   -->  code + tests (in a worktree when the safeguards say so)
-                                            |
-                         /kit:verify   -->  tests + security + code review + every scenario has a test
-                                            + review against the spec / ui-review (when chosen) + docs sync  -->  verify.md
-                                            |  passes (or you override with a reason)
-                         /opsx:archive -->  PRD Shipped; rebuild the docs page into the archive commit?
-                                            |
-                         /kit:docs     -->  knowledge/docs/index.html: what's built, why, what's undecided
- Back after a while?    /kit:status  -->  what it is, what's built, what's under way, what's next; which item
-                         /kit:next    -->  the next stage inside that item; nothing open: the roadmap's next step
- Left something behind?  /kit:loose-ends  -->  checks, friction, debt, kept findings, cleanup, ideas: by importance, never by date
+ an idea  -->  /opsx:explore    think it through; decisions and open questions are saved
+          -->  /kit:prd         a PRD from your notes and that record (optional)
+          -->  /opsx:propose    the plan: proposal, specs with Given/When/Then, design, tasks
+          -->  /kit:ready       the decisions the build would otherwise make alone, asked in one batch;
+                                how careful the build should be (worktree, review against the spec)
+          -->  /opsx:apply      code and tests
+          -->  /kit:verify      tests, security and code review, every scenario mapped to a test
+          -->  /opsx:archive    done; specs updated; /kit:docs refreshes the docs page
 ```
 
-## Install
+Lost? `/kit:status` says where the project stands; `/kit:next` says the next step.
 
-Needs Node and Claude Code. Once per machine, add the kit's marketplace (this enables nothing by itself):
+![/kit:status: what the project is, what's built, what's under way and what's next](docs/images/kit-status.png)
 
-```bash
-claude plugin marketplace add CKamarakis/ac-workbench
-```
+## Limits
 
-The kit is installed **per project**, never for the whole machine, so it stays out of repos that aren't set up with it. In each project folder:
+- **Windows-tested only** so far (see Status).
+- **Project types:** `web-ui` (web apps, with UI review and browser checks on request) and `none` (everything else). No Python or backend-specific type yet.
+- **It costs tokens.** Reviews, the readiness check and docs drafting run the model. Skills are only loaded when you call them.
+- **One person per repo.** Two people on one repo will get conflicts in the kit's decision records and docs page.
+- **Planning runs on [OpenSpec](https://github.com/Fission-AI/OpenSpec),** which `/kit:setup` installs. The `/opsx:` commands are OpenSpec's.
 
-```bash
-claude plugin install kit@ac-workbench --scope project
-```
+## Coming next
 
-The first time on a machine, run `/kit:setup` in a session there. It installs the machine tools (git, gh, jq, gitleaks, OpenSpec) and asks before installing anything. Details: [`docs/setup.md`](docs/setup.md).
+After v1: Python and Node backend project types, mobile testing, a dashboard across projects, docs and specs drafted from an existing codebase, a suggestion for how to deploy and share your app, CI on three systems, help with notes (new, orphaned or old ones), and small teams.
 
-The install is recorded in the project's `.claude/settings.json`. Someone who clones the project runs the same install command; until then Claude Code tells them the kit isn't installed there. `claude plugin list` shows the kit once per project it's installed in; `claude plugin list --json` names each folder (`projectPath`).
+---
 
-The kit loads the next time you start Claude Code in that folder (or run `/reload-plugins` in a session that's already open).
+# Reference
+
+## Install details
+
+The kit is installed **per project**, never for the whole machine, so it stays out of repos that aren't set up with it. The install is recorded in the project's `.claude/settings.json`. Someone who clones the project runs the same install command; until then Claude Code tells them the kit isn't installed there. `claude plugin list` shows the kit once per project it's installed in; `claude plugin list --json` names each folder (`projectPath`).
+
+The kit loads the next time you start Claude Code in that folder (or run `/reload-plugins` in a session that's already open). Machine tools: [`docs/setup.md`](docs/setup.md).
 
 ### Update the kit
 
@@ -66,7 +84,7 @@ claude plugin marketplace update ac-workbench
 claude plugin update kit@ac-workbench --scope project
 ```
 
-Restart Claude Code, then run `/kit:start` in each project to re-sync.
+Use `update`: `install` on a project that already has the kit keeps the old version. Restart Claude Code, check the version with `/kit:ping`, then run `/kit:start` to re-sync. It offers to commit the setup on its own, so it doesn't mix with your work.
 
 ### Remove the kit from a project
 
@@ -76,13 +94,15 @@ claude plugin uninstall kit@ac-workbench --scope project
 
 `--scope project` matters: without it, the command looks at your user-level plugins, not this project's. Then remove what the kit added, if you want: the block between `kit:routing:start` and `kit:routing:end` in `CLAUDE.md`, the block between `kit:start` and `kit:end` in `.gitignore`, and `.claude/kit.json`. Your own files stay yours: `knowledge/` (notes, PRDs), `docs/project-context.md`, and `openspec/` (keep it if you keep using OpenSpec).
 
-## Use it in a project
+## What `/kit:start` does
 
-After the install above, run `/kit:start` once in the project folder (again only to re-sync after a kit update).
+Run it once in the project folder, and again only to re-sync after a kit update.
 - It asks **one question**: the project type. For a Next.js app it recommends `web-ui`.
 - It sets up git, OpenSpec, the `CLAUDE.md` workflow rules, a project context doc, the `knowledge/` folder, and the tools for that type, all for this project only.
 - Changes to files you already have are shown as diffs and need your yes.
 - Heavier tools (Superpowers) are listed as **available on demand**. They're added when a change needs them, not up front.
+
+## Skills
 
 | Skill | What it does |
 |---|---|
@@ -104,7 +124,7 @@ After the install above, run `/kit:start` once in the project folder (again only
 
 Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive`.
 
-### Quality gates
+## Quality gates
 
 - **Block:** a failing required test, a missing required test command (for `web-ui`), a high-severity security finding. You can override one, with a reason that is recorded.
 - **Advise:** everything else (review comments, changed files without tests, optional test suites, the docs sync, open decisions). Your call.
@@ -118,7 +138,7 @@ Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/
 
 The hooks ship in the kit plugin and do nothing outside kit projects.
 
-### The knowledge folder
+## The knowledge folder
 
 ```
  knowledge/
@@ -132,7 +152,7 @@ The hooks ship in the kit plugin and do nothing outside kit projects.
 
 Plain Markdown in your repo: no external service, no quota. Notes you add by hand as `.md` are picked up as they are.
 
-### Harness review
+## Harness review
 
 `/kit:harness-review` checks how a project is set up for Claude Code (CLAUDE.md, rules, skills, hooks, permissions, MCP servers, plugins, auto memory). It draws a map of the setup, rates eight layers (context, tools, memory, loops, verification, guardrails, feedback, observability) as OK, PARTIAL or GAP, and ends with at most three fixes and why they matter. It works in any Claude Code project, with or without the rest of the kit, and changes nothing; it points to Claude Code's own `/doctor prompt-audit` and `/skill-doctor` where they go deeper.
 
@@ -177,3 +197,7 @@ npm run registry     # validate toolkit.yaml, regenerate plugins/kit/data/toolki
 - **Decisions and context:** [`docs/project-context.md`](docs/project-context.md).
 - **Planned and active changes:** [`openspec/changes/`](openspec/changes/).
 - **Secret scanning:** commits pass a gitleaks pre-commit hook. Enable it once per clone with `git config core.hooksPath .githooks`.
+
+## License
+
+MIT, see [`LICENSE`](LICENSE).

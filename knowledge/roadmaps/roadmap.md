@@ -79,8 +79,9 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-Kit 0.21.1 (2026-10-20). M12 done (T2 closed without time and tokens; findings fixed in 0.20.1). The repo restarted public with one commit; a word-list guard blocks real names at commit.
-M13: T1 license, T3 issue templates, T4 descriptions, T7 privacy done. Left: T6 (the user runs docs/test-sheet.md on an Acme copy, recording time and /cost), T2 README (needs the user's screenshot), T5 CHANGELOG and the v1.0.0-rc.1 tag (asked before it goes public).
+Kit 0.21.1. M13: T1, T2 (README for strangers), T3, T4, T7 done; T5 CHANGELOG written, the v1.0.0-rc.1 tag waits.
+T6: the user is running the kit on the real project (2026-10-21), at propose. Findings so far: /kit:start asks the type again on re-sync; /kit:docs first run needed 29 approvals (want one yes and parallel drafting); the docs page shows backticks literally.
+Next: finish the run, one change with its fixes, then the tag. Then M14.
 
 ## Waiting on you
 

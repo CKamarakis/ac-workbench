@@ -6,6 +6,7 @@ changes:
   - public-repo-scrub
   - flexible-handoffs
   - release-basics
+  - release-docs
 ---
 
 v1 phase D: everything a stranger needs to install and trust the kit.
@@ -13,7 +14,7 @@ v1 phase D: everything a stranger needs to install and trust the kit.
 ## Tasks
 
 - [x] T1 MIT license
-- [ ] T2 README for strangers (who, quickstart, screenshot, status, limits, coming next, happy path)
+- [x] T2 README for strangers (who, quickstart, screenshot, status, limits, coming next, happy path)
 - [x] T3 GitHub issue templates
 - [x] T4 Honest plugin descriptions
 - [ ] T5 CHANGELOG and tags
@@ -28,3 +29,5 @@ v1 phase D: everything a stranger needs to install and trust the kit.
 
 - **Delivers:** MIT license; README for strangers (who it's for, quickstart, screenshot, status table, limits, coming next); GitHub issue templates; honest plugin descriptions; CHANGELOG and tags; judgment evals scored once; a privacy read of the public repo
 - **Exit criteria:** Tag `v1.0.0-rc.1`
+
+- 2026-10-21, T5: CHANGELOG.md written (0.1.0 to 0.21.1). The v1.0.0-rc.1 tag waits for T6 (the user's run on the real project) and one change with its fixes: the type question on re-sync, one yes for a big /kit:docs first run with parallel drafting, backticks shown literally on the docs page.

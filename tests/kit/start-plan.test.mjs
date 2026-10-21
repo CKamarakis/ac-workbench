@@ -355,3 +355,12 @@ test('the kit is a per-project tool: present when the project settings enable it
     assert.match(formatPlan(moved), /once every kit project has its own[^\n]*claude plugin uninstall kit@ac-workbench --scope user/);
   }
 });
+
+// rc-fixes (spec: project-starter "Saved type reused")
+test('project-starter: Saved type reused (savedType from .claude/kit.json; none on a first setup)', async () => {
+  const { savedType } = await import('../../plugins/kit/scripts/start-plan.mjs');
+  assert.equal(savedType(null), undefined);
+  assert.equal(savedType({ kit_version: '0.1.0' }), undefined);
+  assert.equal(savedType({ project_type: 'web-ui' }), 'web-ui');
+  assert.equal(savedType({ project_type: null }), 'none');
+});

@@ -1,12 +1,13 @@
 ---
 id: M13
 title: Release prep
-status: planned
+status: done
 changes:
   - public-repo-scrub
   - flexible-handoffs
   - release-basics
   - release-docs
+  - rc-fixes
 ---
 
 v1 phase D: everything a stranger needs to install and trust the kit.
@@ -17,8 +18,8 @@ v1 phase D: everything a stranger needs to install and trust the kit.
 - [x] T2 README for strangers (who, quickstart, screenshot, status, limits, coming next, happy path)
 - [x] T3 GitHub issue templates
 - [x] T4 Honest plugin descriptions
-- [ ] T5 CHANGELOG and tags
-- [ ] T6 Test sheet (docs/test-sheet.md) run once on a real project's copy
+- [x] T5 CHANGELOG and tags
+- [x] T6 Test sheet (docs/test-sheet.md) run once on a real project's copy
 - [x] T7 Privacy read of the public repo
 
 ## Notes
@@ -31,3 +32,5 @@ v1 phase D: everything a stranger needs to install and trust the kit.
 - **Exit criteria:** Tag `v1.0.0-rc.1`
 
 - 2026-10-21, T5: CHANGELOG.md written (0.1.0 to 0.21.1). The v1.0.0-rc.1 tag waits for T6 (the user's run on the real project) and one change with its fixes: the type question on re-sync, one yes for a big /kit:docs first run with parallel drafting, backticks shown literally on the docs page.
+- 2026-10-21, also for that fix change: the pre-commit hook doesn't read text metadata inside images (PNG text chunks, JPEG EXIF/XMP), where a path or name could hide; and strip the editor metadata from docs/images/kit-status.png (editor name and time zone only, nothing private).
+- 2026-10-21, T6 closed (the user: "wrap this up"): the run on the real project went from setup through verify. Its findings were fixed in rc-fixes; /kit:verify's 10+ minutes is M14 T4. Time and /cost not recorded. Tag v1.0.0-rc.1 (the M13 exit) set with rc-fixes.

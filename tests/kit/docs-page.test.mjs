@@ -129,3 +129,14 @@ test('C5: product cards are anchored by product and slug; short links still reso
 test('the page script opens every collapsed product around the current link', () => {
   assert.match(renderPage(model()), /links\[j\]\.setAttribute\('aria-current','page'\);for\(var p=links\[j\]\.parentElement;p;p=p\.parentElement\)if\(p\.tagName==='DETAILS'\)p\.open=true;/);
 });
+
+test('rc-fixes: `code` in How it works, Why and cards renders as code, still escaped, card links kept', () => {
+  const m = model();
+  const p = m.pages['canvas/stickies'];
+  p.how = 'Run `/kit:ready` <b>first</b>.';
+  p.requirements.find(r => r.why?.length).why[0].text = 'Saved by `save()`; see [[acme-canvas]].';
+  const html = renderPage(m);
+  assert.match(html, /Run <code>\/kit:ready<\/code> &lt;b&gt;first&lt;\/b&gt;\./);
+  assert.match(html, /Saved by <code>save\(\)<\/code>; see <a href="#foundations\/acme-canvas">acme-canvas<\/a>\./);
+  assert.doesNotMatch(html, /`\/kit:ready`/);
+});

@@ -19,6 +19,14 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/docs.mjs" build --dir .
 
 1. **Scan:** `docs.mjs scan --dir . --json`. It lists notes that are missing or stale, tools in `package.json` that the inventory doesn't cover (and inventory tools that are gone), the foundation cards found, and whether the page is older than the newest archive.
 2. **Nothing to draft** (no missing or stale notes, no unlisted or gone tools): run `build` and say in one line that the page is rebuilt. Ask nothing.
+2b. **A big batch: one yes, drafted in parallel** (spec: living-docs "One yes for a big batch"). With more than 3 items to draft (typical on a project's first run, when it has history), don't ask per draft:
+   - List the items in your message, one line each with its kind and the path it will be written to. Then ask **once** with **AskUserQuestion**: "Write all N (Recommended)", "One by one" (steps 3-6 as below), "Not now".
+   - **Write all:** draft in parallel with the **Agent** tool, in two rounds, all agents of a round dispatched in one message:
+     1. **One agent per capability.** Give it the paths from step 3 for that capability and the note format from step 4. It writes `knowledge/docs/<path>.md`. It returns the card candidates it found (title, the decisions behind it, the capabilities it affects) and the tools it saw.
+     2. **One agent per card**, after merging duplicate candidates. Give it the card format and its sources. It writes the card. The tools inventory is one more agent in this round.
+     Without the Agent tool, draft the same items one after another. Either way, the rules below still hold (no invented reasons).
+   - Then **build** (step 7) and report: what was written, one line per file, and "Review them on the page or with `git diff`; edit or delete any you don't want. Nothing is committed."
+   - Steps 5-6 (a question per draft) apply to "One by one" and to batches of 3 or fewer.
 3. **Read the sources** for each item: the capability's `openspec/specs/<path>/spec.md`, the archived changes that touched it (`openspec/changes/archive/*/specs/<path>/`, their `proposal.md` and `design.md`), and its existing note when stale.
 4. **Draft**, in these formats, written for the user, not for engineers:
    - **Capability note** `knowledge/docs/<path>.md`:
@@ -65,6 +73,6 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/docs.mjs" build --dir .
 ## Rules
 
 - Never edit specs, archived changes or `decisions.md`; the page shows them as they are.
-- Never write a file the user hasn't said yes to.
+- Never write a file the user hasn't said yes to: a yes per draft, or the one "Write all" for a big batch.
 - Don't invent reasons. If the sources don't say why, leave the why out.
 - Don't commit. During an archive, the archive step decides whether the page goes into the archive commit.

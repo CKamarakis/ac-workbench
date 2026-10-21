@@ -177,6 +177,12 @@ export function aboutAction(id, knowledgeDir = DEFAULT_DIR) {
   return a ? { about: a[0], recommend: a[1], why: a[2] } : {};
 }
 
+/** The type a previous setup saved in .claude/kit.json ('none' when it chose none); undefined on a first setup (rc-fixes). */
+export function savedType(stamp) {
+  if (!stamp || !Object.hasOwn(stamp, 'project_type')) return undefined;
+  return stamp.project_type ?? 'none';
+}
+
 /** Project types with the tools each adds, and a recommendation from the project's config files. */
 export function typeOptions(registry, dir) {
   let files = [];
@@ -282,7 +288,7 @@ export function planProject({ dir, type = null, optIn = [], registry = loadRegis
   for (const a of actions) if (a.kind === 'file') Object.assign(a, aboutAction(a.id, knowledgeDir));
   const changes = actions.filter(a => !['same', 'keep'].includes(a.action)).length + tools.filter(t => ['install', 'update'].includes(t.action)).length;
   const conflicts = actions.filter(a => a.action === 'conflict').length;
-  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, offeredTools: offeredTools(registry, offered), types: projectTypes(registry), typeOptions: typeOptions(registry, abs), warnings, docsLater: !fs.existsSync(path.join(abs, knowledgeDir, 'docs')), roadmapLater: !fs.existsSync(path.join(abs, knowledgeDir, 'roadmaps', 'roadmap.md')), changes, conflicts };
+  return { project, dir: abs, knowledgeDir, type, optIn: [...optIn].sort(), kitVersion: version, actions, tools, offered, offeredTools: offeredTools(registry, offered), types: projectTypes(registry), typeOptions: typeOptions(registry, abs), savedType: savedType(stampCur), warnings, docsLater: !fs.existsSync(path.join(abs, knowledgeDir, 'docs')), roadmapLater: !fs.existsSync(path.join(abs, knowledgeDir, 'roadmaps', 'roadmap.md')), changes, conflicts };
 }
 
 export const CONTEXT_LINE = 'Project context, decisions and open ideas: docs/project-context.md. Read it before any proposal.';

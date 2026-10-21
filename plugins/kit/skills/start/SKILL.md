@@ -5,7 +5,7 @@ description: Set up or re-sync the current project with the kit - git, .gitignor
 
 # Kit start
 
-Sets up **this folder** as a kit project, or re-syncs one. Run it once per project (and again only to re-sync after a kit update). **It asks one setup question: the project type.** On a fresh setup it then offers to fill the project context doc, which can be skipped. It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session. That includes the kit itself: a project that still runs on a user-level kit gets its own install in the plan.
+Sets up **this folder** as a kit project, or re-syncs one. Run it once per project (and again only to re-sync after a kit update). **On a first setup it asks one question: the project type** (a re-sync reuses the saved one). On a fresh setup it then offers to fill the project context doc, which can be skipped. It never overwrites or deletes the user's files: every change to an existing file is shown as a diff and needs a yes. Tools are installed **for this project only**, never for every session. That includes the kit itself: a project that still runs on a user-level kit gets its own install in the plan.
 
 Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project folder (`--dir .`).
 
@@ -20,10 +20,11 @@ Scripts live at `${CLAUDE_PLUGIN_ROOT}/scripts/`. Run them from the project fold
    - **Offer setup once per run.** If the check still reports the same tool after `/kit:setup` (on Windows a new install is often not on this session's PATH yet), don't offer it again: say which tool is still not found and that a new session usually sees it, then stop on `BLOCKED` or go on for a machine tool.
    - `WARNING`: show it as is.
 
-2. **Ask the one question: the project type.** Run the plan once with `--type none --json` (step 3's command) to get `typeOptions`; the text comes from there, never from memory.
+2. **Ask the one question: the project type.** Run the plan once with `--type none --json` (step 3's command) to get `typeOptions` and `savedType`; the text comes from there, never from memory.
    - **Ask with the AskUserQuestion tool** (clickable options), not as plain text. One option per type plus "none"; each option's description is its `about` (the tools it adds).
    - **Order:** types with `recommended: true` go first (in the plan's order), each with " (Recommended)" in its label and its `why` in the description. Otherwise `web-ui` goes first when it's offered, **without** "Recommended" (most kit projects are web apps, but nothing here shows it). "none" always goes last ("no type-specific tools; add a type later").
    - If the user passed a type as an argument, use it and don't ask.
+   - **Re-sync: the type is already saved** (spec: project-starter "Saved type reused"). When the plan has `savedType` (from `.claude/kit.json`), use it and **don't ask**. Say it in one line: "Type: <savedType> (saved in `.claude/kit.json`; say if it changed)". Ask only when the user says it changed.
    - **Ask nothing else about tools.** Global and type tools install without questions. Opt-in tools (`offeredTools`, e.g. Superpowers) are **not** asked about and not installed: they're added on demand when a change needs them. Pass `--opt-in` only when the user explicitly asks for a tool.
 
 3. **Plan** (nothing is written):

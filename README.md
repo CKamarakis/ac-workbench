@@ -39,17 +39,45 @@ You need [Claude Code](https://code.claude.com), Node and git.
 You can start at any step: an idea, an old PRD, a change half done. Each step knows what to take from the one before.
 
 ```
- an idea  -->  /opsx:explore    think it through; decisions and open questions are saved
-          -->  /kit:prd         a PRD from your notes and that record (optional)
-          -->  /opsx:propose    the plan: proposal, specs with Given/When/Then, design, tasks
-          -->  /kit:ready       the decisions the build would otherwise make alone, asked in one batch;
-                                how careful the build should be (worktree, review against the spec)
-          -->  /opsx:apply      code and tests
-          -->  /kit:verify      tests, security and code review, every scenario mapped to a test
-          -->  /opsx:archive    done; specs updated; /kit:docs refreshes the docs page
-```
+ an idea, typed or dictated
+    |
+    |   /kit:capture      saves it as a note in knowledge/notes/
+    v
+    |   /opsx:explore     think it through with Claude; the decisions and
+    |                     open questions are saved as an explore record
+    v
+    |   /kit:prd          a PRD from your notes and that record (optional)
+    v
+    |   /opsx:propose     the plan: proposal, specs with Given/When/Then,
+    |                     design, tasks
+    v
+    |   /kit:ready        the decisions the build would otherwise make alone,
+    |                     asked in one batch; how careful the build should be
+    |                     (worktree, review against the spec)
+    v
+    |   /opsx:apply       code and tests
+    v
+    |   /kit:verify       tests, security and code review, every scenario
+    |                     mapped to a test
+    v
+    |   /opsx:archive     done: the specs are updated
+    v
+ shipped
 
-Lost? `/kit:status` says where the project stands; `/kit:next` says the next step.
+
+ Any time:
+
+    /kit:status       where the project stands: what it is, what's built,
+                      what's under way, what's next
+
+    /kit:next         the next step from where you are
+
+    /kit:docs         your docs page: what's built, why, what's undecided
+
+    /kit:roadmap      your roadmap: goals in order, Now, decisions waiting on you
+
+    /kit:loose-ends   what was left behind while building, by importance
+```
 
 ![/kit:status: what the project is, what's built, what's under way and what's next](docs/images/kit-status.png)
 
@@ -97,7 +125,7 @@ claude plugin uninstall kit@ac-workbench --scope project
 ## What `/kit:start` does
 
 Run it once in the project folder, and again only to re-sync after a kit update.
-- It asks **one question**: the project type. For a Next.js app it recommends `web-ui`.
+- On a first setup it asks **one question**: the project type (for a Next.js app it recommends `web-ui`). A re-sync reuses the saved type and says so.
 - It sets up git, OpenSpec, the `CLAUDE.md` workflow rules, a project context doc, the `knowledge/` folder, and the tools for that type, all for this project only.
 - Changes to files you already have are shown as diffs and need your yes.
 - Heavier tools (Superpowers) are listed as **available on demand**. They're added when a change needs them, not up front.
@@ -115,7 +143,7 @@ Run it once in the project folder, and again only to re-sync after a kit update.
 | `/kit:roadmap` | Optional roadmap: goals in order, tasks left, Now, decisions waiting on you, and a drift log. Writes only on your yes |
 | `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Then rates **reach, undo and safety** and records the build safeguards (worktree, review against the spec, subagents only when justified) in `design.md`. Warns, never blocks |
 | `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests, **scenarios without a test**, the **review against the spec** when the safeguards choose it (a fresh-context `kit:spec-reviewer` agent), and a **docs sync** (what was built goes into the specs and `design.md`, on your yes); writes `verify.md` |
-| `/kit:docs` | Build the project's docs page (`knowledge/docs/index.html`): products › sub-features, their Given/When/Then user stories, the why where it matters, foundation cards, the tools inventory, history and open decisions. Drafts missing notes and asks you per item; the page itself is rebuilt by a script at no token cost |
+| `/kit:docs` | Build the project's docs page (`knowledge/docs/index.html`): products › sub-features, their Given/When/Then user stories, the why where it matters, foundation cards, the tools inventory, history and open decisions. Drafts missing notes: a big first run is one yes, drafted in parallel, then reviewed with git; a few new drafts are asked one by one; the page itself is rebuilt by a script at no token cost |
 | `/kit:harness-review` | Read-only check-up of the project's Claude Code setup, with at most three fixes |
 | `/kit:setup` | Install or check the machine toolset |
 | `/kit:tool-review` | Monthly check of the kit's tools: still there? latest vs tested version, release notes on a major, what's new to use; update, hold or drop each one on your yes (smoke test before an update counts). A session-start reminder says when it's due (kit repo only) |

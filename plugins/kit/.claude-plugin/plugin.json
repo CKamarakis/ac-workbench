@@ -1,6 +1,6 @@
 {
   "name": "kit",
-  "version": "0.21.1",
+  "version": "1.0.0-rc.1",
   "description": "Claude Code kit for building products: turn notes into a PRD and an OpenSpec change, check the plan before you build, and run tests and reviews before you archive. Sets up its tools per project.",
   "author": {
     "name": "CKamarakis"

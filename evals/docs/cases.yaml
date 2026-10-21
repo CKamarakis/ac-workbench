@@ -98,3 +98,10 @@ cases:
     checks:
       - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Show every draft in full in your message first" }
       - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: "Never put draft text in an option preview" }
+  - id: big-batch-one-yes
+    description: 'More than 3 drafts: one question, parallel drafting with the Agent tool, review afterwards (rc-fixes)'
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: 'With more than 3 items to draft' }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: '"Write all N \(Recommended\)", "One by one"' }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: 'One agent per capability' }
+      - { kind: content-match, path: '{{kit}}/skills/docs/SKILL.md', pattern: 'Nothing is committed\.' }

@@ -79,9 +79,8 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-Kit 0.21.1. M13: T1, T2 (README for strangers), T3, T4, T7 done; T5 CHANGELOG written, the v1.0.0-rc.1 tag waits.
-T6: the user is running the kit on the real project (2026-10-21), at propose. Findings so far: /kit:start asks the type again on re-sync; /kit:docs first run needed 29 approvals (want one yes and parallel drafting); the docs page shows backticks literally.
-Next: finish the run, one change with its fixes, then the tag. Then M14.
+v1.0.0-rc.1 (2026-10-21): M13 release prep done. Fresh public repo with a privacy guard (text and image metadata), MIT license, README for strangers, CHANGELOG, issue forms. The run on the real project went from setup through verify; its fixes are in rc-fixes.
+Next: M14, the outside test: a Mac tester and one or two friends install from the README; T4 investigates why /kit:verify takes 10+ minutes.
 
 ## Waiting on you
 

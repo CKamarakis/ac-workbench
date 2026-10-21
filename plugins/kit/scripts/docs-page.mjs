@@ -169,7 +169,10 @@ function treeItems(nodes) {
   }).join('');
 }
 
-const linkCards = text => esc(text).replace(/\[\[([^\]]+)\]\]/g, (_, s) => `<a href="#foundations/${slugId(s)}">${s}</a>`);
+// Note text: `code` spans render as code (rc-fixes), the rest is escaped and [[card]] links become links.
+const linkCards = text => String(text).split(/(`[^`]+`)/).map(part => (/^`[^`]+`$/.test(part)
+  ? `<code>${esc(part.slice(1, -1))}</code>`
+  : esc(part).replace(/\[\[([^\]]+)\]\]/g, (_, s) => `<a href="#foundations/${slugId(s)}">${s}</a>`))).join('');
 const changeLabel = u => `${u.archived ? 'archived change ' : ''}${esc(u.change)}`;
 const undItem = u => `<div class="und">${esc(u.text)}<small>${changeLabel(u)} · ${u.status === 'later' ? 'put off' : 'open'} since ${esc(u.date)}</small></div>`;
 
@@ -186,7 +189,7 @@ function subPage(p, path) {
   const history = p.history?.length ? `<section class="history"><h3>History</h3><ol>${p.history.map(h => `<li><b>${esc(h.change)}</b>${h.date ? ` · ${esc(h.date)}` : ''}${h.why ? ` — ${esc(h.why)}` : ''}</li>`).join('')}</ol></section>` : '';
   return `<section class="page" data-page="spec:${esc(path)}"><div class="main">
 <div class="crumb">${p.crumb.map(esc).join(' › ')}</div><h2>${esc(p.title)}</h2>${p.purpose ? `<p class="purpose">${esc(p.purpose)}</p>` : ''}
-${p.warnings.map(w => `<p class="warn">${esc(w)}</p>`).join('')}${p.how ? `<div class="how"><b>How it works, roughly</b>${esc(p.how)}</div>` : ''}
+${p.warnings.map(w => `<p class="warn">${esc(w)}</p>`).join('')}${p.how ? `<div class="how"><b>How it works, roughly</b>${linkCards(p.how)}</div>` : ''}
 ${reqs || '<p class="empty">No requirements yet.</p>'}${history}</div>
 <aside>${p.undecided.length ? `<section><h3 class="sh">Undecided</h3>${p.undecided.map(undItem).join('')}</section>` : ''}
 ${why ? `<section><h3 class="sh">Why</h3>${why}</section>` : ''}${orphan}

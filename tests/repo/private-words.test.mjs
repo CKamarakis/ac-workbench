@@ -21,6 +21,7 @@ function repo(list = '# test list\nzebrafish\nPlum/Path\n') {
   fs.mkdirSync(hooks);
   fs.copyFileSync(path.join(HOOKS, 'private-words.sh'), path.join(hooks, 'private-words.sh'));
   fs.copyFileSync(path.join(HOOKS, 'commit-msg'), path.join(hooks, 'commit-msg'));
+  fs.copyFileSync(path.join(HOOKS, 'image-text.mjs'), path.join(hooks, 'image-text.mjs'));
   w(hooks, 'pre-commit', '#!/bin/sh\nsh "$(dirname "$0")/private-words.sh" staged || exit 1\n');
   g(d, 'config', 'core.hooksPath', 'hooks');
   w(d, '.gitignore', '.private-words\nhooks/\n');
@@ -87,4 +88,29 @@ test('whole words only, any case; paths and file names are checked too', () => {
 test('the real pre-commit and commit-msg hooks call the check', () => {
   assert.match(fs.readFileSync(path.join(HOOKS, 'pre-commit'), 'utf8'), /private-words\.sh" staged \|\| exit 1/);
   assert.match(fs.readFileSync(path.join(HOOKS, 'commit-msg'), 'utf8'), /private-words\.sh" message "\$1"/);
+});
+
+// rc-fixes (spec: repo-privacy "Image metadata checked"): metadata is read, pixel bytes never are.
+const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); return Buffer.concat([len, Buffer.from(type, 'latin1'), data, Buffer.alloc(4)]); };
+const png = (...chunks) => Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', Buffer.alloc(13)), ...chunks, chunk('IEND', Buffer.alloc(0))]);
+const wb = (d, rel, buf) => { fs.mkdirSync(path.dirname(path.join(d, rel)), { recursive: true }); fs.writeFileSync(path.join(d, rel), buf); };
+
+test('repo-privacy: Image metadata checked (PNG text chunk, JPEG XMP); pixel bytes are not', () => {
+  const d = repo();
+  wb(d, 'img/meta.png', png(chunk('tEXt', Buffer.from('Comment\0made for ZebraFish', 'latin1'))));
+  let r = commit(d);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /metadata of img\/meta\.png/);
+  assert.doesNotMatch(r.stderr, /zebrafish/i);
+  g(d, 'reset', '-q'); fs.rmSync(path.join(d, 'img'), { recursive: true });
+
+  wb(d, 'img/pixels.png', png(chunk('IDAT', Buffer.from(' zebrafish ', 'latin1'))));
+  assert.equal(commit(d).status, 0, 'a word inside pixel data is not metadata');
+
+  const xmp = Buffer.from('<x:xmpmeta><dc:creator>zebrafish</dc:creator></x:xmpmeta>', 'utf8');
+  const app1 = Buffer.concat([Buffer.from([0xff, 0xe1]), Buffer.from([0, xmp.length + 2]), xmp]);
+  wb(d, 'img/photo.jpg', Buffer.concat([Buffer.from([0xff, 0xd8]), app1, Buffer.from([0xff, 0xda, 0, 2, 0xff, 0xd9])]));
+  r = commit(d);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /metadata of img\/photo\.jpg/);
 });

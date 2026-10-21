@@ -129,7 +129,7 @@ cases:
   - id: skill-one-question-setup
     description: The start skill asks one question (type), lists opt-ins as on demand, and confirms file changes with one yes (followups 5.4)
     checks:
-      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'It asks one setup question: the project type' }
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'On a first setup it asks one question: the project type' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Ask nothing else about tools' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'typeOptions' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'available on demand' }
@@ -234,3 +234,8 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: 'Commit the setup on its own before you start a change' }
       - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: '"Commit the setup now\?"' }
       - { kind: content-match, path: '{{kit}}/scripts/start-plan.mjs', pattern: "Don't add tasks that need a running app, a browser or a check by hand" }
+  - id: resync-reuses-saved-type
+    description: 'A re-sync takes the type from .claude/kit.json and does not ask (rc-fixes)'
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/start/SKILL.md', pattern: "When the plan has `savedType`" }
+      - { kind: content-match, path: '{{kit}}/scripts/start-plan.mjs', pattern: 'savedType: savedType\(stampCur\)' }

@@ -26,7 +26,18 @@ case "$1" in
          git -C "$ROOT" diff --cached -U0 --no-color -- "$f" | grep '^+' | grep -v '^+++ ' | grep -iwqF -f "$PAT"; then
         echo "private-words: a listed word is in $f" >&2
         found=1
+        continue
       fi
+      # Images show no text lines in a diff: read their metadata (EXIF, XMP, PNG text) instead.
+      case "$f" in
+        *.[pP][nN][gG]|*.[jJ][pP][gG]|*.[jJ][pP][eE][gG]|*.[wW][eE][bB][pP])
+          if ! command -v node >/dev/null 2>&1; then
+            echo "private-words: node not found; image metadata in $f not checked" >&2
+          elif git -C "$ROOT" show ":$f" | node "$(dirname "$0")/image-text.mjs" | grep -iwqF -f "$PAT"; then
+            echo "private-words: a listed word is in the metadata of $f" >&2
+            found=1
+          fi ;;
+      esac
     done < "$PAT.files"
     rm -f "$PAT.files"
     ;;

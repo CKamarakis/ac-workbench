@@ -2,6 +2,14 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.1 (2026-10-21)
+- **First release candidate.** Run on a real project, from setup through verify, before this tag.
+- `/kit:start` re-sync reuses the project type saved in `.claude/kit.json`; it asks only on a first setup.
+- `/kit:docs`: a big first run (more than 3 drafts) is one question, drafted in parallel, then reviewed with `git diff`; a few new drafts are still asked one by one.
+- The docs page shows `code` as code in How it works, Why notes and cards.
+- The repo's privacy guard also checks image metadata (EXIF, XMP, PNG text).
+- README: the happy path starts at `/kit:capture` and lists the any-time commands.
+
 ## 0.21.1 (2026-10-20)
 - MIT license, GitHub issue forms (bug, idea), and plugin, marketplace and repo descriptions that say what the kit does today.
 

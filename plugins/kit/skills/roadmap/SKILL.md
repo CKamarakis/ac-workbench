@@ -40,7 +40,7 @@ After each write the script prints any **BROKEN** finding; show it with its fix 
 | Now updated | `now --text "<up to 5 lines>"` |
 | A decision for later | `wait --milestone <ID\|general> --question <q>` |
 | A decision answered | `answer --match <words of the question> --answer <a>` (moves it to the drift log) |
-| A link | `link --id <ID> --kind notes\|prd\|changes\|branches --value <v>` |
+| A link | `link --id <ID> --kind notes\|prd\|changes\|branches --value <v>` (a PRD as `<slug>`, `<slug>/<part>` or its path; one that doesn't exist is refused) |
 | A change of direction | `drift --what <t> --why <t> --alt <on-plan alternative> --impact <t>` |
 
 - **Order and scope are the user's.** If you think the order should change, say so with the reason, and change nothing without a yes. Same for adding, dropping or reshaping milestones.

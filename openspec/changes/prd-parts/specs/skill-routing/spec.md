@@ -26,6 +26,11 @@ For a Building part whose change recorded both a part line and a parent line, th
 - **WHEN** the user runs `/kit:next`
 - **THEN** the suggestion says parent PRD `acme-v1` changed after `acme-part-a` was planned, and to review the plan against it
 
+#### Scenario: Parent edited, project in a subfolder of the repo
+- **GIVEN** the project folder is a subfolder of its git repo, and the parent was edited after the commit its change recorded
+- **WHEN** the user runs `/kit:next`
+- **THEN** the suggestion says parent PRD `acme-v1` changed, the same as at the repo root
+
 #### Scenario: Part added to the parent
 - **GIVEN** change `acme-part-a` recorded parent `acme-v1` at `5d6e7f8`, and since then only a row for a new part was added to the parent's Parts section
 - **WHEN** the user runs `/kit:next`

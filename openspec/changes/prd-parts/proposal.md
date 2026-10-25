@@ -16,7 +16,7 @@ A real project (Acme) needs one PRD built over several changes, one slice at a t
 - `prd-check`: a part's parent must exist, and `part-of` must match the folder. A parent marked Shipped while a part is neither Shipped nor Dropped gets a warning (never a block). A parent with parts may be Building without a `change`.
 - `/opsx:propose` from a part records two lines: `PRD: <part path> @ <commit>` and `PRD parent: <parent path> @ <commit>`.
 - `/kit:prd` gets a "split into parts" flow: create the parts, move each slice's rows into its part, trim the parent per section, all on the user's yes.
-- The roadmap's `link --kind prd` already accepts any value, a part included; this change adds only a test for it.
+- The roadmap's `link --kind prd` accepts a part, refuses a PRD or part that doesn't exist, and stores every form as `prds/....md` (added after the rc.2 test).
 - Existing single-file PRDs keep working unchanged. Not breaking.
 
 ```

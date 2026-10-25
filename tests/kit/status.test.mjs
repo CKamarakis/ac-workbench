@@ -241,6 +241,15 @@ test('mismatch (b): Building PRD whose change is archived asks, never advises Sh
   assert.match(m[0].fix, /\/kit:prd: mark it Shipped, or link the next change \(on your yes\)/);
 });
 
+test('rc.2 feedback: a Building parent with parts is not flagged for its own old archived change', () => {
+  const d = project({
+    'knowledge/prds/acme-v1.md': prd('Acme v1', 'Building', 'change: acme-old-change\n'),
+    'knowledge/prds/acme-v1/part-a.md': prd('Part A', 'Building', 'part-of: acme-v1\nchange: acme-part-a\n'),
+    'openspec/changes/archive/2026-10-17-acme-old-change/proposal.md': '# P\n',
+  });
+  assert.deepEqual(run(d).mismatches.filter(m => /acme-old-change/.test(m.what)), []);
+});
+
 test('mismatch (c): roadmap stale Now and unplanned work passed through', () => {
   const d = withRoadmap({ m12a: 'changes:\n  - kit-status\n', files: { 'openspec/changes/kit-status/tasks.md': '- [ ] 1.1 a\n' } });
   const g = gitInit(d);

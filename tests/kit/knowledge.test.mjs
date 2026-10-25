@@ -546,6 +546,20 @@ test('prd-parts verify: set-field part-of with no --value removes it (PowerShell
   assert.doesNotMatch(fs.readFileSync(path.join(d, 'knowledge/prds/acme-v1/part-b.md'), 'utf8'), /part-of/);
 });
 
+test('rc.2 feedback: set-field change with an empty or missing value removes it; a bad name still fails', () => {
+  const d = tmp();
+  const f = 'knowledge/prds/acme-v1.md';
+  put(d, f, parent({ status: 'Building', change: 'acme-old-change' }));
+  const r = kcli(d, 'set-field', '--file', 'prds/acme-v1.md', '--key', 'change', '--value', '');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /change acme-old-change -> \(removed\)/);
+  assert.doesNotMatch(fs.readFileSync(path.join(d, f), 'utf8'), /change:/);
+  put(d, f, parent({ status: 'Building', change: 'acme-old-change' }));
+  assert.equal(kcli(d, 'set-field', '--file', 'prds/acme-v1.md', '--key', 'change', '--value').status, 0);
+  assert.doesNotMatch(fs.readFileSync(path.join(d, f), 'utf8'), /change:/);
+  assert.match(kcli(d, 'set-field', '--file', 'prds/acme-v1.md', '--key', 'change', '--value', 'Bad Name').stderr, /kebab-case change name, or empty to remove it/);
+});
+
 test('prd-parts verify: moving a finished parent refuses when its folder holds files that aren\'t its parts', () => {
   const d = tmp();
   put(d, 'knowledge/prds/acme-v1.md', parent({ status: 'Shipped' }));

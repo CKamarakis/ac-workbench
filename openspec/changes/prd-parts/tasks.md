@@ -32,6 +32,13 @@
 - [x] 5.2 Hand check in a throwaway project in `../temp`: parent plus two parts, `list`, `prd-check`, `/kit:next` with a Ready part; findings noted in the verify report
 - [x] 5.3 Bump the kit version and add a CHANGELOG entry
 
+## 6. Fixes from the rc.2 test on Acme
+
+- [x] 6.1 Parent check in a project that sits in a subfolder of its repo: `git show <commit>:./<file>`, falling back to the plain check when git can't show the file; test in `tests/kit/next.test.mjs`
+- [x] 6.2 Roadmap `link --kind prd` refuses a PRD or part that doesn't exist and stores every form as `prds/....md`; a missing `--id` says so, an ID matches in any case; tests in `tests/kit/roadmap.test.mjs`
+- [x] 6.3 `set-field --key change` with an empty or missing value removes it; `/kit:status` doesn't flag a parent with parts for its own archived change; the split flow offers to remove the parent's `change`; tests in `tests/kit/knowledge.test.mjs`, `tests/kit/status.test.mjs`
+- [x] 6.4 Kit 1.0.0-rc.3 and a CHANGELOG entry
+
 ## Workflow follow-up
 
 - `/kit:ready`, then `/opsx:apply`, `/kit:verify`, `/opsx:archive`.

@@ -504,16 +504,19 @@ function addPartRow(parentFile, name, title) {
   fs.writeFileSync(parentFile, crlf ? out.replace(/\n/g, '\r\n') : out);
 }
 
-const FIELDS = { status: v => STATUSES.includes(v) || `status must be one of ${STATUSES.join(', ')}`, change: v => /^[a-z0-9][a-z0-9-]*$/.test(v) || 'change must be a kebab-case change name', title: v => !!v.trim() || 'title cannot be empty',
+const FIELDS = { status: v => STATUSES.includes(v) || `status must be one of ${STATUSES.join(', ')}`,
+  // Empty removes it, e.g. a parent's old change after a split (rc.2 feedback).
+  change: v => v === '' || /^[a-z0-9][a-z0-9-]*$/.test(v) || 'change must be a kebab-case change name, or empty to remove it', title: v => !!v.trim() || 'title cannot be empty',
   // The /impeccable shape offer's answer, so it's made once per PRD (ui-flow-with-impeccable design D4).
   shape: v => ['done', 'declined'].includes(v) || 'shape must be done or declined',
   // A part's parent slug, or empty to make the part a PRD of its own (prd-parts D8).
   [PART_KEY]: v => v === '' || /^[a-z0-9][a-z0-9-]*$/.test(v) || 'part-of must be a parent PRD slug (no folders), or empty to remove it' };
 
-/** Sets one frontmatter field of a PRD (status, change, title, shape or part-of; an empty part-of removes it). The body is untouched. */
+/** Sets one frontmatter field of a PRD (status, change, title, shape or part-of; an empty change or part-of removes it). The body is untouched. */
 export function setField(root, rel, key, value) {
-  // PowerShell 5.1 drops an empty "" argument, so a missing --value for part-of means "remove it".
-  if (key === PART_KEY && value == null) value = '';
+  // PowerShell 5.1 drops an empty "" argument, so a missing --value for change or part-of means "remove it".
+  const removable = key === PART_KEY || key === 'change';
+  if (removable && value == null) value = '';
   const check = FIELDS[key];
   if (!check) throw new Error(`only ${Object.keys(FIELDS).join(', ')} can be set`);
   const ok = check(String(value ?? ''));
@@ -523,7 +526,7 @@ export function setField(root, rel, key, value) {
   if (read(file) == null) throw new Error(`not found: ${rel}`);
   if (!fm.ok) throw new Error(`${rel}: ${fm.error}`);
   const before = fm.data[key] ?? null;
-  if (key === PART_KEY && value === '') delete fm.data[key];
+  if (removable && value === '') delete fm.data[key];
   else fm.data[key] = String(value);
   fs.writeFileSync(file, writeFrontmatter(fm.data, fm.body));
   // A parent marked Shipped with open parts gets the warning, also when a part under a Shipped parent is
@@ -535,7 +538,7 @@ export function setField(root, rel, key, value) {
     const parentOk = parentFile && posix(path.dirname(r.path)) === `prds/${r.partOf}` && fs.existsSync(parentFile);
     warnings = [...(r.warnings ?? []), ...(parentOk ? readPrd(root, parentFile).warnings ?? [] : [])];
   }
-  return { path: posix(path.relative(root, file)), key, from: before, to: key === PART_KEY && value === '' ? null : String(value), warnings };
+  return { path: posix(path.relative(root, file)), key, from: before, to: removable && value === '' ? null : String(value), warnings };
 }
 
 // ---------- sections (D4) ----------

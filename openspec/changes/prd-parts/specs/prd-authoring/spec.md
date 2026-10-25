@@ -51,6 +51,11 @@ A PRD SHALL be able to have parts: a parent `prds/<slug>.md` and part files `prd
 - **WHEN** the kit lists PRDs
 - **THEN** it shows two different parts, `acme-v1/part-a` and `acme-v2/part-a`
 
+#### Scenario: Parent's old change removed
+- **GIVEN** parent `acme-v1` is Building with `change: acme-old-change`, an archived change, and has parts
+- **WHEN** the user runs `set-field --key change --value ""` on it
+- **THEN** the `change` field is removed, and `/kit:status` never flags a parent with parts for its own archived change
+
 #### Scenario: Single-file PRD unchanged
 - **GIVEN** a project whose PRDs are all single files with no `part-of`
 - **WHEN** `list`, `prd-check`, `/kit:next` and `/kit:status` run
@@ -112,6 +117,15 @@ When the proposal step takes a part as its PRD, the proposal SHALL record two li
 #### Scenario: Part linked to a milestone
 - **WHEN** the user links part `prds/acme-v1/part-b.md` to milestone M3 with the roadmap's `link --kind prd`
 - **THEN** the link is saved and the roadmap check reports no problem
+
+#### Scenario: Link to a PRD that doesn't exist
+- **GIVEN** no file `prds/acme-v1/nope.md`
+- **WHEN** the user runs `link --kind prd --value acme-v1/nope`
+- **THEN** the roadmap says there is no PRD `acme-v1/nope` and writes nothing
+
+#### Scenario: Link stored in one form
+- **WHEN** the user links `acme-v1/part-b`, `prds/acme-v1/part-b.md` or `knowledge/prds/acme-v1/part-b.md`
+- **THEN** the milestone stores `prds/acme-v1/part-b.md` once
 
 ### Requirement: Move a parent with parts
 Before a parent with parts is moved or archived, the kit SHALL warn and name every part that is neither `Shipped` nor `Dropped`, and SHALL ask, per part, what to do: drop it (`Dropped`), put it under another parent, or make it a PRD of its own. The parent SHALL NOT move while an unfinished part is left. Finished parts SHALL move with the parent. No part SHALL be left pointing at a missing parent.

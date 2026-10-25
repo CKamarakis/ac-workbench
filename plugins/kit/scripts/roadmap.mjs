@@ -238,8 +238,11 @@ function need(root) {
   return p;
 }
 function milestoneOf(p, id) {
-  const m = p.milestones.find(x => x.id === id);
-  if (!m) throw new Error(`no milestone ${id}`);
+  if (!String(id ?? '').trim()) throw new Error('--id is required (a milestone ID such as M1)');
+  // "m1" finds M1; the file's own ID is what gets written (rc.2 feedback).
+  const want = String(id).trim();
+  const m = p.milestones.find(x => x.id === want) ?? p.milestones.find(x => x.id.toLowerCase() === want.toLowerCase());
+  if (!m) throw new Error(`no milestone ${want} (milestones: ${p.milestones.map(x => x.id).join(', ') || 'none'})`);
   return m;
 }
 const fileOf = (root, m) => path.join(rdir(root), m.file);
@@ -410,8 +413,8 @@ export function setNow(root, { text }) {
 export function addWaiting(root, { milestone, question, date = today() }) {
   const p = need(root);
   if (!question?.trim()) throw new Error('--question is required');
-  if (milestone !== 'general') milestoneOf(p, milestone);
-  setSection(root, 'Waiting on you', [...p.waiting.map(w => w.text.trim()), `- [${milestone}] ${question.trim()} (proposed ${date})`]);
+  const tag = milestone === 'general' ? milestone : milestoneOf(p, milestone).id;
+  setSection(root, 'Waiting on you', [...p.waiting.map(w => w.text.trim()), `- [${tag}] ${question.trim()} (proposed ${date})`]);
   return { waiting: p.waiting.length + 1, ...after(root) };
 }
 
@@ -434,10 +437,23 @@ export function link(root, { id, kind, value }) {
   if (!value?.trim()) throw new Error('--value is required');
   const p = need(root);
   const m = milestoneOf(p, id);
-  const v = value.trim();
-  const list = m.links[kind].includes(v) ? m.links[kind] : [...m.links[kind], v];
+  const v = kind === 'prd' ? prdRef(root, value) : value.trim();
+  const same = kind === 'prd' ? (x => prdKey(root, x) === prdKey(root, v)) : (x => x === v);
+  const list = m.links[kind].some(same) ? m.links[kind] : [...m.links[kind], v];
   writeMilestone(root, m, { ...m.data, [kind]: list }, m.body);
-  return { id, kind, [kind]: list, ...after(root) };
+  return { id: m.id, kind, [kind]: list, ...after(root) };
+}
+
+// A PRD link given as "<slug>", "<slug>/<part>", "prds/....md" or "<knowledge>/prds/....md" (rc.2 feedback).
+const prdKey = (root, v) => String(v).trim().replace(/\\/g, '/').replace(/^\.\//, '')
+  .replace(new RegExp(`^${path.basename(root).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`), '').replace(/^prds\//, '').replace(/\.md$/i, '');
+
+/** The PRD or part a link names, as "prds/<slug>.md" or "prds/<slug>/<part>.md"; refuses one that doesn't exist. */
+function prdRef(root, value) {
+  const k = prdKey(root, value);
+  if (!k || k.split('/').some(s => !s || s === '.' || s === '..')) throw new Error(`"${value}" is not a PRD name (use <slug>, <slug>/<part> or prds/<slug>.md). Nothing written.`);
+  if (!fs.existsSync(path.join(root, 'prds', `${k}.md`))) throw new Error(`no PRD ${k} (looked for prds/${k}.md). Nothing written.`);
+  return `prds/${k}.md`;
 }
 
 const cell = s => String(s ?? '').replace(/\r?\n/g, ' ').replace(/\|/g, '\\|').trim() || '-';

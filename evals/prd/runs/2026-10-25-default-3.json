@@ -1,0 +1,442 @@
+{
+  "skill": "prd",
+  "date": "2026-10-25T12:08:31.478Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 3648,
+  "summary": {
+    "pass": 12,
+    "fail": 0,
+    "pending": 7
+  },
+  "cases": [
+    {
+      "id": "template-has-format",
+      "outcome": "pass",
+      "duration_ms": 7,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/templates/prd.md matches /^---\\r?\\ntitle: \\{\\{title\\}\\}\\r?\\nstatus: Draft\\r?\\nsources: \\[\\]\\r?\\n---/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/templates/prd.md matches /## Problem[\\s\\S]*## Users[\\s\\S]*## Goals and success measures[\\s\\S]*## Scope[\\s\\S]*## Requirements[\\s\\S]*## UX notes and assets[\\s\\S]*## Risks[\\s\\S]*## Open questions/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "new-prd-from-notes",
+      "outcome": "pass",
+      "duration_ms": 455,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/gift-cards.md matches /status: Draft\\r?\\nsources:\\r?\\n  - notes/2026-10-06-flow\\.md/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "section-conflict-protects-user-edits",
+      "outcome": "pass",
+      "duration_ms": 647,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 3 (expected 3)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/x.md matches /User edit/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/x.md does not match /Agent text/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "prd-check-reports-not-guesses",
+      "outcome": "pass",
+      "duration_ms": 207,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "status-only-valid-values",
+      "outcome": "pass",
+      "duration_ms": 389,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-rules",
+      "outcome": "pass",
+      "duration_ms": 9,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /one-line reason/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /multi-select\\*\\*: several notes can feed one PRD/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /is not a fact\\.(\\*\\*)? Mark it \"Assumption:\" or list it under Open questions/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /ask yes or no for each one/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /--expect <hash>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /PRD: <knowledge>/prds/<slug>\\.md @ <commit>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /The status changes only on the user's yes/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /\\*\\*Requirements as stories:\\*\\* \"Given <starting state>, when <the user does X>, then <what they see>\"/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "draft-writes-stories",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "story-form",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "plain-where-fitting",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "open-questions-now-or-later",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "separate-step",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "options-when-now",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "later-keeps-them",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "shortlist-and-gaps",
+      "outcome": "pending",
+      "duration_ms": 1,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "shortlist-reasons",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "gaps-marked",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "no-overwrite",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "skill-offers-prds-newest-first",
+      "outcome": "pass",
+      "duration_ms": 9,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /most recently updated first\\*\\* \\(it already sorts them/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "prd-offers-ready-explore-record-first",
+      "outcome": "pass",
+      "duration_ms": 3,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /Explore records first/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /explore\\.mjs\" link-prd/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "shape-offer-rules-in-skill",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /\\*\\*Shape offer\\*\\*/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /ready\\.mjs\" web-ui/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /--key shape --value declined/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/prd/SKILL.md matches /Never offer it again for this PRD/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "shape-field-set",
+      "outcome": "pass",
+      "duration_ms": 435,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "shape-offered-for-a-screen",
+      "outcome": "pending",
+      "duration_ms": 4,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "offers-shape",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "no-shape-for-background-job",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "no-offer",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "shape-declined-not-repeated",
+      "outcome": "pending",
+      "duration_ms": 11,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "not-repeated",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    },
+    {
+      "id": "new-part",
+      "outcome": "pass",
+      "duration_ms": 811,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/acme-v1/part-a.md matches /part-of: acme-v1/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "knowledge/prds/acme-v1.md matches /\\| acme-v1/part-a \\| Part A \\|/"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 1 (expected 1)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "dropped-part",
+      "outcome": "pass",
+      "duration_ms": 646,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "split-on-request",
+      "outcome": "pending",
+      "duration_ms": 3,
+      "checks": [],
+      "rubric": [
+        {
+          "name": "proposes-first",
+          "pass": null,
+          "reason": "not scored"
+        },
+        {
+          "name": "per-section",
+          "pass": null,
+          "reason": "not scored"
+        }
+      ],
+      "input": {
+        "note": "prompt input needs an engine; not executed"
+      }
+    }
+  ]
+}

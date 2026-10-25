@@ -459,6 +459,8 @@ test('link: adds notes, prd, changes or branches without duplicates', () => {
   const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'planned') } });
   link(kroot(d), { id: 'M1', kind: 'changes', value: 'roadmap-structure' });
   link(kroot(d), { id: 'M1', kind: 'changes', value: 'roadmap-structure' });
+  fs.mkdirSync(path.join(d, 'knowledge/prds'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge/prds/roadmap-structure.md'), '---\ntitle: R\nstatus: Ready\n---\n');
   link(kroot(d), { id: 'M1', kind: 'prd', value: 'prds/roadmap-structure.md' });
   const m = parseRoadmap(kroot(d)).milestones[0];
   assert.deepEqual(m.links.changes, ['roadmap-structure']);
@@ -594,4 +596,27 @@ test('prd-parts 4.2: link --kind prd accepts a PRD part and the check reports no
   assert.deepEqual(r.prd, ['prds/acme-v1/part-b.md']);
   assert.deepEqual(parseRoadmap(kroot(d)).milestones.find(m => m.id === 'M3').links.prd, ['prds/acme-v1/part-b.md']);
   assert.equal(check(d).good, true);
+});
+
+test('rc.2 feedback: link --kind prd refuses a PRD that does not exist and stores every form as prds/....md', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active') } });
+  fs.mkdirSync(path.join(d, 'knowledge/prds/acme-v1'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge/prds/acme-v1.md'), '---\ntitle: Acme v1\nstatus: Building\n---\n');
+  fs.writeFileSync(path.join(d, 'knowledge/prds/acme-v1/part-a.md'), '---\ntitle: Part A\nstatus: Ready\npart-of: acme-v1\n---\n');
+  const before = fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m1-a.md'), 'utf8');
+  assert.throws(() => link(kroot(d), { id: 'M1', kind: 'prd', value: 'acme-v1/nope' }), /no PRD acme-v1\/nope .*Nothing written/);
+  assert.throws(() => link(kroot(d), { id: 'M1', kind: 'prd', value: 'nope-flat' }), /no PRD nope-flat/);
+  assert.throws(() => link(kroot(d), { id: 'M1', kind: 'prd', value: '../secret' }), /not a PRD name/);
+  assert.equal(fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m1-a.md'), 'utf8'), before);
+  link(kroot(d), { id: 'M1', kind: 'prd', value: 'acme-v1' });
+  link(kroot(d), { id: 'M1', kind: 'prd', value: 'knowledge/prds/acme-v1.md' });
+  const r = link(kroot(d), { id: 'm1', kind: 'prd', value: 'acme-v1/part-a' });
+  assert.equal(r.id, 'M1');
+  assert.deepEqual(r.prd, ['prds/acme-v1.md', 'prds/acme-v1/part-a.md']);
+});
+
+test('rc.2 feedback: a missing --id says so, and an unknown one lists the milestones', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': ms('M1', 'A', 'active') } });
+  assert.throws(() => link(kroot(d), { kind: 'changes', value: 'x' }), /--id is required/);
+  assert.throws(() => link(kroot(d), { id: 'M9', kind: 'changes', value: 'x' }), /no milestone M9 \(milestones: M1\)/);
 });

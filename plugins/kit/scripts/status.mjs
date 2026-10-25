@@ -227,7 +227,8 @@ export function mismatches({ roadmap, report, changes, knowledge, archived, bran
   }
   // (b) A PRD still says Building after its change was archived.
   const done = new Set(archived.map(a => a.change));
-  for (const p of knowledge.list.prds.filter(x => x.valid && x.status === 'Building' && x.change && done.has(x.change))) {
+  // A parent with parts is built through its parts, so an old change of its own says nothing (rc.2 feedback).
+  for (const p of knowledge.list.prds.filter(x => x.valid && x.status === 'Building' && !x.parts?.length && x.change && done.has(x.change))) {
     // A PRD can be built across several changes, so this asks rather than advising Shipped (L1).
     out.push({ what: `PRD "${p.label ?? p.title}" is Building, but its change ${p.change} is archived: is the PRD done, or does it continue in another change?`, sources: [`${knowledge.dir}/${p.path}`, 'openspec/changes/archive/'], fix: '/kit:prd: mark it Shipped, or link the next change (on your yes)' });
   }

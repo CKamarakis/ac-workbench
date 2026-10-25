@@ -61,7 +61,8 @@ Run this when the PRD exists and the user wants changes, or new notes should fee
   1. Read the PRD. Propose the parts (title each) and, per part, which sections, requirements or rows move to it. Show it all in your message. **Write nothing until the user says yes** to the split.
   2. For each part: `new-prd --part-of <slug> --title "<title>"`, then fill its sections with `section-get` / `section-set`.
   3. Trim the parent **per section** (Requirements and the slice-specific rows move out; Problem, Users, Goals and Out of scope stay), each section on a yes. Never delete the parent and never rewrite it whole.
-  4. Run `prd-check`. If a part's status should differ from Draft, offer it, on a yes.
+  4. If the parent has a `change` of its own, offer to remove it (the parts carry the changes now): `set-field --file prds/<slug>.md --key change --value ""`, on a yes.
+  5. Run `prd-check`. If a part's status should differ from Draft, offer it, on a yes.
 - **Drop a part** (or a PRD) that won't be built: `set-field --key status --value Dropped`, on a yes. A parent can then be Shipped once every other part is Shipped.
 - **`WARNING ... is Shipped while ...`** from `prd-check` or `set-field`: the parent was marked Shipped with open parts. Name them; offer to ship or drop each, or to set the parent back. It's a warning, never a block.
 

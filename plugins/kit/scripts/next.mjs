@@ -304,9 +304,10 @@ export function gitChangedSince(dir) {
   const git = locate('git')?.path ?? 'git';
   const run = args => spawnSync(git, args, { cwd: dir, encoding: 'utf8', timeout: 30000 });
   return (file, commit, { ignoreSection = null } = {}) => {
-    if (ignoreSection) {
-      const old = run(['show', `${commit}:${file}`]);
-      if (old.status !== 0) return null;
+    // "./" makes git read the path from the project folder, also when the project sits in a subfolder of the
+    // repo (rc.2 feedback: the parent check gave up there). A file git can't show falls back to the plain check.
+    const old = ignoreSection ? run(['show', `${commit}:./${file}`]) : null;
+    if (old?.status === 0) {
       let now;
       try { now = fs.readFileSync(path.join(dir, file), 'utf8'); } catch { return true; }
       return withoutSection(old.stdout, ignoreSection) !== withoutSection(now, ignoreSection);

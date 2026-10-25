@@ -2,6 +2,12 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.3 (2026-10-25)
+Fixes from testing PRD parts on a real project:
+- `/kit:next` now warns when the parent PRD changed after planning, also when the project sits in a subfolder of its git repo (it gave up there without a word).
+- Roadmap `link --kind prd` refuses a PRD or part that doesn't exist ("no PRD acme-v1/nope. Nothing written.") and stores `acme-v1/part-b`, `prds/...` and `knowledge/prds/...` the same way, as `prds/acme-v1/part-b.md`. A missing `--id` says so; `m1` finds M1.
+- `set-field --key change --value ""` removes a PRD's `change`, e.g. a parent's old change after a split; the split flow in `/kit:prd` offers it. `/kit:status` no longer flags a parent with parts for its own archived change.
+
 ## 1.0.0-rc.2 (2026-10-25)
 - **PRD parts.** One PRD can be split over a parent `prds/<slug>.md` and part files `prds/<slug>/<part>.md` (`part-of: <slug>`), each with its own status and change. `new-prd --part-of` creates a part and adds it to the parent's Parts table; `/kit:prd` can split an existing PRD on request.
 - "PRD changed after planning" is checked per part and on the parent (a proposal from a part records a `PRD parent:` line), so editing one part no longer flags the change building another. Adding a part (a new row in the parent's Parts table) doesn't count as a parent change.

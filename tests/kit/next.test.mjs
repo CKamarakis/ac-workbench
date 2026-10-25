@@ -603,6 +603,27 @@ test('prd-parts D1: gitChangedSince with ignoreSection on a real repo: a Parts r
   assert.equal(since(f, 'deadbeef', { ignoreSection: 'Parts' }), null);
 });
 
+test('rc.2 feedback: the parent check works when the project sits in a subfolder of the repo', async () => {
+  const fs = await import('node:fs'); const path = await import('node:path');
+  const { spawnSync } = await import('node:child_process');
+  const { gitChangedSince } = await import('../../plugins/kit/scripts/next.mjs');
+  const repo = tmpDir('kit-next-sub-');
+  const d = path.join(repo, 'app');
+  const f = 'knowledge/prds/acme-v1.md';
+  const w = t => { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.writeFileSync(path.join(d, f), t); };
+  const g = (...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: repo, encoding: 'utf8' });
+  const base = '---\ntitle: Acme v1\nstatus: Building\n---\n\n## Goals\n\nShip it.\n\n## Parts\n\n| Part | Title |\n|---|---|\n| acme-v1/part-a | Part A |\n';
+  w(base); g('init', '-q'); g('add', '.'); g('commit', '-qm', 'one');
+  const c1 = g('rev-parse', '--short', 'HEAD').stdout.trim();
+  const since = gitChangedSince(d);
+  assert.equal(since(f, c1, { ignoreSection: 'Parts' }), false);
+  w(base.replace('Ship it.', 'Ship it by June.'));
+  g('commit', '-qam', 'two');
+  assert.equal(since(f, c1, { ignoreSection: 'Parts' }), true);
+  // A file git can't show at that commit falls back to "has commits since".
+  assert.equal(since('knowledge/prds/new.md', c1, { ignoreSection: 'Parts' }), false);
+});
+
 test('prd-parts: a proposal with no parent line is checked against the part only', () => {
   const k = K({ prds: [PARENT('Building', ['acme-v1/part-a']), PART('part-a', 'Building', { change: 'acme-part-a' })],
     changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a', '1a2b3c4', null) }] });

@@ -10,7 +10,7 @@ v1 phase E: outside testers install from the README; fixes; the post.
 
 - [ ] T1 A Mac tester and one or two friends install from the README
 - [ ] T2 Fixes from the outside test
-- [ ] T3 The LinkedIn post
+- [x] T3 The LinkedIn post
 - [ ] T4 Investigate why /kit:verify takes 10+ minutes on a real project (2026-10-21 run); find where the time goes and what can run in parallel or be skipped
 
 ## Notes

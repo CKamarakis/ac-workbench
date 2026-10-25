@@ -74,13 +74,14 @@ Every decision is checked against these.
 - M16
 - M12
 - M13
+- M17
 - M14
 
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-v1.0.0-rc.1 (2026-10-21): M13 release prep done. Fresh public repo with a privacy guard (text and image metadata), MIT license, README for strangers, CHANGELOG, issue forms. The run on the real project went from setup through verify; its fixes are in rc-fixes.
-Next: M14, the outside test: a Mac tester and one or two friends install from the README; T4 investigates why /kit:verify takes 10+ minutes.
+M17 PRD parts (active): split one PRD over a parent and part files, per-part status and change checks. Note: notes/2026-10-25-prd-parts-one-prd-split-over-several-files.md.
+After it: M14 T4, the verify spike. M14 T1 and T2 (outside test) are low priority; T3 LinkedIn post done.
 
 ## Waiting on you
 

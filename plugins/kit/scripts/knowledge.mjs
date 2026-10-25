@@ -9,10 +9,10 @@
 //   move        --from <path> --to archive|<folder>
 //   section-get --file <path> --heading <h>
 //   section-set --file <path> --heading <h> (--text <t> | --text-file <f>) --expect <hash>
-//   new-prd     --title <t> [--sources a,b] [--slug <s>]
-//   set-field   --file <path> --key status|change|title|shape --value <v>
+//   new-prd     --title <t> [--sources a,b] [--slug <s>] [--part-of <parent slug>]
+//   set-field   --file <path> --key status|change|title|shape|part-of --value <v>
 //   prd-check   [--file <path>]
-// Paths are relative to the knowledge folder. Exit codes: 0 ok, 1 error, 3 conflict.
+// Paths are relative to the knowledge folder. Exit codes: 0 ok, 1 error, 3 conflict (or a move waiting on unfinished parts).
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -23,15 +23,23 @@ import { locate } from './locate.mjs';
 // The PRD line a proposal carries (spec: skill-routing "Next-step suggestion uses PRD status"); used by next, ready and docs.
 export const PRD_LINE = /PRD:\s*`?([^\s`@]+\.md)`?\s*@\s*`?([0-9a-f]{4,40}|uncommitted)`?/i;
 
-/** The PRD line of a proposal, or null. */
+// The parent line a proposal made from a PRD part carries next to its PRD line (prd-parts D7). It has no "PRD:"
+// token, so PRD_LINE never matches it.
+export const PRD_PARENT_LINE = /PRD parent:\s*`?([^\s`@]+\.md)`?\s*@\s*`?([0-9a-f]{4,40}|uncommitted)`?/i;
+
+/** The PRD line of a proposal, plus `parent` when it also has a "PRD parent:" line; or null. */
 export function prdLink(proposalText) {
   const m = PRD_LINE.exec(proposalText ?? '');
-  return m ? { path: m[1].replace(/\\/g, '/'), commit: m[2].toLowerCase() } : null;
+  if (!m) return null;
+  const p = PRD_PARENT_LINE.exec(proposalText);
+  return { path: m[1].replace(/\\/g, '/'), commit: m[2].toLowerCase(), ...(p ? { parent: { path: p[1].replace(/\\/g, '/'), commit: p[2].toLowerCase() } } : {}) };
 }
 
 export const DEFAULT_DIR = 'knowledge';
 export const SUBDIRS = ['notes', 'prds', 'assets', 'archive'];
-export const STATUSES = ['Draft', 'Review', 'Ready', 'Building', 'Shipped'];
+export const STATUSES = ['Draft', 'Review', 'Ready', 'Building', 'Shipped', 'Dropped'];
+// A part counts as finished for its parent's Shipped check (prd-parts D3).
+export const FINISHED = ['Shipped', 'Dropped'];
 
 const posix = p => p.split(path.sep).join('/');
 const norm = s => s.replace(/\r\n/g, '\n');
@@ -192,22 +200,87 @@ export function openQuestions(text) {
   return m ? m[1].split('\n').filter(l => /^\s*[-*]\s*\S/.test(l) && !/^\s*[-*]\s*(none|n\/a)\.?\s*$/i.test(l)).map(l => l.replace(/^\s*[-*]\s*/, '').trim()) : [];
 }
 
-/** Validates one PRD file. Returns { path, slug, title, status, sources, change, openQuestions, valid, errors }. */
+const PART_KEY = 'part-of';
+const partOfField = d => (typeof d[PART_KEY] === 'string' && d[PART_KEY].trim() ? d[PART_KEY].trim() : null);
+
+/**
+ * The parts of a top-level PRD `prds/<slug>.md` (prd-parts D1): files in `prds/<slug>/` whose `part-of` is
+ * that slug. Each is { name, path, title, status }. Any other PRD has none.
+ */
+export function partsOf(root, rel) {
+  const m = /^prds\/([^/]+)\.md$/.exec(rel);
+  if (!m) return [];
+  const dir = path.join(root, 'prds', m[1]);
+  if (!fs.existsSync(dir)) return [];
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!e.isFile() || !e.name.toLowerCase().endsWith('.md')) continue;
+    const fm = parseFrontmatter(read(path.join(dir, e.name)));
+    if (!fm.ok || partOfField(fm.data) !== m[1]) continue;
+    const name = `${m[1]}/${path.basename(e.name, '.md')}`;
+    out.push({ name, path: `prds/${name}.md`, title: fm.data.title ?? name, status: fm.data.status ?? null });
+  }
+  return out;
+}
+
+/**
+ * Validates one PRD file. Returns { path, slug, name, partOf, label, title, status, sources, change, parts,
+ * openQuestions, valid, errors, warnings }. A part (a file with `part-of`, prd-parts D1) is named
+ * `<parent>/<file name>` and labelled "<parent title> › <part title>"; anything else keeps its file name.
+ */
 export function readPrd(root, file) {
   const rel = posix(path.relative(root, file));
   const slug = path.basename(file, '.md');
   const raw = read(file);
   const fm = parseFrontmatter(raw);
-  if (!fm.ok) return { path: rel, slug, valid: false, errors: [fm.error] };
+  if (!fm.ok) return { path: rel, slug, name: slug, valid: false, errors: [fm.error], warnings: [] };
   const d = fm.data;
   const errors = [];
+  const warnings = [];
   const sources = Array.isArray(d.sources) ? d.sources : d.sources ? [d.sources] : [];
+  const partOf = partOfField(d);
+  const title = d.title ?? slug;
+  let name = slug, label = title, parts = [];
   if (!fm.hasFrontmatter) errors.push('no frontmatter');
   if (!d.title) errors.push('missing title');
   if (!STATUSES.includes(d.status)) errors.push(`invalid status "${d.status ?? ''}" (expected one of ${STATUSES.join(', ')})`);
   for (const s of sources) if (!fs.existsSync(path.resolve(root, s))) errors.push(`source not found: ${s}`);
-  if (['Building', 'Shipped'].includes(d.status) && !d.change) errors.push(`status ${d.status} needs a "change"`);
-  return { path: rel, slug, title: d.title ?? slug, status: d.status ?? null, sources, change: d.change || null, openQuestions: openQuestions(raw).length, valid: !errors.length, errors };
+  if (partOf) {
+    name = `${partOf}/${slug}`;
+    const parentRel = `prds/${partOf}.md`;
+    // The folder check comes first, so a crafted part-of never reads a file outside prds/.
+    const parentText = posix(path.dirname(rel)) === `prds/${partOf}` ? read(path.join(root, parentRel)) : undefined;
+    const parent = parentText ? parseFrontmatter(parentText) : null;
+    if (parentText === undefined) errors.push(`part-of "${partOf}" doesn't match its folder: a part of ${partOf} belongs in prds/${partOf}/`);
+    else if (parentText == null) errors.push(`parent not found: ${parentRel}`);
+    else if (parent.ok && partOfField(parent.data)) errors.push(`parent ${partOf} is itself a part; a part can't have parts`);
+    else if (parent.ok && parent.data.title) label = `${parent.data.title} › ${title}`;
+  } else {
+    parts = partsOf(root, rel);
+    if (d.status === 'Shipped' && parts.length) {
+      const open = parts.filter(p => !FINISHED.includes(p.status));
+      if (open.length) warnings.push(`${slug} is Shipped while ${open.map(p => `${p.name} is ${p.status ?? 'without a status'}`).join(', ')}`);
+    }
+  }
+  // A parent with parts is built through its parts, so it needs no change of its own (prd-parts D4).
+  if (['Building', 'Shipped'].includes(d.status) && !d.change && !parts.length) errors.push(`status ${d.status} needs a "change"`);
+  return { path: rel, slug, name, partOf, label, title, status: d.status ?? null, sources, change: d.change || null, parts: parts.map(p => p.name), openQuestions: openQuestions(raw).length, valid: !errors.length, errors, warnings };
+}
+
+/** Parents and single PRDs newest first (a parent's time is the newest of itself and its parts), each part right after its parent. */
+function orderPrds(prds) {
+  // Group exactly the parts each parent lists (partsOf), valid or not, so the list indents the same set.
+  const listed = new Set(prds.flatMap(p => p.parts ?? []));
+  const partsOfParent = new Map();
+  const top = [];
+  for (const p of prds) {
+    const parent = p.partOf ? `prds/${p.partOf}.md` : null;
+    if (parent && listed.has(p.name)) (partsOfParent.get(parent) ?? partsOfParent.set(parent, []).get(parent)).push(p);
+    else top.push(p);
+  }
+  const groupTime = p => [p, ...(partsOfParent.get(p.path) ?? [])].map(x => String(x.updated)).sort().pop();
+  const keyed = top.map(p => ({ p, updated: groupTime(p), slug: p.name }));
+  return keyed.sort(byUpdated).flatMap(({ p }) => [p, ...(partsOfParent.get(p.path) ?? []).sort(byUpdated)]);
 }
 
 /** Notes (recursive, never archive/), PRDs newest-updated first, and .txt files not imported yet. */
@@ -216,7 +289,7 @@ export function listKnowledge(root, { updatedOf = null } = {}) {
   const notes = walk(path.join(root, 'notes')).map(f => readNote(root, f));
   const prdFiles = walk(path.join(root, 'prds'));
   const upd = prdFiles.length ? (updatedOf ?? gitUpdatedOf(root)) : null;
-  const prds = prdFiles.map(f => ({ ...readPrd(root, f), updated: upd(f) })).sort(byUpdated);
+  const prds = orderPrds(prdFiles.map(f => ({ ...readPrd(root, f), updated: upd(f) })));
   return {
     root: posix(root),
     exists,
@@ -224,6 +297,7 @@ export function listKnowledge(root, { updatedOf = null } = {}) {
     prds,
     unimported: walk(path.join(root, 'notes'), '.txt').map(f => posix(path.relative(root, f))),
     invalid: [...notes.filter(n => !n.valid), ...prds.filter(p => !p.valid)].map(x => ({ path: x.path, errors: x.errors })),
+    warnings: prds.flatMap(p => p.warnings ?? []),
   };
 }
 
@@ -322,7 +396,7 @@ function rewriteSources(root, prdRel, from, to) {
  * under the knowledge root (e.g. "notes/checkout"). Never overwrites, never deletes.
  * Citing PRDs get their `sources` rewritten to the new path.
  */
-export function move(root, fromRel, to) {
+export function move(root, fromRel, to, { projectDir = null } = {}) {
   const src = resolveIn(root, fromRel);
   if (!fs.existsSync(src)) throw new Error(`not found: ${fromRel}`);
   const from = posix(path.relative(root, src));
@@ -330,37 +404,116 @@ export function move(root, fromRel, to) {
   const destDir = to === 'archive' ? path.dirname(resolveIn(root, path.join('archive', from))) : resolveIn(root, to);
   const dest = path.join(destDir, path.basename(src));
   if (fs.existsSync(dest)) throw new Error(`target exists, nothing moved: ${posix(path.relative(root, dest))}`);
+  // A parent with parts (prd-parts D8): unfinished parts are the user's call, one by one; finished ones move along.
+  const parts = partsOf(root, from);
+  const unfinished = parts.filter(p => !FINISHED.includes(p.status));
+  const partsDir = parts.length ? path.join(path.dirname(src), path.basename(src, '.md')) : null;
+  // The folder moves whole, so anything in it that isn't a part of this parent (a detached part, broken
+  // frontmatter, a nested PRD of its own, any other file) would go along unseen: name it and move nothing.
+  const partFiles = new Set(parts.map(p => path.basename(p.path)));
+  const others = partsDir ? fs.readdirSync(partsDir).filter(n => !partFiles.has(n)).sort().map(n => posix(path.relative(root, path.join(partsDir, n)))) : [];
+  if (unfinished.length || others.length) return { from, moved: false, unfinished, others, updated: [], proposals: [] };
+  const partsDest = partsDir ? path.join(destDir, path.basename(partsDir)) : null;
+  if (partsDest && fs.existsSync(partsDest)) throw new Error(`target exists, nothing moved: ${posix(path.relative(root, partsDest))}`);
   const toRel = posix(path.relative(root, dest));
   const cited = citing(root, from);
+  // Only a PRD can be named in a proposal's PRD lines.
+  const proposals = projectDir && from.startsWith('prds/') ? proposalsCiting(projectDir, root, [from, ...parts.map(p => p.path)]) : [];
   fs.mkdirSync(destDir, { recursive: true });
   fs.renameSync(src, dest);
+  if (partsDir) fs.renameSync(partsDir, partsDest);
   for (const p of cited) rewriteSources(root, p, from, toRel);
-  return { from, to: toRel, updated: cited };
+  return { from, to: toRel, moved: true, parts: parts.map(p => p.name), updated: cited, proposals };
+}
+
+/** Active changes whose proposal names one of these PRD files (knowledge-relative) in its PRD or PRD parent line. */
+function proposalsCiting(projectDir, root, rels) {
+  const want = new Set(rels.map(r => posix(path.relative(projectDir, path.join(root, r)))));
+  const base = path.join(projectDir, 'openspec', 'changes');
+  let entries = [];
+  try { entries = fs.readdirSync(base, { withFileTypes: true }); } catch { return []; }
+  return entries.filter(e => e.isDirectory() && e.name !== 'archive').filter(e => {
+    const link = prdLink(read(path.join(base, e.name, 'proposal.md')));
+    return link && (want.has(link.path) || (link.parent && want.has(link.parent.path)));
+  }).map(e => `openspec/changes/${e.name}/proposal.md`).sort();
 }
 
 // ---------- PRDs ----------
 
 const KIT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Creates prds/<slug>.md from the kit template. Refuses to overwrite; sources must exist. */
-export function newPrd(root, { title, sources = [], slug = null }) {
+/**
+ * Creates prds/<slug>.md from the kit template, or with `partOf` a part prds/<parent>/<slug>.md from the part
+ * template plus a row in the parent's Parts section (prd-parts D5). Refuses to overwrite; sources must exist.
+ */
+export function newPrd(root, { title, sources = [], slug = null, partOf = null }) {
   if (!title || !String(title).trim()) throw new Error('a PRD needs a title');
   for (const s of sources) if (!fs.existsSync(resolveIn(root, s))) throw new Error(`source not found: ${s}`);
-  const dir = path.join(root, 'prds');
-  const file = path.join(dir, `${slugify(slug ?? title)}.md`);
+  let dir = path.join(root, 'prds');
+  let parentFile = null;
+  if (partOf != null) {
+    if (!String(partOf).trim()) throw new Error('--part-of needs the parent PRD\'s slug (prds/<slug>.md). Nothing written.');
+    if (partOf.includes('/')) throw new Error(`"${partOf}" is a part; a part can't have parts. Nothing written.`);
+    // Exact file name only: no "..", no backslash, no other case (Windows would still find the file), so the
+    // part always lands in prds/<parent>/ and its part-of matches the parent (security finding S1).
+    const names = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+    if (/[\\]|^\.+$/.test(partOf) || !names.includes(`${partOf}.md`)) {
+      const near = names.find(n => n.toLowerCase() === `${partOf}.md`.toLowerCase());
+      throw new Error(`parent PRD not found: prds/${partOf}.md${near ? ` (did you mean ${path.basename(near, '.md')}?)` : ''}. Nothing written.`);
+    }
+    parentFile = path.join(dir, `${partOf}.md`);
+    const parent = read(parentFile);
+    const pfm = parseFrontmatter(parent);
+    if (pfm.ok && partOfField(pfm.data)) throw new Error(`"${partOf}" is a part of ${partOfField(pfm.data)}; a part can't have parts. Nothing written.`);
+    dir = path.join(dir, partOf);
+  }
+  const name = slugify(slug ?? title);
+  const file = path.join(dir, `${name}.md`);
   if (fs.existsSync(file)) throw new Error(`PRD exists, nothing written: ${posix(path.relative(root, file))}`);
-  const tpl = parseFrontmatter(read(path.join(KIT, 'templates', 'prd.md')));
+  const tpl = parseFrontmatter(read(path.join(KIT, 'templates', parentFile ? 'prd-part.md' : 'prd.md')));
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, writeFrontmatter({ title: String(title).trim(), status: 'Draft', sources: sources.map(s => posix(path.normalize(s))) }, tpl.body));
-  return { path: posix(path.relative(root, file)) };
+  const data = { title: String(title).trim(), status: 'Draft', ...(parentFile ? { [PART_KEY]: partOf } : {}), sources: sources.map(s => posix(path.normalize(s))) };
+  fs.writeFileSync(file, writeFrontmatter(data, tpl.body));
+  if (parentFile) addPartRow(parentFile, `${partOf}/${name}`, data.title);
+  return { path: posix(path.relative(root, file)), ...(parentFile ? { parent: `prds/${partOf}.md` } : {}) };
+}
+
+/** Appends `| name | title |` to the parent's `## Parts` section; adds the section or the table header when missing. Other lines stay as they are. */
+function addPartRow(parentFile, name, title) {
+  const row = `| ${name} | ${title.replace(/\|/g, '\\|')} |`;
+  const header = ['| Part | Title |', '|---|---|'];
+  const text = read(parentFile);
+  // Keep the file's own line endings (read() normalises to LF).
+  const crlf = fs.readFileSync(parentFile, 'utf8').includes('\r\n');
+  const s = findSection(text, 'Parts');
+  let out;
+  if (s.start < 0) out = text.replace(/\s*$/, '\n') + `\n## Parts\n\n${[...header, row].join('\n')}\n`;
+  else {
+    const body = s.lines.slice(s.start + 1, s.end);
+    const at = (pred) => body.reduce((n, l, i) => (pred(l) ? i : n), -1);
+    const lastTable = at(l => /^\s*\|/.test(l));
+    const last = at(l => l.trim());
+    let next;
+    if (lastTable >= 0) next = [...body.slice(0, lastTable + 1), row, ...body.slice(lastTable + 1)];
+    else if (last >= 0) next = [...body.slice(0, last + 1), '', ...header, row, ...body.slice(last + 1)];
+    else next = ['', ...header, row, ''];
+    const after = s.lines.slice(s.end);
+    if (!after.length && next[next.length - 1] !== '') next.push('');
+    out = [...s.lines.slice(0, s.start + 1), ...next, ...after].join('\n');
+  }
+  fs.writeFileSync(parentFile, crlf ? out.replace(/\n/g, '\r\n') : out);
 }
 
 const FIELDS = { status: v => STATUSES.includes(v) || `status must be one of ${STATUSES.join(', ')}`, change: v => /^[a-z0-9][a-z0-9-]*$/.test(v) || 'change must be a kebab-case change name', title: v => !!v.trim() || 'title cannot be empty',
   // The /impeccable shape offer's answer, so it's made once per PRD (ui-flow-with-impeccable design D4).
-  shape: v => ['done', 'declined'].includes(v) || 'shape must be done or declined' };
+  shape: v => ['done', 'declined'].includes(v) || 'shape must be done or declined',
+  // A part's parent slug, or empty to make the part a PRD of its own (prd-parts D8).
+  [PART_KEY]: v => v === '' || /^[a-z0-9][a-z0-9-]*$/.test(v) || 'part-of must be a parent PRD slug (no folders), or empty to remove it' };
 
-/** Sets one frontmatter field of a PRD (status, change, title or shape). The body is untouched. */
+/** Sets one frontmatter field of a PRD (status, change, title, shape or part-of; an empty part-of removes it). The body is untouched. */
 export function setField(root, rel, key, value) {
+  // PowerShell 5.1 drops an empty "" argument, so a missing --value for part-of means "remove it".
+  if (key === PART_KEY && value == null) value = '';
   const check = FIELDS[key];
   if (!check) throw new Error(`only ${Object.keys(FIELDS).join(', ')} can be set`);
   const ok = check(String(value ?? ''));
@@ -370,9 +523,19 @@ export function setField(root, rel, key, value) {
   if (read(file) == null) throw new Error(`not found: ${rel}`);
   if (!fm.ok) throw new Error(`${rel}: ${fm.error}`);
   const before = fm.data[key] ?? null;
-  fm.data[key] = String(value);
+  if (key === PART_KEY && value === '') delete fm.data[key];
+  else fm.data[key] = String(value);
   fs.writeFileSync(file, writeFrontmatter(fm.data, fm.body));
-  return { path: posix(path.relative(root, file)), key, from: before, to: String(value) };
+  // A parent marked Shipped with open parts gets the warning, also when a part under a Shipped parent is
+  // reopened; the write stands (prd-parts D6).
+  let warnings = [];
+  if (key === 'status') {
+    const r = readPrd(root, file);
+    const parentFile = r.partOf ? path.join(root, 'prds', `${r.partOf}.md`) : null;
+    const parentOk = parentFile && posix(path.dirname(r.path)) === `prds/${r.partOf}` && fs.existsSync(parentFile);
+    warnings = [...(r.warnings ?? []), ...(parentOk ? readPrd(root, parentFile).warnings ?? [] : [])];
+  }
+  return { path: posix(path.relative(root, file)), key, from: before, to: key === PART_KEY && value === '' ? null : String(value), warnings };
 }
 
 // ---------- sections (D4) ----------
@@ -426,7 +589,8 @@ function parseArgs(argv) {
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--json') o.json = true;
-    else if (a.startsWith('--')) o[a.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = argv[++i];
+    // A flag right after a flag means the first one had no value (PowerShell 5.1 drops an empty "" argument).
+    else if (a.startsWith('--')) o[a.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = argv[i + 1]?.startsWith('--') ? undefined : argv[++i];
     else throw new Error(`unexpected argument ${a}`);
   }
   return o;
@@ -446,15 +610,16 @@ function run(o) {
     });
     case 'import': return importNote(root, { file: o.file, title: o.title ?? null, date: o.date ?? null, topic: o.topic ?? null, tags: o.tags ? o.tags.split(',').map(s => s.trim()).filter(Boolean) : null });
     case 'citing': return { note: o.note, citedBy: citing(root, o.note) };
-    case 'move': return move(root, o.from, o.to);
+    case 'move': return move(root, o.from, o.to, { projectDir: path.resolve(o.dir) });
     case 'section-get': return sectionGet(at(o.file), o.heading);
     case 'section-set': return sectionSet(at(o.file), o.heading, o.textFile ? fs.readFileSync(o.textFile, 'utf8') : o.text ?? '', o.expect);
-    case 'new-prd': return newPrd(root, { title: o.title, slug: o.slug ?? null, sources: o.sources ? o.sources.split(',').map(s => s.trim()).filter(Boolean) : [] });
+    // A --part-of given with no value is an error, never a quiet top-level PRD.
+    case 'new-prd': return newPrd(root, { title: o.title, slug: o.slug ?? null, partOf: 'partOf' in o ? (o.partOf ?? '') : null, sources: o.sources ? o.sources.split(',').map(s => s.trim()).filter(Boolean) : [] });
     case 'set-field': return setField(root, o.file, o.key, o.value);
     case 'prd-check': {
       const files = o.file ? [at(o.file)] : walk(path.join(root, 'prds'));
       const results = files.map(f => readPrd(root, f));
-      return { valid: results.every(r => r.valid), results };
+      return { valid: results.every(r => r.valid), results, warnings: results.flatMap(r => r.warnings ?? []) };
     }
     default: throw new Error(`unknown command "${o.cmd ?? ''}" (list, new-note, import, citing, move, new-prd, set-field, section-get, section-set, prd-check)`);
   }
@@ -465,19 +630,30 @@ function format(cmd, r) {
     const lines = [`Knowledge: ${r.root}${r.exists ? '' : ' (missing)'}`, `Notes (${r.notes.length}):`];
     for (const n of r.notes) lines.push(`  ${n.path}  - ${n.title}${n.tags.length ? `  [${n.tags.join(', ')}]` : ''}`);
     lines.push(`PRDs (${r.prds.length}):`);
-    for (const p of r.prds) lines.push(`  ${p.path}  ${p.status ?? '?'}  - ${p.title ?? p.slug}${p.change ? `  (change: ${p.change})` : ''}  (updated ${String(p.updated).slice(0, 16).replace('T', ' ')})`);
+    // Parts sit right after their parent in the list (orderPrds); indent them under it.
+    const grouped = new Set(r.prds.filter(p => p.parts?.length).flatMap(p => p.parts));
+    for (const p of r.prds) lines.push(`${grouped.has(p.name) ? '    ' : '  '}${p.path}  ${p.status ?? '?'}  - ${p.title ?? p.slug}${p.change ? `  (change: ${p.change})` : ''}  (updated ${String(p.updated).slice(0, 16).replace('T', ' ')})`);
     if (r.unimported.length) { lines.push(`Not imported yet (${r.unimported.length}):`); for (const u of r.unimported) lines.push(`  ${u}`); }
     for (const x of r.invalid) lines.push(`INVALID ${x.path}: ${x.errors.join('; ')}`);
+    for (const w of r.warnings ?? []) lines.push(`WARNING ${w}`);
     return lines.join('\n');
   }
   if (cmd === 'section-set') return r.conflict
     ? `CONFLICT: "${r.heading}" changed since it was read (expected ${r.expected}, now ${r.actual}). Nothing written.`
     : `wrote "${r.heading}" (hash ${r.hash})`;
-  if (cmd === 'prd-check') return r.results.map(x => `${x.valid ? 'ok     ' : 'INVALID'} ${x.path}${x.errors.length ? `: ${x.errors.join('; ')}` : ''}`).join('\n') || 'No PRDs.';
-  if (cmd === 'move') return `moved ${r.from} -> ${r.to}${r.updated.length ? `\nupdated sources in: ${r.updated.join(', ')}` : ''}`;
+  if (cmd === 'prd-check') return [...r.results.map(x => `${x.valid ? 'ok     ' : 'INVALID'} ${x.path}${x.errors.length ? `: ${x.errors.join('; ')}` : ''}`), ...r.warnings.map(w => `WARNING ${w}`)].join('\n') || 'No PRDs.';
+  if (cmd === 'move' && !r.moved) return [
+    ...(r.unfinished.length ? [`WARNING: ${r.from} has unfinished parts; nothing moved. Decide each one first:`,
+      ...r.unfinished.map(p => `  ${p.name}  ${p.status ?? '?'}  - ${p.title}`),
+      'For each: drop it (set-field --key status --value Dropped), put it under another parent (set-field --key part-of --value <parent>, then move --to prds/<parent>),',
+      'or make it a PRD of its own (set-field --key part-of --value "", then move --to prds).'] : []),
+    ...(r.others.length ? [`WARNING: ${r.from}'s folder also holds files that aren't its parts; nothing moved. Move them out first (or fix a part's frontmatter):`,
+      ...r.others.map(p => `  ${p}`)] : []),
+    'Then move the parent again.'].join('\n');
+  if (cmd === 'move') return `moved ${r.from} -> ${r.to}${r.parts?.length ? `\nmoved its parts: ${r.parts.join(', ')}` : ''}${r.updated.length ? `\nupdated sources in: ${r.updated.join(', ')}` : ''}${r.proposals?.length ? `\nthese proposals cite the old path: ${r.proposals.join(', ')}` : ''}`;
   if (cmd === 'citing') return r.citedBy.length ? `${r.note} is cited by: ${r.citedBy.join(', ')}` : `${r.note} is not cited by any PRD`;
-  if (cmd === 'new-prd') return `created ${r.path} (status Draft)`;
-  if (cmd === 'set-field') return `${r.path}: ${r.key} ${r.from ?? '(none)'} -> ${r.to}`;
+  if (cmd === 'new-prd') return `created ${r.path} (status Draft)${r.parent ? `\nadded a row to the Parts section of ${r.parent}` : ''}`;
+  if (cmd === 'set-field') return [`${r.path}: ${r.key} ${r.from ?? '(none)'} -> ${r.to ?? '(removed)'}`, ...r.warnings.map(w => `WARNING ${w}`)].join('\n');
   if (cmd === 'import') return `created ${r.path}${r.removed ? `
 replaced ${r.removed}` : ''}${r.kept ? `
 original kept at ${r.kept}` : ''}`;
@@ -492,7 +668,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     o = parseArgs(process.argv.slice(2));
     const r = run(o);
     console.log(o.json ? JSON.stringify(r, null, 2) : format(o.cmd, r));
-    if (r?.conflict) process.exitCode = 3;
+    if (r?.conflict || (o.cmd === 'move' && !r.moved)) process.exitCode = 3;
     else if (o.cmd === 'prd-check' && !r.valid) process.exitCode = 1;
   } catch (e) {
     console.error(`error: ${e.message}`);

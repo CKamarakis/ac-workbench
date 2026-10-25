@@ -86,7 +86,7 @@ A PRD SHALL be able to have parts: a parent `prds/<slug>.md` and part files `prd
 - **THEN** the row reads "Acme v1 › Part B"
 
 ### Requirement: Parts checked against their parent
-`prd-check` SHALL report a part as invalid when its parent file doesn't exist or `part-of` doesn't match the part's folder. A parent with parts SHALL be valid as `Building` without a `change`. A parent marked `Shipped` while any part is neither `Shipped` nor `Dropped` SHALL get a warning that names those parts; the PRD stays valid and nothing is blocked.
+`prd-check` SHALL report a part as invalid when its parent file doesn't exist or `part-of` doesn't match the part's folder. A parent with parts SHALL be valid as `Building` or `Shipped` without a `change`. A parent marked `Shipped` while any part is neither `Shipped` nor `Dropped` SHALL get a warning that names those parts; the PRD stays valid and nothing is blocked.
 
 #### Scenario: Orphan part
 - **WHEN** `prds/acme-v1/part-a.md` says `part-of: acme-v1` and `prds/acme-v1.md` doesn't exist
@@ -125,6 +125,11 @@ Before a parent with parts is moved or archived, the kit SHALL warn and name eve
 - **GIVEN** the user picked "its own PRD" for `acme-v1/part-b`
 - **WHEN** the kit applies it
 - **THEN** the part is `prds/part-b.md` without `part-of`, keeps its status and change, and the proposal lines that cited the old path still resolve or are named to the user
+
+#### Scenario: Folder holds files that aren't parts
+- **GIVEN** parent `acme-v1` (Shipped) whose folder holds `part-a` (Shipped), a detached `part-b.md` with no `part-of`, and a `part-c.md` whose frontmatter doesn't parse
+- **WHEN** the user archives `acme-v1`
+- **THEN** the kit names `part-b.md` and `part-c.md` as not its parts and moves nothing
 
 #### Scenario: All parts finished
 - **GIVEN** parent `acme-v1` with `part-a` Shipped and `part-b` Dropped

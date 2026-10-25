@@ -584,3 +584,14 @@ test('loose-ends verify C2: the report says when loose-ends.md is unreadable', (
   const out = spawnSync(process.execPath, [SCRIPT, 'report', '--dir', d], { encoding: 'utf8' }).stdout;
   assert.match(out, /Loose ends: loose-ends.md can't be read .*fix it from git/);
 });
+
+test('prd-parts 4.2: link --kind prd accepts a PRD part and the check reports nothing', () => {
+  const d = project({ order: ['M3'], milestones: { 'm3-acme.md': ms('M3', 'Acme', 'active', ['- [ ] T1 build part b']) } });
+  fs.mkdirSync(path.join(d, 'knowledge/prds/acme-v1'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'knowledge/prds/acme-v1.md'), '---\ntitle: Acme v1\nstatus: Ready\n---\n');
+  fs.writeFileSync(path.join(d, 'knowledge/prds/acme-v1/part-b.md'), '---\ntitle: Part B\nstatus: Ready\npart-of: acme-v1\n---\n');
+  const r = link(kroot(d), { id: 'M3', kind: 'prd', value: 'prds/acme-v1/part-b.md' });
+  assert.deepEqual(r.prd, ['prds/acme-v1/part-b.md']);
+  assert.deepEqual(parseRoadmap(kroot(d)).milestones.find(m => m.id === 'M3').links.prd, ['prds/acme-v1/part-b.md']);
+  assert.equal(check(d).good, true);
+});

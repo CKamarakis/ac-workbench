@@ -62,7 +62,8 @@ Only when the user asks. Nothing is ever deleted.
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.mjs" move --dir . --from <notes/...md> --to archive|notes/<topic>
    ```
-3. **Report** the new path and the PRDs whose sources were updated.
+   **A PRD with parts** (spec: prd-authoring "Move a parent with parts"). If `move` prints `WARNING: ... has unfinished parts; nothing moved` (exit 3), show the parts it names and ask, **per part**, with **AskUserQuestion**: drop it, put it under another parent, or make it a PRD of its own. There is no default; it's the user's call each time. Apply each answer with the commands the warning prints (`set-field` for `status` or `part-of`, then `move` for the part file), then move the parent again. Finished parts move with the parent on their own.
+3. **Report** the new path, the parts that moved with it, the PRDs whose sources were updated, and any proposals the helper says cite the old path (their PRD line now points at a moved file; offer to fix the line, on a yes).
 
 ## Rules
 

@@ -45,6 +45,13 @@ The main flow in a few steps, edge cases worth naming, and links to images in `.
 |---|---|---|
 | | | |
 
+## Parts
+
+Only when this PRD is built in parts, one change each (`new-prd --part-of <slug>` adds a row). Leave it empty otherwise.
+
+| Part | Title |
+|---|---|
+
 ## Open questions
 
 -

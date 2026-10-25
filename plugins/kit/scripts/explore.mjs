@@ -159,7 +159,8 @@ export function linkPrd(dir, { slug, prd }) {
   const r = readRecord(dir, slug);
   if (!r) throw new Error(`no explore record ${slug}`);
   const rel = posix(path.normalize(String(prd ?? ''))).replace(/^\.\//, '');
-  if (!/^prds\/[^/]+\.md$/.test(rel) || !fs.existsSync(path.join(root(dir), rel))) throw new Error(`PRD not found: ${prd} (prds/<slug>.md)`);
+  // A PRD or one of its parts (prd-parts); normalize has already collapsed any "..".
+  if (!/^prds\/(?:[^/]+\/)?[^/]+\.md$/.test(rel) || !fs.existsSync(path.join(root(dir), rel))) throw new Error(`PRD not found: ${prd} (prds/<slug>.md or prds/<slug>/<part>.md)`);
   if (r.prd && r.prd !== rel) throw new Error(`explore/${slug}.md is already in PRD ${r.prd}`);
   write(dir, { ...r, prd: rel, undo: null });
   return readRecord(dir, slug);

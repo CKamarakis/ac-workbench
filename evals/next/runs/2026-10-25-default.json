@@ -1,0 +1,263 @@
+{
+  "skill": "next",
+  "date": "2026-10-25T09:19:24.933Z",
+  "setup": "default",
+  "interventions": 0,
+  "duration_ms": 32524,
+  "summary": {
+    "pass": 13,
+    "fail": 0,
+    "pending": 0
+  },
+  "cases": [
+    {
+      "id": "no-openspec-suggests-start",
+      "outcome": "pass",
+      "duration_ms": 264,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "fresh-kit-project-offers-first-steps",
+      "outcome": "pass",
+      "duration_ms": 4453,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "several-active-changes-ask-which",
+      "outcome": "pass",
+      "duration_ms": 5959,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /never run it automatically/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-offers-but-does-not-run",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /Don't run the suggested step yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /\\$\\{CLAUDE_PLUGIN_ROOT\\}/scripts/next\\.mjs/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "ready-prd-suggests-propose",
+      "outcome": "pass",
+      "duration_ms": 4395,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "notes-only-no-prd-step",
+      "outcome": "pass",
+      "duration_ms": 4587,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "explore-record-ready-suggests-prd",
+      "outcome": "pass",
+      "duration_ms": 4462,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-reports-prd-and-never-writes-status",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /checks the project.s PRDs/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /Never change a PRD's status here/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "newest-ready-prd-named-first",
+      "outcome": "pass",
+      "duration_ms": 4419,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "tasks-done-suggests-verify",
+      "outcome": "pass",
+      "duration_ms": 3974,
+      "checks": [
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        },
+        {
+          "kind": "command-exit",
+          "pass": true,
+          "detail": "exit 0 (expected 0)"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-explore-and-roadmap-steps",
+      "outcome": "pass",
+      "duration_ms": 3,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /--explore <slug>/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /never tick, finish or start a milestone yourself/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /Notes never come up as a step/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "skill-gives-both-first-steps",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /Next is `/kit:capture` \\(\"Nothing here yet\", a new project\\)/"
+        }
+      ],
+      "rubric": []
+    },
+    {
+      "id": "quiet-about-notes",
+      "outcome": "pass",
+      "duration_ms": 2,
+      "checks": [
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md matches /It says nothing about notes/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/next/SKILL.md does not match /notes with no PRD yet/"
+        },
+        {
+          "kind": "content-match",
+          "pass": true,
+          "detail": "{{kit}}/skills/status/SKILL.md matches /one plain line \"N notes\"/"
+        }
+      ],
+      "rubric": []
+    }
+  ]
+}

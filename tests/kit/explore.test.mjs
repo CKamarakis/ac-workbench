@@ -63,6 +63,13 @@ test('link to its PRD: state in-prd; further saves refused and point to /kit:prd
   assert.throws(() => save(d, { slug: 'kit-status', decisions: ['late'] }), /already in PRD prds\/kit-status\.md: update the PRD with \/kit:prd/);
 });
 
+test('prd-parts verify: an explore record links to a PRD part; paths outside prds/ are still refused', () => {
+  const d = project({ 'knowledge/prds/acme-v1/part-a.md': '---\ntitle: Part A\nstatus: Draft\npart-of: acme-v1\n---\n', 'knowledge/notes/n.md': '---\ntitle: N\n---\n' });
+  save(d, { slug: 'pa', ...first, questions: [] });
+  assert.throws(() => linkPrd(d, { slug: 'pa', prd: 'prds/../notes/n.md' }), /PRD not found/);
+  assert.equal(linkPrd(d, { slug: 'pa', prd: 'prds/acme-v1/part-a.md' }).prd, 'prds/acme-v1/part-a.md');
+});
+
 test('stateOf and list', () => {
   assert.equal(stateOf({ prd: null, questions: [] }), 'ready-for-prd');
   const d = project();

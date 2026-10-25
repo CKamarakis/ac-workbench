@@ -5,7 +5,9 @@ description: Draft or update a PRD (product requirements) in this project's know
 
 # Kit PRD
 
-Turns the project's notes into a PRD that **the user owns**: they edit it freely, and you propose changes. PRDs live in `<knowledge>/prds/<slug>.md`, with frontmatter `title`, `status` (Draft → Review → Ready → Building → Shipped), `sources` (note paths) and `change` (once a change uses it). The body follows `${CLAUDE_PLUGIN_ROOT}/templates/prd.md`.
+Turns the project's notes into a PRD that **the user owns**: they edit it freely, and you propose changes. PRDs live in `<knowledge>/prds/<slug>.md`, with frontmatter `title`, `status` (Draft → Review → Ready → Building → Shipped, or `Dropped` when it won't be built), `sources` (note paths) and `change` (once a change uses it). The body follows `${CLAUDE_PLUGIN_ROOT}/templates/prd.md`.
+
+**Parts** (spec: prd-authoring "PRD parts"). A PRD built over several changes can be split: the parent `prds/<slug>.md` keeps Problem, Users, Goals, Out of scope and a Parts table; each part `prds/<slug>/<part>.md` has `part-of: <slug>`, its own status and `change`, and the part template's sections (Scope, Requirements, Done when, Open questions). Name a part as `<slug>/<part>` (the helper's `name`). Everything below works on a part as on a PRD; a parent with parts is never proposed itself, and needs no `change` to be Building.
 
 All file work goes through the helper, run from the project folder:
 ```bash
@@ -52,11 +54,22 @@ Run this when the PRD exists and the user wants changes, or new notes should fee
 4. **`CONFLICT` (exit 3):** the user edited that section after you read it. Don't retry blindly. Show their current text next to your proposal, and let them choose.
 5. **New sources:** add them only after the user agrees, as one more `  - notes/...` line under `sources`. Change nothing else in the frontmatter. Then run `prd-check --file prds/<slug>.md`.
 
+## Parts: add one, or split a PRD
+
+- **Add a part** on request: `new-prd --part-of <parent slug> --title "<title>" [--sources ...]`. It creates `prds/<parent>/<part>.md` as Draft and adds a row to the parent's Parts table. Fill it per section like any PRD.
+- **Split a PRD into parts** (spec: prd-authoring "Split a PRD into parts"), only when the user asks:
+  1. Read the PRD. Propose the parts (title each) and, per part, which sections, requirements or rows move to it. Show it all in your message. **Write nothing until the user says yes** to the split.
+  2. For each part: `new-prd --part-of <slug> --title "<title>"`, then fill its sections with `section-get` / `section-set`.
+  3. Trim the parent **per section** (Requirements and the slice-specific rows move out; Problem, Users, Goals and Out of scope stay), each section on a yes. Never delete the parent and never rewrite it whole.
+  4. Run `prd-check`. If a part's status should differ from Draft, offer it, on a yes.
+- **Drop a part** (or a PRD) that won't be built: `set-field --key status --value Dropped`, on a yes. A parent can then be Shipped once every other part is Shipped.
+- **`WARNING ... is Shipped while ...`** from `prd-check` or `set-field`: the parent was marked Shipped with open parts. Name them; offer to ship or drop each, or to set the parent back. It's a warning, never a block.
+
 ## Status and handoff
 
 - **The status changes only on the user's yes.** Use `set-field --file prds/<slug>.md --key status --value <Status>`.
 - **Before Ready:** run `prd-check --file prds/<slug>.md`, and fix what it reports with the user. If open questions remain, offer step 7 first.
-- **Ready → planning:** tell the user the next step is `/opsx:propose`. The project's routing rules make the proposal read the Ready PRD and record a line `PRD: <knowledge>/prds/<slug>.md @ <commit>`. The commit is `git log -1 --format=%h -- <file>`, or `uncommitted` if the file has uncommitted changes.
+- **Ready → planning:** tell the user the next step is `/opsx:propose`. The project's routing rules make the proposal read the Ready PRD and record a line `PRD: <knowledge>/prds/<slug>.md @ <commit>`. The commit is `git log -1 --format=%h -- <file>`, or `uncommitted` if the file has uncommitted changes. From a part, the proposal also records `PRD parent: <knowledge>/prds/<parent>.md @ <commit>`, so `/kit:next` warns when the part or the parent changes, not when another part does.
 - **After the proposal exists:** offer to set `change` to the change name and the status to `Building`, both on a yes.
 - **After `/opsx:archive`:** ask whether the PRD is done or continues in another change. A PRD can be built across several changes. Done: offer `Shipped`. Continues: keep `Building`, and once the next change is proposed, offer to set `change` to it. Either way, only on a yes.
 

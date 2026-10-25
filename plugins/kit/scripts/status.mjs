@@ -121,7 +121,7 @@ function activeChanges(dir, knowledge) {
   return dirs(root).filter(n => n !== 'archive').map(name => {
     const link = prdLink(read(path.join(root, name, 'proposal.md')));
     const prd = link ? knowledge.list.prds.find(p => `${knowledge.dir}/${p.path}` === link.path) : null;
-    return { name, title: prd?.title ?? words(name), tasks: taskCounts(path.join(root, name, 'tasks.md')), source: `openspec/changes/${name}/` };
+    return { name, title: prd?.label ?? prd?.title ?? words(name), tasks: taskCounts(path.join(root, name, 'tasks.md')), source: `openspec/changes/${name}/` };
   });
 }
 
@@ -164,8 +164,8 @@ function nextAndAfter({ roadmap, report, knowledge, changes, roadmapRel, now }) 
   }
   // No roadmap: Ready PRDs no change uses, newest first, then notes no change or PRD uses. Hints only (D7).
   const used = new Set(changes.map(c => c.name));
-  const ready = knowledge.list.prds.filter(p => p.valid && p.status === 'Ready' && !(p.change && used.has(p.change)) && !knowledge.changes.some(c => c.link?.path === `${knowledge.dir}/${p.path}`))
-    .map(p => row(p.title, 'ready to propose', 'PRD Ready', `${knowledge.dir}/${p.path}`, { kind: 'prd', age: ageDays(p.updated, now) }));
+  const ready = knowledge.list.prds.filter(p => p.valid && p.status === 'Ready' && !p.parts?.length && !(p.change && used.has(p.change)) && !knowledge.changes.some(c => c.link?.path === `${knowledge.dir}/${p.path}`))
+    .map(p => row(p.label ?? p.title, 'ready to propose', 'PRD Ready', `${knowledge.dir}/${p.path}`, { kind: 'prd', age: ageDays(p.updated, now) }));
   return { next: ready, after: [] };
 }
 
@@ -180,7 +180,7 @@ function saidRows({ dir, roadmap, roadmapRel, knowledge, changes, archived, now 
     rows.push(row(w.question, w.milestone === 'general' ? 'general' : `milestone ${w.milestone}`, 'waiting on you', `${roadmapRel}/roadmap.md`, { kind: 'roadmap', answer: '/kit:roadmap', date: w.date, age: ageDays(w.date, now) }));
   }
   for (const p of knowledge.list.prds.filter(x => x.valid && x.openQuestions > 0)) {
-    rows.push(row(`PRD "${p.title}": ${p.openQuestions} open question(s)`, `${p.openQuestions}`, `PRD ${p.status}`, `${knowledge.dir}/${p.path}`, { kind: 'prd', answer: '/kit:prd', date: p.updated?.slice(0, 10) ?? null, age: ageDays(p.updated, now) }));
+    rows.push(row(`PRD "${p.label ?? p.title}": ${p.openQuestions} open question(s)`, `${p.openQuestions}`, `PRD ${p.status}`, `${knowledge.dir}/${p.path}`, { kind: 'prd', answer: '/kit:prd', date: p.updated?.slice(0, 10) ?? null, age: ageDays(p.updated, now) }));
   }
   const decisions = (folder, change, archivedTo) => {
     const st = readDecisions(path.join(dir, folder, 'decisions.md'));
@@ -229,7 +229,7 @@ export function mismatches({ roadmap, report, changes, knowledge, archived, bran
   const done = new Set(archived.map(a => a.change));
   for (const p of knowledge.list.prds.filter(x => x.valid && x.status === 'Building' && x.change && done.has(x.change))) {
     // A PRD can be built across several changes, so this asks rather than advising Shipped (L1).
-    out.push({ what: `PRD "${p.title}" is Building, but its change ${p.change} is archived: is the PRD done, or does it continue in another change?`, sources: [`${knowledge.dir}/${p.path}`, 'openspec/changes/archive/'], fix: '/kit:prd: mark it Shipped, or link the next change (on your yes)' });
+    out.push({ what: `PRD "${p.label ?? p.title}" is Building, but its change ${p.change} is archived: is the PRD done, or does it continue in another change?`, sources: [`${knowledge.dir}/${p.path}`, 'openspec/changes/archive/'], fix: '/kit:prd: mark it Shipped, or link the next change (on your yes)' });
   }
   // (c) The roadmap check's own git findings, passed through with their fixes.
   for (const f of findings?.tidy ?? []) out.push({ what: f.problem, sources: [`${roadmapRel}/${f.file}`, 'git log'], fix: f.fix });

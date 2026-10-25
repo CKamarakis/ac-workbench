@@ -332,3 +332,266 @@ test('openQuestions lists the section items; None and N/A do not count; readPrd 
   fs.writeFileSync(path.join(r, 'prds/side.md'), '---\ntitle: Side\nstatus: Draft\n---\n\n' + body);
   assert.equal(readPrd(r, path.join(r, 'prds/side.md')).openQuestions, 2);
 });
+
+// ---------- prd-parts (spec: prd-authoring "PRD parts" and the requirements after it) ----------
+
+import { newPrd, setField, prdLink, PRD_LINE } from '../../plugins/kit/scripts/knowledge.mjs';
+
+const KCLI = path.resolve('plugins/kit/scripts/knowledge.mjs');
+const kcli = (dir, ...args) => sp(process.execPath, [KCLI, ...args, '--dir', dir], { encoding: 'utf8' });
+const fmText = (data, body = '\n## Scope\n\nS\n') => `---\n${Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\n${body}`;
+const parent = (extra = {}) => fmText({ title: 'Acme v1', status: 'Ready', ...extra }, '\n## Problem\n\nP\n\n## Parts\n\n| Part | Title |\n|---|---|\n\n## Open questions\n\n-\n');
+const part = (title, status = 'Draft', extra = {}) => fmText({ title, status, 'part-of': 'acme-v1', ...extra });
+const at = stamps => f => stamps[path.basename(f, '.md')] ?? '2026-01-01T00:00:00.000Z';
+
+test('prd-parts 1.1: Dropped is a status; a Dropped PRD needs no change; the six values are named', () => {
+  const r = tmp();
+  put(r, 'prds/old.md', fmText({ title: 'Old', status: 'Dropped' }));
+  put(r, 'prds/bad.md', fmText({ title: 'Bad', status: 'Done' }));
+  assert.equal(readPrd(r, path.join(r, 'prds/old.md')).valid, true);
+  assert.match(readPrd(r, path.join(r, 'prds/bad.md')).errors[0], /Draft, Review, Ready, Building, Shipped, Dropped/);
+  put(r, 'prds/x.md', fmText({ title: 'X', status: 'Draft' }));
+  assert.equal(setField(r, 'prds/x.md', 'status', 'Dropped').to, 'Dropped');
+});
+
+test('prd-parts 1.2: a part is named parent/file and labelled with its parent; a nested file without part-of keeps its name', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent());
+  put(r, 'prds/acme-v1/part-a.md', part('Part A'));
+  put(r, 'prds/acme-v1/notes-only.md', fmText({ title: 'Loose', status: 'Draft' }));
+  const a = readPrd(r, path.join(r, 'prds/acme-v1/part-a.md'));
+  assert.equal(a.name, 'acme-v1/part-a');
+  assert.equal(a.partOf, 'acme-v1');
+  assert.equal(a.label, 'Acme v1 › Part A');
+  const loose = readPrd(r, path.join(r, 'prds/acme-v1/notes-only.md'));
+  assert.equal(loose.name, 'notes-only');
+  assert.equal(loose.partOf, null);
+  assert.equal(loose.label, 'Loose');
+  assert.deepEqual(readPrd(r, path.join(r, 'prds/acme-v1.md')).parts, ['acme-v1/part-a']);
+});
+
+test('prd-parts 1.2: the same part name under two parents gives two different parts', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent());
+  put(r, 'prds/acme-v2.md', parent({ title: 'Acme v2' }));
+  put(r, 'prds/acme-v1/part-a.md', part('A1'));
+  put(r, 'prds/acme-v2/part-a.md', part('A2', 'Draft', { 'part-of': 'acme-v2' }));
+  const names = listKnowledge(r, { updatedOf: at({}) }).prds.map(p => p.name).sort();
+  assert.deepEqual(names, ['acme-v1', 'acme-v1/part-a', 'acme-v2', 'acme-v2/part-a']);
+});
+
+test('prd-parts 1.3: orphan part, wrong folder and part of a part are invalid; a parent with parts may be Building without a change', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1/part-a.md', part('Orphan'));
+  put(r, 'prds/other/part-x.md', part('Wrong folder'));
+  put(r, 'prds/acme-v2.md', parent({ title: 'Acme v2', status: 'Building' }));
+  put(r, 'prds/acme-v2/part-b.md', part('B', 'Building', { 'part-of': 'acme-v2', change: 'acme-part-b' }));
+  put(r, 'prds/acme-v3.md', parent({ title: 'Acme v3', status: 'Building' }));
+  const l = listKnowledge(r, { updatedOf: at({}) });
+  const err = p => l.invalid.find(x => x.path === p)?.errors.join('; ') ?? '';
+  assert.match(err('prds/acme-v1/part-a.md'), /parent not found: prds\/acme-v1\.md/);
+  assert.match(err('prds/other/part-x.md'), /doesn't match its folder/);
+  assert.equal(err('prds/acme-v2.md'), '');
+  assert.match(err('prds/acme-v3.md'), /needs a "change"/);
+  put(r, 'prds/acme-v2/part-b.md', part('B', 'Draft', { 'part-of': 'acme-v2' }));
+  put(r, 'prds/acme-v2/part-b/sub.md', part('Sub', 'Draft', { 'part-of': 'acme-v2/part-b' }));
+  assert.ok(listKnowledge(r, { updatedOf: at({}) }).invalid.some(x => x.path === 'prds/acme-v2/part-b/sub.md'));
+});
+
+test('prd-parts 1.3: parent Shipped too early warns; a Dropped part counts as finished', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent({ status: 'Shipped' }));
+  put(r, 'prds/acme-v1/part-a.md', part('A', 'Shipped', { change: 'acme-part-a' }));
+  put(r, 'prds/acme-v1/part-b.md', part('B', 'Building', { change: 'acme-part-b' }));
+  let l = listKnowledge(r, { updatedOf: at({}) });
+  assert.deepEqual(l.warnings, ['acme-v1 is Shipped while acme-v1/part-b is Building']);
+  assert.equal(l.invalid.length, 0);
+  put(r, 'prds/acme-v1/part-b.md', part('B', 'Dropped'));
+  l = listKnowledge(r, { updatedOf: at({}) });
+  assert.deepEqual(l.warnings, []);
+});
+
+test('prd-parts 1.3: parents ordered by their newest part, each part right after its parent', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent());
+  put(r, 'prds/acme-v1/part-a.md', part('A'));
+  put(r, 'prds/acme-v1/part-b.md', part('B'));
+  put(r, 'prds/solo.md', fmText({ title: 'Solo', status: 'Draft' }));
+  const l = listKnowledge(r, { updatedOf: at({ 'acme-v1': '2026-01-01T00:00:00Z', 'part-a': '2026-01-02T00:00:00Z', 'part-b': '2026-03-01T00:00:00Z', solo: '2026-02-01T00:00:00Z' }) });
+  assert.deepEqual(l.prds.map(p => p.name), ['acme-v1', 'acme-v1/part-b', 'acme-v1/part-a', 'solo']);
+});
+
+test('prd-parts 1.4: list indents parts with status and change; prd-check warns with exit 0; set-field Shipped warns', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent({ status: 'Building' }));
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Building', { change: 'acme-part-a' }));
+  put(d, 'knowledge/prds/acme-v1/part-b.md', part('Part B', 'Ready'));
+  const list = kcli(d, 'list').stdout;
+  assert.match(list, /\n {4}prds\/acme-v1\/part-a\.md {2}Building {2}- Part A {2}\(change: acme-part-a\)/);
+  assert.match(list, /\n {4}prds\/acme-v1\/part-b\.md {2}Ready {2}- Part B/);
+  assert.match(list, /\n {2}prds\/acme-v1\.md {2}Building/);
+  const set = kcli(d, 'set-field', '--file', 'prds/acme-v1.md', '--key', 'status', '--value', 'Shipped');
+  assert.equal(set.status, 0);
+  assert.match(set.stdout, /WARNING acme-v1 is Shipped while acme-v1\/part-a is Building, acme-v1\/part-b is Ready/);
+  const check = kcli(d, 'prd-check');
+  assert.equal(check.status, 0);
+  assert.match(check.stdout, /WARNING acme-v1 is Shipped/);
+});
+
+test('prd-parts 2.2: new-prd --part-of writes the part and appends a Parts row, keeping the user\'s lines', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent().replace('|---|---|\n', '|---|---|\n| acme-v1/old | My own row |\n\nA note of mine.\n'));
+  const res = newPrd(r, { title: 'Part A', partOf: 'acme-v1' });
+  assert.equal(res.path, 'prds/acme-v1/part-a.md');
+  const a = readPrd(r, path.join(r, res.path));
+  assert.equal(a.status, 'Draft');
+  assert.equal(a.partOf, 'acme-v1');
+  const body = fs.readFileSync(path.join(r, res.path), 'utf8');
+  for (const h of ['Scope', 'Requirements', 'Done when', 'Open questions']) assert.match(body, new RegExp(`^## ${h}\\r?$`, 'm'));
+  const p = fs.readFileSync(path.join(r, 'prds/acme-v1.md'), 'utf8');
+  assert.match(p, /\| acme-v1\/old \| My own row \|\n\| acme-v1\/part-a \| Part A \|\n\nA note of mine\.\n\n## Open questions/);
+});
+
+test('prd-parts 2.2: Parts section or table header added when missing', () => {
+  const r = tmp();
+  put(r, 'prds/plain.md', fmText({ title: 'Plain', status: 'Draft' }, '\n## Problem\n\nP\n'));
+  newPrd(r, { title: 'One', partOf: 'plain' });
+  assert.match(fs.readFileSync(path.join(r, 'prds/plain.md'), 'utf8'), /## Problem\n\nP\n\n## Parts\n\n\| Part \| Title \|\n\|---\|---\|\n\| plain\/one \| One \|\n$/);
+  put(r, 'prds/texty.md', fmText({ title: 'Texty', status: 'Draft' }, '\n## Parts\n\nSome words.\n\n## Risks\n\nR\n'));
+  newPrd(r, { title: 'Two', partOf: 'texty' });
+  assert.match(fs.readFileSync(path.join(r, 'prds/texty.md'), 'utf8'), /Some words\.\n\n\| Part \| Title \|\n\|---\|---\|\n\| texty\/two \| Two \|\n\n## Risks/);
+});
+
+test('prd-parts 2.2: new-prd --part-of refuses a missing parent, a part as parent and an existing file', () => {
+  const r = tmp();
+  assert.throws(() => newPrd(r, { title: 'A', partOf: 'nope' }), /parent PRD not found: prds\/nope\.md/);
+  put(r, 'prds/acme-v1.md', parent());
+  newPrd(r, { title: 'Part A', partOf: 'acme-v1' });
+  assert.throws(() => newPrd(r, { title: 'Sub', partOf: 'acme-v1/part-a' }), /a part can't have parts/);
+  assert.throws(() => newPrd(r, { title: 'Part A', partOf: 'acme-v1' }), /PRD exists, nothing written/);
+  assert.equal(fs.readdirSync(path.join(r, 'prds/acme-v1')).length, 1);
+});
+
+test('prd-parts 2.3: moving a parent with an unfinished part moves nothing and names it', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent());
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Shipped', { change: 'acme-part-a' }));
+  put(d, 'knowledge/prds/acme-v1/part-b.md', part('Part B', 'Building', { change: 'acme-part-b' }));
+  const res = kcli(d, 'move', '--from', 'prds/acme-v1.md', '--to', 'archive');
+  assert.equal(res.status, 3);
+  assert.match(res.stdout, /acme-v1\/part-b {2}Building/);
+  assert.doesNotMatch(res.stdout, /acme-v1\/part-a {2}/);
+  assert.match(res.stdout, /drop it .*another parent.*a PRD of its own/s);
+  assert.ok(fs.existsSync(path.join(d, 'knowledge/prds/acme-v1.md')));
+  assert.ok(!fs.existsSync(path.join(d, 'knowledge/archive')));
+});
+
+test('prd-parts 2.3: a part made independent keeps status and change; proposals citing it are named', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent());
+  put(d, 'knowledge/prds/acme-v1/part-b.md', part('Part B', 'Building', { change: 'acme-part-b' }));
+  put(d, 'openspec/changes/acme-part-b/proposal.md', '# P\n\nPRD: knowledge/prds/acme-v1/part-b.md @ abc1234\nPRD parent: knowledge/prds/acme-v1.md @ def5678\n');
+  assert.equal(kcli(d, 'set-field', '--file', 'prds/acme-v1/part-b.md', '--key', 'part-of', '--value', '').status, 0);
+  const mv = kcli(d, 'move', '--from', 'prds/acme-v1/part-b.md', '--to', 'prds');
+  assert.equal(mv.status, 0, mv.stderr);
+  assert.match(mv.stdout, /these proposals cite the old path: openspec\/changes\/acme-part-b\/proposal\.md/);
+  const b = readPrd(path.join(d, 'knowledge'), path.join(d, 'knowledge/prds/part-b.md'));
+  assert.deepEqual([b.name, b.partOf, b.status, b.change, b.valid], ['part-b', null, 'Building', 'acme-part-b', true]);
+});
+
+test('prd-parts 2.3: with every part finished, the parent and its folder move together and nothing is deleted', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent({ status: 'Shipped' }));
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Shipped', { change: 'acme-part-a' }));
+  put(d, 'knowledge/prds/acme-v1/part-b.md', part('Part B', 'Dropped'));
+  const before = files(path.join(d, 'knowledge'));
+  const mv = kcli(d, 'move', '--from', 'prds/acme-v1.md', '--to', 'archive');
+  assert.equal(mv.status, 0, mv.stderr);
+  assert.ok(fs.existsSync(path.join(d, 'knowledge/archive/prds/acme-v1.md')));
+  assert.ok(fs.existsSync(path.join(d, 'knowledge/archive/prds/acme-v1/part-b.md')));
+  assert.ok(!fs.existsSync(path.join(d, 'knowledge/prds/acme-v1')));
+  assert.equal(files(path.join(d, 'knowledge')), before);
+});
+
+// ---------- prd-parts verify fixes ----------
+
+test('prd-parts verify S1: --part-of is the exact parent file name only (no "..", backslash, other case, or empty)', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent());
+  put(d, 'knowledge/notes/x.md', '---\ntitle: X\n---\n');
+  const r = path.join(d, 'knowledge');
+  for (const bad of ['..\\notes\\x', '..', 'Acme-V1']) assert.throws(() => newPrd(r, { title: 'P', partOf: bad }), /parent PRD not found/, bad);
+  assert.throws(() => newPrd(r, { title: 'P', partOf: 'Acme-V1' }), /did you mean acme-v1\?/);
+  assert.throws(() => newPrd(r, { title: 'P', partOf: '' }), /--part-of needs the parent PRD's slug/);
+  const cli = kcli(d, 'new-prd', '--title', 'P', '--part-of');
+  assert.equal(cli.status, 1);
+  assert.ok(!fs.existsSync(path.join(r, 'prds/p.md')));
+  assert.ok(!fs.existsSync(path.join(r, 'notes/x')));
+});
+
+test('prd-parts verify: a part with a crafted part-of never reads outside prds/', () => {
+  const r = tmp();
+  put(r, 'secret.md', '---\ntitle: Secret title\n---\n');
+  put(r, 'prds/acme-v1/part-a.md', part('A', 'Draft', { 'part-of': '../secret' }));
+  const a = readPrd(r, path.join(r, 'prds/acme-v1/part-a.md'));
+  assert.equal(a.valid, false);
+  assert.doesNotMatch(a.label, /Secret/);
+});
+
+test('prd-parts verify: set-field part-of with no --value removes it (PowerShell drops "")', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent());
+  put(d, 'knowledge/prds/acme-v1/part-b.md', part('Part B'));
+  assert.equal(kcli(d, 'set-field', '--file', 'prds/acme-v1/part-b.md', '--key', 'part-of', '--value').status, 0);
+  assert.doesNotMatch(fs.readFileSync(path.join(d, 'knowledge/prds/acme-v1/part-b.md'), 'utf8'), /part-of/);
+});
+
+test('prd-parts verify: moving a finished parent refuses when its folder holds files that aren\'t its parts', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent({ status: 'Shipped' }));
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Shipped', { change: 'acme-part-a' }));
+  put(d, 'knowledge/prds/acme-v1/part-b.md', fmText({ title: 'Detached', status: 'Building', change: 'x' }));
+  put(d, 'knowledge/prds/acme-v1/part-c.md', '---\ntitle: Broken\nmeta: {a: 1}\n---\n');
+  const res = kcli(d, 'move', '--from', 'prds/acme-v1.md', '--to', 'archive');
+  assert.equal(res.status, 3);
+  assert.match(res.stdout, /aren't its parts[\s\S]*prds\/acme-v1\/part-b\.md[\s\S]*prds\/acme-v1\/part-c\.md/);
+  assert.ok(fs.existsSync(path.join(d, 'knowledge/prds/acme-v1.md')));
+  assert.ok(!fs.existsSync(path.join(d, 'knowledge/archive')));
+});
+
+test('prd-parts verify: an invalid part stays indented right under its parent', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent());
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Done'));
+  put(d, 'knowledge/prds/zeta.md', fmText({ title: 'Zeta', status: 'Draft' }));
+  const lines = kcli(d, 'list').stdout.split('\n');
+  const i = lines.findIndex(l => /^ {2}prds\/acme-v1\.md/.test(l));
+  assert.match(lines[i + 1], /^ {4}prds\/acme-v1\/part-a\.md/);
+});
+
+test('prd-parts verify: reopening a part under a Shipped parent warns', () => {
+  const d = tmp();
+  put(d, 'knowledge/prds/acme-v1.md', parent({ status: 'Shipped' }));
+  put(d, 'knowledge/prds/acme-v1/part-a.md', part('Part A', 'Shipped', { change: 'acme-part-a' }));
+  const res = kcli(d, 'set-field', '--file', 'prds/acme-v1/part-a.md', '--key', 'status', '--value', 'Building');
+  assert.equal(res.status, 0);
+  assert.match(res.stdout, /WARNING acme-v1 is Shipped while acme-v1\/part-a is Building/);
+});
+
+test('prd-parts verify: a CRLF parent keeps CRLF line endings when a row is added', () => {
+  const r = tmp();
+  put(r, 'prds/acme-v1.md', parent().replace(/\n/g, '\r\n'));
+  newPrd(r, { title: 'Part A', partOf: 'acme-v1' });
+  const t = fs.readFileSync(path.join(r, 'prds/acme-v1.md'), 'utf8');
+  assert.match(t, /\| acme-v1\/part-a \| Part A \|\r\n/);
+  assert.doesNotMatch(t, /[^\r]\n/);
+});
+
+test('prd-parts 3.1: proposal lines from a part; PRD parent never read as the PRD line', () => {
+  assert.deepEqual(prdLink('PRD: knowledge/prds/acme-v1/part-b.md @ abc1234\nPRD parent: knowledge/prds/acme-v1.md @ def5678'),
+    { path: 'knowledge/prds/acme-v1/part-b.md', commit: 'abc1234', parent: { path: 'knowledge/prds/acme-v1.md', commit: 'def5678' } });
+  assert.equal(prdLink('PRD parent: knowledge/prds/acme-v1.md @ def5678\nPRD: knowledge/prds/acme-v1/part-b.md @ abc1234').path, 'knowledge/prds/acme-v1/part-b.md');
+  assert.deepEqual(prdLink('PRD: knowledge/prds/gift.md @ abc1234'), { path: 'knowledge/prds/gift.md', commit: 'abc1234' });
+  assert.equal(prdLink('PRD parent: knowledge/prds/acme-v1.md @ def5678'), null);
+  assert.equal(PRD_LINE.test('PRD parent: knowledge/prds/acme-v1.md @ def5678'), false);
+});

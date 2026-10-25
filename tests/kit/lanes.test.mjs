@@ -80,6 +80,14 @@ test('prd-pipeline 5.2: routing block names the knowledge folder and the PRD han
   assert.ok(block.endsWith(BLOCK_END));
 });
 
+test('prd-parts 3.2: routing block: propose from a part with a parent line; the change offer goes to the part', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'docs/kb' });
+  assert.match(block, /`docs\/kb\/prds\/<slug>\/<part>\.md` with `part-of: <slug>`/);
+  assert.match(block, /never from a parent that has parts/);
+  assert.match(block, /`PRD parent: docs\/kb\/prds\/<slug>\.md @ <commit>`/);
+  assert.match(block, /offer below goes to the part/);
+});
+
 test('prd-authoring: Several PRDs, Draft PRD (most recent by default, never a stop)', () => {
   const block = routingBlock(laneMap(fixture('resolved-overlap')), { knowledgeDir: 'knowledge' });
   assert.match(block, /else the most recently updated one with no `change` \(say which, and name the others so the user can switch\)/);

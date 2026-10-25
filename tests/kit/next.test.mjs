@@ -511,3 +511,75 @@ test('verify C1: an unreadable record is a warning and never counts as open', ()
   assert.equal(s.use, '/kit:prd');
   assert.match(format(s), /WARNING explore\/bad\.md can't be read/);
 });
+
+// ---------- prd-parts 3.3 (spec: skill-routing "Next-step suggestion with PRD parts", "PRD changed checked per part and parent") ----------
+
+const PARENT = (status, parts, extra = {}) => P('acme-v1', status, { name: 'acme-v1', partOf: null, parts, ...extra });
+const PART = (part, status, extra = {}) => ({ ...P(part, status), path: `prds/acme-v1/${part}.md`, name: `acme-v1/${part}`, partOf: 'acme-v1', parts: [], ...extra });
+const partLink = (part, commit = '1a2b3c4', parentCommit = '5d6e7f8') => ({ path: `knowledge/prds/acme-v1/${part}.md`, commit, ...(parentCommit ? { parent: { path: 'knowledge/prds/acme-v1.md', commit: parentCommit } } : {}) });
+
+test('prd-parts: a Ready part is proposed by name; its Ready parent never is', () => {
+  const k = K({ prds: [PARENT('Ready', ['acme-v1/part-b']), PART('part-b', 'Ready')] });
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: k });
+  assert.equal(s.use, '/opsx:propose');
+  assert.equal(s.prd, 'knowledge/prds/acme-v1/part-b.md');
+  assert.match(s.reason, /"acme-v1\/part-b" is Ready/);
+  assert.equal(s.otherReady, undefined);
+});
+
+test('prd-parts: a Ready part waits for the active change', () => {
+  const k = K({ prds: [PARENT('Building', ['acme-v1/part-a', 'acme-v1/part-b']), PART('part-a', 'Building', { change: 'acme-part-a' }), PART('part-b', 'Ready')],
+    changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a') }] });
+  const s = suggest({ openspec: { root: {}, changes: [change('acme-part-a', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince: () => false });
+  assert.equal(s.phase, 'build');
+  assert.match(s.waiting, /PRD acme-v1\/part-b is Ready; it waits until acme-part-a is done/);
+});
+
+test('prd-parts: Dropped PRDs and parts never lead to a suggestion', () => {
+  const k = K({ prds: [P('old', 'Dropped'), PARENT('Ready', ['acme-v1/part-c']), PART('part-c', 'Dropped')] });
+  const s = suggest({ openspec: os0, statusOf: () => null, map: kmap, knowledge: k });
+  assert.notEqual(s.use, '/opsx:propose');
+  assert.doesNotMatch(JSON.stringify(s), /part-c|"old"/);
+});
+
+const building = (changedSince) => {
+  const k = K({ prds: [PARENT('Building', ['acme-v1/part-a', 'acme-v1/part-b']), PART('part-a', 'Building', { change: 'acme-part-a' }), PART('part-b', 'Draft')],
+    changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a') }] });
+  return suggest({ openspec: { root: {}, changes: [change('acme-part-a', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince });
+};
+
+test('prd-parts: an edit to another part gives no "PRD changed" suggestion', () => {
+  const seen = [];
+  const s = building((p, c) => { seen.push([p, c]); return p.endsWith('part-b.md'); });
+  assert.equal(s.phase, 'build');
+  assert.deepEqual(seen, [['knowledge/prds/acme-v1/part-a.md', '1a2b3c4'], ['knowledge/prds/acme-v1.md', '5d6e7f8']]);
+});
+
+test('prd-parts: the parent edited -> review, naming the parent', () => {
+  const s = building(p => p === 'knowledge/prds/acme-v1.md');
+  assert.equal(s.phase, 'plan');
+  assert.equal(s.change, 'acme-part-a');
+  assert.match(s.reason, /Parent PRD "acme-v1" changed after change "acme-part-a" was planned \(at 5d6e7f8\)/);
+});
+
+test('prd-parts: the own part edited -> review, naming the part', () => {
+  const s = building(p => p.endsWith('part-a.md'));
+  assert.equal(s.phase, 'plan');
+  assert.match(s.reason, /PRD "acme-v1\/part-a" changed after change "acme-part-a" was planned/);
+});
+
+test('prd-parts verify: the part uncommitted, the parent edited -> still names the parent', () => {
+  const k = K({ prds: [PARENT('Building', ['acme-v1/part-a']), PART('part-a', 'Building', { change: 'acme-part-a' })],
+    changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a', 'uncommitted') }] });
+  const s = suggest({ openspec: { root: {}, changes: [change('acme-part-a', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince: p => p === 'knowledge/prds/acme-v1.md' });
+  assert.equal(s.phase, 'plan');
+  assert.match(s.reason, /Parent PRD "acme-v1" changed/);
+});
+
+test('prd-parts: a proposal with no parent line is checked against the part only', () => {
+  const k = K({ prds: [PARENT('Building', ['acme-v1/part-a']), PART('part-a', 'Building', { change: 'acme-part-a' })],
+    changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a', '1a2b3c4', null) }] });
+  const seen = [];
+  suggest({ openspec: { root: {}, changes: [change('acme-part-a', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince: (p) => { seen.push(p); return false; } });
+  assert.deepEqual(seen, ['knowledge/prds/acme-v1/part-a.md']);
+});

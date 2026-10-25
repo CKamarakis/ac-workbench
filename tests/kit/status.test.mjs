@@ -385,3 +385,13 @@ test('explore-stage verify C1: an unreadable explore record is a note, not a row
   assert.equal(s.sections.now.rows.length, 0);
   assert.ok(s.notes.some(n => /explore\/bad\.md can't be read/.test(n)));
 });
+
+test('prd-parts 4.1: a Ready part is named "<parent> › <part>"; its Ready parent is not listed on its own', () => {
+  const d = project({
+    'PRODUCT.md': '# P\n',
+    'knowledge/prds/acme-v1.md': prd('Acme v1', 'Ready'),
+    'knowledge/prds/acme-v1/part-b.md': prd('Part B', 'Ready', 'part-of: acme-v1\n'),
+  });
+  const s = run(d);
+  assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Acme v1 › Part B']);
+});

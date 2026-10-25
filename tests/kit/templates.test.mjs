@@ -59,3 +59,11 @@ test('build-readiness 6.1: the PRD template asks for Given/When/Then stories, wi
   assert.match(req, /^- Given .+, when .+, then .+\.$/m);
   assert.match(req, /short plain statement when there's no real starting state/);
 });
+
+test('prd-parts 2.1: the part template has Scope, Requirements, Done when, Open questions; the PRD template has a Parts table', () => {
+  const p = fs.readFileSync(path.join(templates, 'prd-part.md'), 'utf8').replace(/\r\n/g, '\n');
+  assert.deepEqual([...p.matchAll(/^## (.+)$/gm)].map(m => m[1]), ['Scope', 'Requirements', 'Done when', 'Open questions']);
+  assert.match(p, /^part-of: /m);
+  const t = fs.readFileSync(path.join(templates, 'prd.md'), 'utf8').replace(/\r\n/g, '\n');
+  assert.match(t, /## Parts\n[\s\S]*\| Part \| Title \|\n\|---\|---\|\n\n## Open questions/);
+});

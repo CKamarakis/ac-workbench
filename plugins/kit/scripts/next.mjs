@@ -56,26 +56,37 @@ export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null,
   const changeFor = p => changes.find(c => c.name === p.change) ?? changes.find(c => c.link?.path === full(p.path)) ?? null;
   const at = (phase, reason, prd, extra = {}) => ({ suggestion: step(map, phase, reason, { prd: full(prd.path), ...extra }), warnings });
 
-  for (const p of prds.filter(x => x.status === 'Building')) {
+  // A part is named "<parent>/<part>" (prd-parts D2); a single PRD's name is its slug.
+  const nm = p => p.name ?? p.slug;
+  // A parent with parts is built through its parts, never on its own (prd-parts D4).
+  const building = prds.filter(x => x.status === 'Building' && !x.parts?.length);
+  for (const p of building) {
     const c = changeFor(p);
     // A PRD can be built across several changes, so this asks rather than advising Shipped (L1).
-    if (c?.archived) return at('prd', `Change "${c.name}" is archived: is PRD "${p.slug}" done, or does it continue in another change? Mark it Shipped, or link the next change (only on your yes).`, p, { change: c.name });
+    if (c?.archived) return at('prd', `Change "${c.name}" is archived: is PRD "${nm(p)}" done, or does it continue in another change? Mark it Shipped, or link the next change (only on your yes).`, p, { change: c.name });
   }
-  for (const p of prds.filter(x => x.status === 'Building')) {
+  for (const p of building) {
     const c = changeFor(p);
     if (!c?.link) continue;
     const changed = c.link.commit === 'uncommitted' ? null : changedSince(full(p.path), c.link.commit);
-    if (changed === null) { warnings.push(`could not check whether PRD "${p.slug}" changed since "${c.name}" was planned`); continue; }
-    if (changed) return at('plan', `PRD "${p.slug}" changed after change "${c.name}" was planned (at ${c.link.commit}): review the plan against it.`, p, { change: c.name });
+    if (changed === null) warnings.push(`could not check whether PRD "${nm(p)}" changed since "${c.name}" was planned`);
+    if (changed) return at('plan', `PRD "${nm(p)}" changed after change "${c.name}" was planned (at ${c.link.commit}): review the plan against it.`, p, { change: c.name });
+    // prd-parts D7: the parent's shared goals count too, even when the part itself can't be checked; an edit
+    // to another part doesn't.
+    const par = c.link.parent;
+    if (!par || !p.partOf) continue;
+    const parentChanged = par.commit === 'uncommitted' ? null : changedSince(par.path, par.commit);
+    if (parentChanged === null) warnings.push(`could not check whether parent PRD "${p.partOf}" changed since "${c.name}" was planned`);
+    if (parentChanged) return at('plan', `Parent PRD "${p.partOf}" changed after change "${c.name}" was planned (at ${par.commit}): review the plan against it.`, p, { change: c.name });
   }
-  const ready = prds.filter(p => p.status === 'Ready' && !p.change && !changeFor(p));
+  const ready = prds.filter(p => p.status === 'Ready' && !p.parts?.length && !p.change && !changeFor(p));
   // kit-followups D1: finish the active change first; a Ready PRD waits as a reminder line.
   if (ready.length && activeCount > 0) {
-    return { suggestion: null, warnings, waiting: `PRD ${ready.map(p => p.slug).join(', ')} ${ready.length === 1 ? 'is' : 'are'} Ready; ${ready.length === 1 ? 'it waits' : 'they wait'} until ${activeName ?? 'the active change'} is done` };
+    return { suggestion: null, warnings, waiting: `PRD ${ready.map(nm).join(', ')} ${ready.length === 1 ? 'is' : 'are'} Ready; ${ready.length === 1 ? 'it waits' : 'they wait'} until ${activeName ?? 'the active change'} is done` };
   }
   if (ready.length) {
-    const others = ready.slice(1).map(p => p.slug);
-    return at('artifacts', `PRD "${ready[0].slug}" is Ready and no change uses it yet: propose a change from it.`, ready[0], others.length ? { otherReady: others } : {});
+    const others = ready.slice(1).map(nm);
+    return at('artifacts', `PRD "${nm(ready[0])}" is Ready and no change uses it yet: propose a change from it.`, ready[0], others.length ? { otherReady: others } : {});
   }
   // explore-stage: notes alone never lead to a suggestion; a note is input that an explore reads.
   return { suggestion: null, warnings };
@@ -86,7 +97,7 @@ export function questionsLine(knowledge) {
   const prds = (knowledge?.list?.prds ?? []).filter(p => p.valid && ['Draft', 'Review'].includes(p.status) && p.openQuestions > 0);
   if (!prds.length) return null;
   const [p, ...rest] = prds;
-  return `PRD "${p.slug}" has ${p.openQuestions} open question(s) to answer before Ready (/kit:prd)${rest.length ? `; ${rest.length} more PRD(s) with open questions` : ''}`;
+  return `PRD "${p.name ?? p.slug}" has ${p.openQuestions} open question(s) to answer before Ready (/kit:prd)${rest.length ? `; ${rest.length} more PRD(s) with open questions` : ''}`;
 }
 
 /**

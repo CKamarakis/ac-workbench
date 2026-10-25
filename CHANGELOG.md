@@ -2,6 +2,13 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.2 (2026-10-25)
+- **PRD parts.** One PRD can be split over a parent `prds/<slug>.md` and part files `prds/<slug>/<part>.md` (`part-of: <slug>`), each with its own status and change. `new-prd --part-of` creates a part and adds it to the parent's Parts table; `/kit:prd` can split an existing PRD on request.
+- "PRD changed after planning" is checked per part and on the parent (a proposal from a part records a `PRD parent:` line), so editing one part no longer flags the change building another.
+- New status `Dropped` for a PRD or part that won't be built. A parent marked Shipped with open parts gets a warning, never a block.
+- Moving or archiving a parent asks what to do with each unfinished part (drop, another parent, or its own PRD); finished parts move with it.
+- Re-sync projects with `/kit:start` to get the new routing line for proposals made from a part.
+
 ## 1.0.0-rc.1 (2026-10-21)
 - **First release candidate.** Run on a real project, from setup through verify, before this tag.
 - `/kit:start` re-sync reuses the project type saved in `.claude/kit.json`; it asks only on a first setup.

@@ -192,3 +192,48 @@ cases:
         criteria:
           - name: not-repeated
             description: Updates the section on a yes and doesn't offer /impeccable shape again
+
+  - id: new-part
+    description: new-prd --part-of creates a Draft part under its parent and adds a Parts row; a missing parent writes nothing (prd-parts)
+    setup:
+      files:
+        knowledge/prds/acme-v1.md: "---\ntitle: Acme v1\nstatus: Ready\nsources: []\n---\n\n## Problem\n\nP\n"
+    checks:
+      - kind: command-exit
+        command: node "{{k}}" new-prd --dir . --part-of acme-v1 --title "Part A"
+        stdout_match: 'created prds/acme-v1/part-a\.md \(status Draft\)[\s\S]*Parts section of prds/acme-v1\.md'
+      - { kind: content-match, path: knowledge/prds/acme-v1/part-a.md, pattern: 'part-of: acme-v1' }
+      - { kind: content-match, path: knowledge/prds/acme-v1.md, pattern: '\| acme-v1/part-a \| Part A \|' }
+      - { kind: command-exit, command: 'node "{{k}}" new-prd --dir . --part-of nope --title "X"', expect: 1 }
+      - kind: command-exit
+        command: node "{{k}}" list --dir .
+        stdout_match: '\n    prds/acme-v1/part-a\.md  Draft  - Part A'
+
+  - id: dropped-part
+    description: A Dropped part needs no change and lets the parent ship without a warning; an open part warns, never blocks (prd-parts)
+    setup:
+      files:
+        knowledge/prds/acme-v1.md: "---\ntitle: Acme v1\nstatus: Shipped\nsources: []\n---\n"
+        knowledge/prds/acme-v1/part-a.md: "---\ntitle: Part A\nstatus: Shipped\npart-of: acme-v1\nchange: acme-part-a\n---\n"
+        knowledge/prds/acme-v1/part-b.md: "---\ntitle: Part B\nstatus: Building\npart-of: acme-v1\nchange: acme-part-b\n---\n"
+    checks:
+      - { kind: command-exit, command: 'node "{{k}}" prd-check --dir .', stdout_match: 'WARNING acme-v1 is Shipped while acme-v1/part-b is Building' }
+      - { kind: command-exit, command: 'node "{{k}}" set-field --dir . --file prds/acme-v1/part-b.md --key status --value Dropped' }
+      - { kind: command-exit, command: 'node "{{k}}" prd-check --dir .', stdout_match: '^(?![\s\S]*WARNING)' }
+
+  - id: split-on-request
+    description: Splitting a PRD into parts is proposed in full first, and nothing is written without a yes (prd-parts)
+    setup:
+      files:
+        knowledge/prds/acme-v1.md: "---\ntitle: Acme v1\nstatus: Ready\nsources: []\n---\n\n## Problem\n\nP\n\n## Requirements\n\n### Slice one\n\n- Given a board, when I add a shape, then it shows.\n\n### Slice two\n\n- Given a shape, when I select it, then it's highlighted.\n"
+    input:
+      prompt: "/kit:prd split the acme-v1 PRD into parts, one per slice"
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'Split a PRD into parts[\s\S]*Write nothing until the user says yes' }
+      - { kind: content-match, path: '{{kit}}/skills/prd/SKILL.md', pattern: 'Never delete the parent and never rewrite it whole' }
+      - kind: rubric
+        criteria:
+          - name: proposes-first
+            description: Shows the proposed parts and what moves to each, and writes no file before the user says yes
+          - name: per-section
+            description: After the yes, creates each part with new-prd --part-of and trims the parent per section, not by rewriting it

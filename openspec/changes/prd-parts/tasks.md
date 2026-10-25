@@ -12,6 +12,8 @@
 - [ ] 2.1 New `plugins/kit/templates/prd-part.md` (Scope, Requirements, Done when, Open questions) and a `## Parts` section with table header in `templates/prd.md`; extend `tests/kit/templates.test.mjs`
 - [ ] 2.2 `new-prd --part-of <slug>`: refuses a missing parent, a parent that is a part, an existing file; writes the part; appends the Parts row without touching other lines, adding the section if missing (D5); tests for each case, including a parent with user text in Parts
 
+- [ ] 2.3 Moving a parent (D8): `set-field --key part-of` (slug or empty); `move` of a parent with unfinished parts moves nothing and prints them with the three choices; with all parts finished it moves the file and folder together; `/kit:capture` SKILL.md asks per unfinished part; tests for each "Move a parent with parts" scenario
+
 ## 3. Proposal lines and next step
 
 - [ ] 3.1 `PRD parent:` pattern and `prdLink` returning `parent` (D7); tests: both lines, part line only, old single line unchanged, "PRD parent:" never read as the PRD line

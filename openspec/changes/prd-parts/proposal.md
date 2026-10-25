@@ -28,8 +28,8 @@ prds/
     part-c.md             part-of: acme-v1   status Dropped
 
 proposal (acme-part-a):
-  PRD: knowledge/prds/acme-v1/part-a.md @ 1a2b3c4     <- edit here: warns
-  PRD parent: knowledge/prds/acme-v1.md @ 5d6e7f8     <- edit here: warns
+  PRD: knowledge/prds/acme-v1/part-a.md @ <commit>     <- edit here: warns
+  PRD parent: knowledge/prds/acme-v1.md @ <commit>     <- edit here: warns
   (edit in part-b.md: no warning for acme-part-a)
 ```
 

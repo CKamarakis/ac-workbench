@@ -113,6 +113,24 @@ When the proposal step takes a part as its PRD, the proposal SHALL record two li
 - **WHEN** the user links part `prds/acme-v1/part-b.md` to milestone M3 with the roadmap's `link --kind prd`
 - **THEN** the link is saved and the roadmap check reports no problem
 
+### Requirement: Move a parent with parts
+Before a parent with parts is moved or archived, the kit SHALL warn and name every part that is neither `Shipped` nor `Dropped`, and SHALL ask, per part, what to do: drop it (`Dropped`), put it under another parent, or make it a PRD of its own. The parent SHALL NOT move while an unfinished part is left. Finished parts SHALL move with the parent. No part SHALL be left pointing at a missing parent.
+
+#### Scenario: Unfinished parts named first
+- **GIVEN** parent `acme-v1` with `part-a` Shipped and `part-b` Building
+- **WHEN** the user asks to archive `acme-v1`
+- **THEN** the kit warns that `acme-v1/part-b` is unfinished, offers drop, another parent or its own PRD for it, and moves nothing yet
+
+#### Scenario: Part made independent
+- **GIVEN** the user picked "its own PRD" for `acme-v1/part-b`
+- **WHEN** the kit applies it
+- **THEN** the part is `prds/part-b.md` without `part-of`, keeps its status and change, and the proposal lines that cited the old path still resolve or are named to the user
+
+#### Scenario: All parts finished
+- **GIVEN** parent `acme-v1` with `part-a` Shipped and `part-b` Dropped
+- **WHEN** the user archives `acme-v1`
+- **THEN** `acme-v1.md` and its `acme-v1/` folder both move under `archive/`, and nothing is deleted
+
 ### Requirement: Split a PRD into parts
 The PRD skill SHALL offer to split an existing PRD into parts on request: it SHALL propose the parts and which sections or rows move to each, create each part with `new-prd --part-of`, fill it per section, and trim the parent per section, each write only on the user's yes. It SHALL never delete the parent or rewrite it whole.
 

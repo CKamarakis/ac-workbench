@@ -576,6 +576,33 @@ test('prd-parts verify: the part uncommitted, the parent edited -> still names t
   assert.match(s.reason, /Parent PRD "acme-v1" changed/);
 });
 
+test('prd-parts D1: the parent check leaves the Parts section out; the part check does not', () => {
+  const calls = [];
+  building((p, c, opts) => { calls.push([p, opts?.ignoreSection ?? null]); return false; });
+  assert.deepEqual(calls, [['knowledge/prds/acme-v1/part-a.md', null], ['knowledge/prds/acme-v1.md', 'Parts']]);
+});
+
+test('prd-parts D1: gitChangedSince with ignoreSection on a real repo: a Parts row is no change, a goals edit is', async () => {
+  const fs = await import('node:fs'); const path = await import('node:path');
+  const { spawnSync } = await import('node:child_process');
+  const { gitChangedSince } = await import('../../plugins/kit/scripts/next.mjs');
+  const d = tmpDir('kit-next-d1-');
+  const f = 'knowledge/prds/acme-v1.md';
+  const w = t => { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.writeFileSync(path.join(d, f), t); };
+  const g = (...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
+  const base = '---\ntitle: Acme v1\nstatus: Building\n---\n\n## Goals\n\nShip it.\n\n## Parts\n\n| Part | Title |\n|---|---|\n| acme-v1/part-a | Part A |\n\n## Open questions\n\n-\n';
+  w(base); g('init', '-q'); g('add', '.'); g('commit', '-qm', 'one');
+  const c1 = g('rev-parse', '--short', 'HEAD').stdout.trim();
+  const since = gitChangedSince(d);
+  w(base.replace('| acme-v1/part-a | Part A |\n', '| acme-v1/part-a | Part A |\n| acme-v1/part-b | Part B |\n'));
+  g('commit', '-qam', 'two');
+  assert.equal(since(f, c1, { ignoreSection: 'Parts' }), false);
+  assert.equal(since(f, c1), true);
+  w(base.replace('Ship it.', 'Ship it by June.'));
+  assert.equal(since(f, c1, { ignoreSection: 'Parts' }), true);
+  assert.equal(since(f, 'deadbeef', { ignoreSection: 'Parts' }), null);
+});
+
 test('prd-parts: a proposal with no parent line is checked against the part only', () => {
   const k = K({ prds: [PARENT('Building', ['acme-v1/part-a']), PART('part-a', 'Building', { change: 'acme-part-a' })],
     changes: [{ name: 'acme-part-a', archived: false, link: partLink('part-a', '1a2b3c4', null) }] });

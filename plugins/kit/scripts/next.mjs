@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { laneMap } from './lanes.mjs';
 import { loadRegistry } from './setup.mjs';
 import { locate, pathWith } from './locate.mjs';
-import { knowledgeDir, listKnowledge, prdLink } from './knowledge.mjs';
+import { knowledgeDir, listKnowledge, prdLink, withoutSection } from './knowledge.mjs';
 import { pageStatus } from './docs.mjs';
 import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine, archivedOpen, archivedLine } from './decisions.mjs';
@@ -75,7 +75,8 @@ export function prdSuggest({ knowledge, map, activeCount = 0, activeName = null,
     // to another part doesn't.
     const par = c.link.parent;
     if (!par || !p.partOf) continue;
-    const parentChanged = par.commit === 'uncommitted' ? null : changedSince(par.path, par.commit);
+    // Adding a part writes a row into the parent's Parts table; that alone isn't a change to plan against (D1).
+    const parentChanged = par.commit === 'uncommitted' ? null : changedSince(par.path, par.commit, { ignoreSection: 'Parts' });
     if (parentChanged === null) warnings.push(`could not check whether parent PRD "${p.partOf}" changed since "${c.name}" was planned`);
     if (parentChanged) return at('plan', `Parent PRD "${p.partOf}" changed after change "${c.name}" was planned (at ${par.commit}): review the plan against it.`, p, { change: c.name });
   }
@@ -294,11 +295,22 @@ export function readKnowledge(dir) {
   return { dir: rel, list, changes };
 }
 
-/** (projectRelPath, commit) -> true if the file has commits after `commit` or uncommitted changes; null if git can't tell. */
+/**
+ * (projectRelPath, commit, { ignoreSection }) -> true if the file has commits after `commit` or uncommitted changes;
+ * null if git can't tell. With `ignoreSection`, the file's text at `commit` is compared with its text now, leaving
+ * that `## section` out (prd-parts D1: a new Parts row on the parent isn't a change to the shared goals).
+ */
 export function gitChangedSince(dir) {
   const git = locate('git')?.path ?? 'git';
   const run = args => spawnSync(git, args, { cwd: dir, encoding: 'utf8', timeout: 30000 });
-  return (file, commit) => {
+  return (file, commit, { ignoreSection = null } = {}) => {
+    if (ignoreSection) {
+      const old = run(['show', `${commit}:${file}`]);
+      if (old.status !== 0) return null;
+      let now;
+      try { now = fs.readFileSync(path.join(dir, file), 'utf8'); } catch { return true; }
+      return withoutSection(old.stdout, ignoreSection) !== withoutSection(now, ignoreSection);
+    }
     const log = run(['log', '--format=%h', `${commit}..HEAD`, '--', file]);
     if (log.status !== 0) return null;
     if (log.stdout.trim()) return true;

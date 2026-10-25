@@ -553,6 +553,13 @@ function findSection(text, heading) {
 }
 
 /** Section body under `## heading` (without the heading line) and its hash. */
+/** The text without its `## heading` section (heading line included), line endings normalised and trailing space trimmed. */
+export function withoutSection(text, heading) {
+  const s = findSection(text ?? '', heading);
+  const lines = s.start < 0 ? s.lines : [...s.lines.slice(0, s.start), ...s.lines.slice(s.end)];
+  return lines.map(l => l.replace(/\s+$/, '')).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 export function sectionGet(file, heading) {
   const text = read(file);
   if (text == null) throw new Error(`not found: ${file}`);

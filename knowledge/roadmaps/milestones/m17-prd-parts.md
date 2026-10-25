@@ -4,6 +4,8 @@ title: PRD parts
 status: active
 notes:
   - notes/2026-10-25-prd-parts-one-prd-split-over-several-files.md
+changes:
+  - prd-parts
 ---
 
 One PRD can be split over several files: a parent plus parts, each with its own status and its own "PRD changed" check.

@@ -81,7 +81,7 @@ Every decision is checked against these.
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
 M17 PRD parts (active): split one PRD over a parent and part files, per-part status and change checks. Note: notes/2026-10-25-prd-parts-one-prd-split-over-several-files.md.
-After it: M14 T4, the verify spike. M14 T1 and T2 (outside test) are low priority; T3 LinkedIn post done.
+After it: M14 T4, the verify spike. M14 T1 and T2 (outside test) are low priority.
 
 ## Waiting on you
 

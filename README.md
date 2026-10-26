@@ -4,10 +4,6 @@ A Claude Code kit for building products. You bring ideas; it helps you and Claud
 
 **Who it's for:** someone who builds products with Claude Code (a product manager, a founder, a solo builder) and wants more than "just ask Claude": a written plan before the build, the open decisions asked before they're made silently, tests and reviews before anything is called done, and a record of *why* things are the way they are.
 
-![The docs page the kit builds for a project: each feature, its user stories and the why behind it](docs/images/docs-page.png)
-
-*The docs page the kit builds for a project (here, for the kit itself): each feature, its user stories, and the reasons behind it.*
-
 ## Status
 
 **v1 release candidate.** The kit is used daily by its author and has been run end to end on a real web app.
@@ -134,21 +130,21 @@ Run it once in the project folder, and again only to re-sync after a kit update.
 
 | Skill | What it does |
 |---|---|
-| `/kit:capture` | Save an idea, dictation, link or screenshot as a note; import a `.txt` transcript; archive or move notes. It only saves: bring notes into a PRD with `/kit:prd` when you want |
-| `/kit:prd` | Draft a PRD from the notes you pick, update it section by section (never overwriting your edits), and mark it Ready |
-| `/kit:status` | Where the project stands, in plain words: what it is, what's built, a table of Now / Next / We said we'd do / Loose ends / After with sources, and anything that doesn't match between the roadmap, PRDs, OpenSpec and git. Names the item to work on; read-only, works without a roadmap |
-| `/kit:next` | The next step inside the current item and which skill to use, from your PRDs and OpenSpec state. With nothing open it points you to `/kit:status`; with several changes active it asks which one |
-| `/kit:explore-record` | Saves what an `/opsx:explore` decided (notes read, decisions, open questions) at the end of the explore, by default; `/kit:next` and `/kit:prd` follow it. Undo right after if you don't want it |
-| `/kit:loose-ends` | Things left behind while building that have no other owner (a check that belongs elsewhere, friction, debt, kept review findings, cleanup, ideas). Offered once at the end of a step; marked important or blocking; cleanup and an analysis of why they pile up. No ranks, no dates |
-| `/kit:roadmap` | Optional roadmap: goals in order, tasks left, Now, decisions waiting on you, and a drift log. Writes only on your yes |
-| `/kit:ready` | Before apply: find what the change still needs decided (missing cases, PRD vs spec differences, points to confirm, new tools vs your dependencies), ask it in one batch, and write the answers into the change. Then rates **reach, undo and safety** and records the build safeguards (worktree, review against the spec, subagents only when justified) in `design.md`. Warns, never blocks |
-| `/kit:verify` | Check a change before archive: the project's tests (by project type), `/security-review`, `/code-review`, changed files without tests, **scenarios without a test**, the **review against the spec** when the safeguards choose it (a fresh-context `kit:spec-reviewer` agent), and a **docs sync** (what was built goes into the specs and `design.md`, on your yes); writes `verify.md` |
-| `/kit:docs` | Build the project's docs page (`knowledge/docs/index.html`): products › sub-features, their Given/When/Then user stories, the why where it matters, foundation cards, the tools inventory, history and open decisions. Drafts missing notes: a big first run is one yes, drafted in parallel, then reviewed with git; a few new drafts are asked one by one; the page itself is rebuilt by a script at no token cost |
-| `/kit:harness-review` | Read-only check-up of the project's Claude Code setup, with at most three fixes |
-| `/kit:setup` | Install or check the machine toolset |
-| `/kit:tool-review` | Monthly check of the kit's tools: still there? latest vs tested version, release notes on a major, what's new to use; update, hold or drop each one on your yes (smoke test before an update counts). A session-start reminder says when it's due (kit repo only) |
+| `/kit:capture` | Save an idea, dictation, link or screenshot as a note |
+| `/kit:prd` | Draft a PRD from your notes, update it without overwriting your edits, mark it Ready |
+| `/kit:status` | Where the project stands: what's built, under way and next. Read-only |
+| `/kit:next` | The next step and which skill to use |
+| `/kit:explore-record` | Save what an `/opsx:explore` decided and left open |
+| `/kit:loose-ends` | Things left behind while building: debt, friction, kept findings, ideas |
+| `/kit:roadmap` | Optional roadmap: goals in order, Now, decisions waiting on you |
+| `/kit:ready` | Before apply: ask the open decisions in one batch, pick the build safeguards. Never blocks |
+| `/kit:verify` | Before archive: tests, security and code review, scenarios without a test, docs sync |
+| `/kit:docs` | The project's docs page: what's built, why, what's undecided |
+| `/kit:harness-review` | Read-only check-up of the project's Claude Code setup, at most three fixes |
+| `/kit:setup` | Install or check the machine tools |
+| `/kit:tool-review` | Monthly check of the kit's tools: update, hold or drop each one |
 | `/kit:start` | Set up or re-sync a project |
-| `/kit:ping` | Check that the kit plugin is installed |
+| `/kit:ping` | Check that the kit is installed |
 
 Planning and building use [OpenSpec](https://github.com/Fission-AI/OpenSpec): `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive`.
 
@@ -180,28 +176,22 @@ The hooks ship in the kit plugin and do nothing outside kit projects.
 
 Plain Markdown in your repo: no external service, no quota. Notes you add by hand as `.md` are picked up as they are.
 
-## Harness review
-
-`/kit:harness-review` checks how a project is set up for Claude Code (CLAUDE.md, rules, skills, hooks, permissions, MCP servers, plugins, auto memory). It draws a map of the setup, rates eight layers (context, tools, memory, loops, verification, guardrails, feedback, observability) as OK, PARTIAL or GAP, and ends with at most three fixes and why they matter. It works in any Claude Code project, with or without the rest of the kit, and changes nothing; it points to Claude Code's own `/doctor prompt-audit` and `/skill-doctor` where they go deeper.
-
 ## Tools in use, and when they load
 
-Plain skills cost little while idle: only their name and one line sit in context until one is called. Hooks and workflow plugins act on their own, so those are kept to what each project needs.
+Skills load only when called. Hooks and workflow plugins act on their own, so they're kept to what each project needs.
 
-| Tool | Installed | When it loads or runs |
+| Tool | Installed | When it runs |
 |---|---|---|
-| **kit** (this plugin) | per project (`--scope project`); its marketplace once per machine | Skills (`/kit:…`) load when called. One hook checks each shell command, but **acts only in kit projects** (with `.claude/kit.json`): it blocks `openspec archive` until `/kit:verify` passes (and reminds about open decisions) |
-| **OpenSpec** | CLI once per machine; its `/opsx:…` skills per project (by `/kit:start`) | When you plan or build: `/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:archive` |
-| **git, gh** | once per machine (`/kit:setup`) | Only when a command calls them |
-| **gitleaks** | once per machine | On every `git commit`, in repos with the pre-commit hook enabled |
-| **`/code-review`, `/security-review`** | built into Claude Code | When `/kit:verify` runs them, or when you call them |
-| **context7** | nothing to install | Called with `npx` when the agent needs current library docs (a `CLAUDE.md` rule). No sign-in |
-| **Impeccable** | per project, type `web-ui` | The kit calls it at three points: `/kit:prd` offers `shape` for a screen, `/kit:ready` checks UI states and copy and can recommend `ui-review`, and `/kit:verify` runs `critique` + `audit` when `ui-review` is chosen. Its other `/impeccable …` commands when you call them (polish…). **Its hooks run on their own** in that project: at session start, after each edit to a UI file (quick design check) and at the end of each turn (deeper pass). First use: `/impeccable init` |
-| **Playwright CLI** | per project, type `web-ui` (plus the CLI once per machine) | **Only when you ask** for a browser check (in `/kit:verify`); never on every verify. **Why machine-wide:** the `playwright-cli` command is installed once, like git. It's idle until a browser check calls it, and the skill expects that command (each project gets only the skill). Running it through `npx` instead works, but then every browser step asks for permission (tested 2026-10-08) |
-| **Superpowers** | not installed by default | **On demand**, when a change's safeguards (`/kit:ready`) choose a subagent build or test-first; you decide. It has a session-start hook, so it's added only when needed |
-| **Emil's skills** | not installed by default | **On demand**, for motion and animation work |
+| **kit** | per project | Skills when called. Its hook acts only in kit projects: it blocks `openspec archive` until `/kit:verify` passes |
+| **OpenSpec** | CLI per machine, skills per project | When you plan or build (`/opsx:…`) |
+| **git, gh, gitleaks** | per machine (`/kit:setup`) | When called; gitleaks on every commit |
+| **`/code-review`, `/security-review`** | built into Claude Code | From `/kit:verify`, or when you call them |
+| **context7** | nothing to install | When the agent needs current library docs |
+| **Impeccable** | per project, type `web-ui` | UI design checks from `/kit:prd`, `/kit:ready` and `/kit:verify`. Its hooks run on their own in that project |
+| **Playwright CLI** | per project, type `web-ui` (CLI per machine) | Only when you ask for a browser check |
+| **Superpowers** | on demand | When a change's safeguards choose a subagent build or test-first |
 
-Everything else in [`toolkit.yaml`](toolkit.yaml) (Notion, ECC, task-observer, claude-mem…) was evaluated and is **not in use**. Its verdict says why.
+Everything else in [`toolkit.yaml`](toolkit.yaml) was evaluated and is **not in use**. Its verdict says why.
 
 ## How tools are chosen
 

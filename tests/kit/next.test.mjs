@@ -631,3 +631,52 @@ test('prd-parts: a proposal with no parent line is checked against the part only
   suggest({ openspec: { root: {}, changes: [change('acme-part-a', 1, 5)] }, statusOf: () => ({ isPlanningComplete: true }), map: kmap, knowledge: k, changedSince: (p) => { seen.push(p); return false; } });
   assert.deepEqual(seen, ['knowledge/prds/acme-v1/part-a.md']);
 });
+
+// ---------- worktree-cleanup 2.1 (spec: skill-routing "Leftover worktree reminder") ----------
+import { worktreeLine, worktreeState } from '../../plugins/kit/scripts/next.mjs';
+
+test('worktree-cleanup: a worktree left after its change was archived gets one reminder line with both commands', () => {
+  const r = worktreeLine({ worktrees: [{ name: 'acme-part-a', branch: 'wt/acme-part-a' }], archived: ['acme-part-a'], reminded: [] });
+  assert.deepEqual(r.names, ['acme-part-a']);
+  assert.match(r.line, /\.claude\/worktrees\/acme-part-a is still here after change acme-part-a was archived/);
+  assert.match(r.line, /`git worktree remove \.claude\/worktrees\/acme-part-a` and `git branch -d wt\/acme-part-a` \(on your yes\)/);
+  const s = suggest({ openspec: { root: {}, changes: [] }, statusOf: () => null, map, worktree: r.line });
+  assert.equal(s.phase, 'status');
+  assert.match(format(s), /\n  worktree: \.claude\/worktrees\/acme-part-a is still here/);
+});
+
+test('worktree-cleanup: shown once; an active change\'s worktree gets no line', () => {
+  assert.equal(worktreeLine({ worktrees: [{ name: 'acme-part-a', branch: 'wt/acme-part-a' }], archived: ['acme-part-a'], reminded: ['acme-part-a'] }), null);
+  assert.equal(worktreeLine({ worktrees: [{ name: 'acme-part-b', branch: 'wt/acme-part-b' }], archived: ['acme-part-a'], reminded: [] }), null);
+  assert.equal(worktreeLine(), null);
+});
+
+test('worktree-cleanup verify S1: names with shell characters never reach the printed commands', () => {
+  assert.equal(worktreeLine({ worktrees: [{ name: 'x;rm', branch: 'wt/x;rm' }], archived: ['x;rm'] }), null);
+  const r = worktreeLine({ worktrees: [{ name: 'acme-part-a', branch: 'wt/a`b`' }], archived: ['acme-part-a'] });
+  assert.match(r.line, /`git branch -d wt\/acme-part-a`/);
+  assert.doesNotMatch(r.line, /a`b`/);
+});
+
+test('worktree-cleanup: worktreeState on a real repo reads kit worktrees and archived changes, and remembers what it showed', async () => {
+  const fs = await import('node:fs'); const path = await import('node:path');
+  const { spawnSync } = await import('node:child_process');
+  const d = tmpDir('kit-next-wt-');
+  const g = (...a) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { cwd: d, encoding: 'utf8' });
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-01-acme-part-a'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'openspec/changes/archive/2026-11-01-acme-part-a/proposal.md'), '# P\n');
+  g('init', '-q'); g('add', '.'); g('commit', '-qm', 'one');
+  g('worktree', 'add', '-q', '.claude/worktrees/acme-part-a', '-b', 'wt/acme-part-a');
+  g('worktree', 'add', '-q', path.join(path.dirname(d), `${path.basename(d)}-other`), '-b', 'other');
+  const st = worktreeState(d);
+  assert.deepEqual(st.worktrees, [{ name: 'acme-part-a', branch: 'wt/acme-part-a' }]);
+  assert.ok(st.archived.includes('acme-part-a'));
+  assert.deepEqual(st.reminded, []);
+  const line = worktreeLine(st);
+  assert.deepEqual(line.names, ['acme-part-a']);
+  st.remember(line.names);
+  assert.equal(worktreeLine(worktreeState(d)), null);
+  // The list lives inside .git, so it is never committed.
+  assert.equal(g('status', '--porcelain').stdout.includes('kit-worktree-reminders'), false);
+  g('worktree', 'remove', '--force', path.join(path.dirname(d), `${path.basename(d)}-other`));
+});

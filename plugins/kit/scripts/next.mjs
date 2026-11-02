@@ -101,19 +101,56 @@ export function questionsLine(knowledge) {
   return `PRD "${p.name ?? p.slug}" has ${p.openQuestions} open question(s) to answer before Ready (/kit:prd)${rest.length ? `; ${rest.length} more PRD(s) with open questions` : ''}`;
 }
 
-/**
- * Pure decision. Input:
- *   openspec: { root, changes: [{ name, completedTasks, totalTasks, lastModified, status }] } (openspec list --json)
- *   statusOf: name -> { artifacts: [{ id, status }], isPlanningComplete }               (openspec status --json)
- *   map: laneMap(registry)
- */
+/** worktree-cleanup D3: one reminder line for kit worktrees (`.claude/worktrees/<name>`) whose change is archived and
+ *  that weren't shown before. worktrees: [{ name, branch }]; archived: change names; reminded: names already shown.
+ *  Returns { line, names } or null. Never the next step itself. */
+export function worktreeLine({ worktrees = [], archived = [], reminded = [] } = {}) {
+  const done = new Set(archived);
+  // The names end up in commands the agent may run: change names are kebab-case, and a branch with any other
+  // character falls back to wt/<name> (verify S1).
+  const left = worktrees.filter(w => /^[a-z0-9][a-z0-9-]*$/.test(w.name) && done.has(w.name) && !reminded.includes(w.name))
+    .map(w => ({ ...w, branch: /^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(w.branch ?? '') ? w.branch : null }));
+  if (!left.length) return null;
+  const one = w => `.claude/worktrees/${w.name} is still here after change ${w.name} was archived: \`git worktree remove .claude/worktrees/${w.name}\` and \`git branch -d ${w.branch ?? `wt/${w.name}`}\` (on your yes)`;
+  return { line: left.map(one).join('; '), names: left.map(w => w.name) };
+}
+
+/** Reads the kit worktrees, the archived change names and the names already reminded; `remember` adds names to the
+ *  list in the git folder (shared by every worktree, never committed). Without git: no worktrees, nothing remembered. */
+export function worktreeState(dir) {
+  const git = locate('git')?.path ?? 'git';
+  const run = args => spawnSync(git, args, { cwd: dir, encoding: 'utf8', timeout: 30000 });
+  const list = run(['worktree', 'list', '--porcelain']);
+  const common = run(['rev-parse', '--git-common-dir']);
+  if (list.status !== 0 || common.status !== 0) return { worktrees: [], archived: [], reminded: [], remember: () => {} };
+  const worktrees = [];
+  for (const block of list.stdout.replace(/\r/g, '').split('\n\n')) {
+    const wt = /^worktree (.+)$/m.exec(block)?.[1]?.replace(/\\/g, '/');
+    const name = wt && /\/\.claude\/worktrees\/([^/]+)$/.exec(wt)?.[1];
+    if (name) worktrees.push({ name, branch: /^branch refs\/heads\/(.+)$/m.exec(block)?.[1] ?? null });
+  }
+  let archived = [];
+  try { archived = fs.readdirSync(path.join(dir, 'openspec', 'changes', 'archive')).map(f => f.replace(/^\d{4}-\d{2}-\d{2}-/, '')); } catch { /* none */ }
+  const file = path.join(path.resolve(dir, common.stdout.trim()), 'kit-worktree-reminders');
+  let reminded = [];
+  try { reminded = fs.readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean); } catch { /* none yet */ }
+  const remember = names => { try { fs.appendFileSync(file, names.map(n => `${n}\n`).join('')); } catch { /* the line shows again */ } };
+  return { worktrees, archived, reminded, remember };
+}
+
 /** kit-docs: a one-line reminder when the docs page is older than the newest archive (spec: skill-routing
  *  "Stale docs page suggested"). Never the next step itself. `page` is docs.mjs scan().page. */
 export function docsLine(page) {
   return page?.exists && page.stale ? 'docs page is older than the last archive; run /kit:docs' : null;
 }
 
-export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null, loose = [], looseWarning = null, explores = [], explore = null, roadmap = null }) {
+/**
+ * Pure decision. Input:
+ *   openspec: { root, changes: [{ name, completedTasks, totalTasks, lastModified, status }] } (openspec list --json)
+ *   statusOf: name -> { artifacts: [{ id, status }], isPlanningComplete }               (openspec status --json)
+ *   map: laneMap(registry)
+ */
+export function suggest({ openspec, statusOf, map, knowledge = null, changedSince, verifyOf = () => null, decisionsOf = () => null, docs = null, archived = null, change = null, loose = [], looseWarning = null, explores = [], explore = null, roadmap = null, worktree = null }) {
   if (!openspec || openspec.root == null) {
     return { phase: 'setup', owner: 'kit', use: '/kit:start', alternatives: [], reason: 'No OpenSpec here yet: set the project up first.' };
   }
@@ -126,7 +163,7 @@ export function suggest({ openspec, statusOf, map, knowledge = null, changedSinc
   if (looseWarning) warnings.push(looseWarning);
   for (const r of explores.filter(x => x.state === 'unreadable')) warnings.push(r.error);
   const questions = questionsLine(knowledge);
-  const withWarnings = s => ({ ...s, ...blockedBy(loose, s.change), ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
+  const withWarnings = s => ({ ...s, ...blockedBy(loose, s.change), ...(questions ? { questions } : {}), ...(docs ? { docs } : {}), ...(worktree ? { worktree } : {}), ...(waiting ? { waiting } : {}), ...(archivedLine(archived) ? { archived: archivedLine(archived) } : {}), ...(warnings.length ? { warnings } : {}) });
   // With a change named, a PRD step wins only when it is about that change (verify C1).
   if (suggestion && (!named || suggestion.change === named)) return withWarnings(suggestion);
   // kit-status D6: next works inside one item. Several active changes and none named -> the user picks one.
@@ -263,6 +300,7 @@ export function format(s) {
   if (s.waiting) lines.push(`  waiting: ${s.waiting}`);
   if (s.archived) lines.push(`  archived: ${s.archived}`);
   if (s.docs) lines.push(`  docs:  ${s.docs}`);
+  if (s.worktree) lines.push(`  worktree: ${s.worktree}`);
   if (s.nextArtifact) lines.push(`  next artifact: ${s.nextArtifact}`);
   if (s.alternatives?.length) lines.push(`  big or risky change? alternative: ${s.alternatives.map(a => `${a.use} (${a.tool})`).join('; ')}`);
   if (s.otherReady?.length) lines.push(`  other Ready PRDs: ${s.otherReady.join(', ')}`);
@@ -389,11 +427,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const openspec = fs.existsSync(path.join(dir, 'openspec')) ? openspecJson('list --json', dir) : { root: null, changes: [] };
   let docs = null;
   try { docs = docsLine(pageStatus(dir)); } catch { /* no docs reminder */ }
-  const s = suggest({ openspec, statusOf: name => {
+  const wts = worktreeState(dir);
+  const wt = worktreeLine(wts);
+  const s = suggest({ worktree: wt?.line ?? null, openspec, statusOf: name => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return null; // folder names reach a shell string: kebab-case only
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
   }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir), explores: (() => { try { return listRecords(dir); } catch { return []; } })(), explore, roadmap: (() => { try { const p = parseRoadmap(knowledgeDir(dir)); return p.exists ? reportRoadmap(p) : null; } catch { return null; } })() });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
+  if (wt && s.worktree) wts.remember(wt.names);
 }

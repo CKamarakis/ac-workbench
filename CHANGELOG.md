@@ -2,6 +2,11 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.4 (2026-11-01)
+- **Worktree clean-up.** After a worktree build is merged back, the kit offers to remove the worktree and its `wt/<change>` branch, on your yes. It never forces: if git refuses (uncommitted or untracked files, a branch not merged), it names what's left and removes nothing.
+- `/kit:next` reminds once when a worktree is still there after its change was archived, with the two commands to remove it.
+- Re-sync projects with `/kit:start` to get the new routing line.
+
 ## 1.0.0-rc.3 (2026-10-25)
 Fixes from testing PRD parts on a real project:
 - `/kit:next` now warns when the parent PRD changed after planning, also when the project sits in a subfolder of its git repo (it gave up there without a word).

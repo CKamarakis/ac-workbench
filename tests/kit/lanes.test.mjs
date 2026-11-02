@@ -188,3 +188,10 @@ test('build-safeguards 2.3: routing block tells apply to follow design.md Safegu
   assert.match(block, /EnterWorktree/);
   assert.match(block, /No Safeguards section: build in the current branch, with no worktree and no subagents\./);
 });
+
+test('worktree-cleanup 1.1: after the merge back, the routing block offers to remove the worktree and branch, never forcing', () => {
+  const block = routingBlock(laneMap(fixture('resolved-overlap')), { qualityGates: true });
+  assert.match(block, /Once the merge back succeeds, offer once to remove the worktree and its branch, on a yes/);
+  assert.match(block, /git worktree remove \.claude\/worktrees\/<change>` and `git branch -d wt\/<change>`, never `--force` or `-D`/);
+  assert.match(block, /if git refuses .* name what is left and remove nothing\. On a no, keep both\./);
+});

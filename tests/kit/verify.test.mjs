@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { runVerify, addFinding, addOverride, verifyStatus, installPrepush, untestedFiles, changedFiles, readState } from '../../plugins/kit/scripts/verify.mjs';
+import { runVerify, defaultRun, TEST_TIMEOUT_MINUTES, homeRelative, addFinding, addOverride, verifyStatus, installPrepush, untestedFiles, changedFiles, readState } from '../../plugins/kit/scripts/verify.mjs';
 
 const registry = {
   project_types: {
@@ -56,6 +56,45 @@ test('missing required script: HARD for web-ui, advisory for none; failing optio
   const c = project({ scripts: { test: 'x', 'test:integration': 'y' } });
   runVerify({ dir: c, change: 'add-x', registry, run: runner({ 'test:integration': 3 }) });
   assert.equal(verifyStatus({ dir: c, change: 'add-x' }).status, 'pass');
+});
+
+// verify-test-timeout (spec: quality-gates "Test command time limit")
+test('defaultRun: limit is 15 min; a command stopped by the limit is timedOut, a non-zero exit is not', () => {
+  assert.equal(TEST_TIMEOUT_MINUTES, 15);
+  const slow = defaultRun(`"${process.execPath}" -e "setTimeout(()=>{},1500)"`, process.cwd(), 300);
+  assert.equal(slow.timedOut, true);
+  const bad = defaultRun(`"${process.execPath}" -e "process.exit(3)"`, process.cwd(), 30000);
+  assert.deepEqual([bad.timedOut, bad.status], [false, 3]);
+});
+
+const outOfTime = names => cmd => names.includes(cmd.replace('npm run ', '')) ? { status: 1, timedOut: true, out: 'still running' } : { status: 0, out: '' };
+
+test('optional suite runs out of time -> advisory "ran out", names the verify.mjs to edit, result pass', () => {
+  const d = project({ scripts: { test: 'x', 'test:integration': 'y' } });
+  runVerify({ dir: d, change: 'add-x', registry, run: outOfTime(['test:integration']) });
+  assert.equal(verifyStatus({ dir: d, change: 'add-x' }).status, 'pass');
+  const md = fs.readFileSync(path.join(d, 'openspec/changes/add-x/verify.md'), 'utf8');
+  assert.match(md, /\| test:integration \| no \| ran out after 15 min \|/);
+  assert.match(md, /npm run test:integration ran out after 15 min \(not a test failure\)/);
+  assert.match(md, /edit TEST_TIMEOUT_MINUTES in .*verify\.mjs \(a kit update resets it\)/);
+  assert.doesNotMatch(md, /test:integration failed/);
+  assert.ok(!md.includes(os.homedir()), 'the report must not carry the home folder (username)');
+});
+
+test('homeRelative: home folder shown as ~ with forward slashes; other paths unchanged', () => {
+  assert.equal(homeRelative('C:\\Users\\Ann\\.claude\\plugins\\kit\\scripts\\verify.mjs', 'C:\\Users\\Ann'), '~/.claude/plugins/kit/scripts/verify.mjs');
+  assert.equal(homeRelative('c:\\users\\ann\\x.mjs', 'C:\\Users\\Ann'), '~/x.mjs');
+  assert.equal(homeRelative('/home/ann/.claude/v.mjs', '/home/ann'), '~/.claude/v.mjs');
+  assert.equal(homeRelative('D:\\kit\\verify.mjs', 'C:\\Users\\Ann'), 'D:/kit/verify.mjs');
+  assert.equal(homeRelative('C:\\Users\\Anna\\v.mjs', 'C:\\Users\\Ann'), 'C:/Users/Anna/v.mjs');
+});
+
+test('required suite runs out of time -> HARD with the same message, result fail', () => {
+  const d = project();
+  runVerify({ dir: d, change: 'add-x', registry, run: outOfTime(['test']) });
+  const st = verifyStatus({ dir: d, change: 'add-x' });
+  assert.equal(st.status, 'fail');
+  assert.match(st.hard[0], /npm run test ran out after 15 min \(not a test failure\)/);
 });
 
 test('unknown change and missing report are reported, not guessed', () => {

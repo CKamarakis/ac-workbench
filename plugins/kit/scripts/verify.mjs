@@ -17,6 +17,7 @@
 //   prepush --install                        opt-in git pre-push hook (never overwrites)
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadRegistry } from './setup.mjs';
@@ -24,6 +25,16 @@ import { locate } from './locate.mjs';
 import { decisionStatus, openLine } from './decisions.mjs';
 import { parseSafeguards, chose } from './safeguards-data.mjs';
 import { webUi } from './project.mjs';
+
+// Time limit per test command (spec: quality-gates "Test command time limit"). To allow longer runs, raise this
+// number; a kit update resets it.
+export const TEST_TIMEOUT_MINUTES = 15;
+// Shown in the ran-out message with the home folder as ~, so a committed report doesn't carry the username.
+export const homeRelative = (p, home = os.homedir()) => {
+  const inHome = home && p.toLowerCase().startsWith(home.toLowerCase()) && /^[\\/]?$/.test(p.charAt(home.length));
+  return (inHome ? '~' + p.slice(home.length) : p).replace(/\\/g, '/');
+};
+const SELF = homeRelative(fileURLToPath(import.meta.url));
 
 // Review sources (each has a row in the report) and finding sources a user can resolve; one list each.
 const REVIEW_SOURCES = ['security', 'code', 'spec', 'ui'];
@@ -54,9 +65,10 @@ export function policyFor(registry, type) {
 
 const scriptsOf = dir => { try { return JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).scripts ?? {}; } catch { return {}; } };
 
-export const defaultRun = (cmd, cwd) => {
-  const r = spawnSync(cmd, { cwd, shell: true, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024 });
-  return { status: r.status ?? 1, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+// timedOut: the child was stopped by the time limit (not a crash by signal, not a non-zero exit).
+export const defaultRun = (cmd, cwd, timeoutMs = TEST_TIMEOUT_MINUTES * 60000) => {
+  const r = spawnSync(cmd, { cwd, shell: true, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 });
+  return { status: r.status ?? 1, timedOut: r.error?.code === 'ETIMEDOUT', out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 };
 
 function git(dir, args) {
@@ -403,9 +415,16 @@ export function runVerify({ dir, change, registry = loadRegistry(), run = defaul
       continue;
     }
     const r = run(`npm run ${t.script}`, dir);
+    const level = t.required ? 'HARD' : 'ADVISORY';
+    if (r.timedOut) {
+      const ran = `ran out after ${TEST_TIMEOUT_MINUTES} min`, tail = failureDetail(r.out);
+      tests.push({ script: t.script, required: !!t.required, result: ran });
+      items.push({ id, level, what: `npm run ${t.script} ${ran} (not a test failure)`, detail: `To raise the limit, edit TEST_TIMEOUT_MINUTES in ${SELF} (a kit update resets it).${tail ? ` Last output: ${tail}` : ''}`, source: 'tests' });
+      continue;
+    }
     const ok = r.status === 0;
     tests.push({ script: t.script, required: !!t.required, result: ok ? 'pass' : `fail (exit ${r.status})` });
-    if (!ok) items.push({ id, level: t.required ? 'HARD' : 'ADVISORY', what: `npm run ${t.script} failed (exit ${r.status})`, detail: failureDetail(r.out), source: 'tests' });
+    if (!ok) items.push({ id, level, what: `npm run ${t.script} failed (exit ${r.status})`, detail: failureDetail(r.out), source: 'tests' });
   }
   for (const f of untestedFiles(dir, changedFiles(dir, change))) items.push({ id: `U:${f}`, level: 'ADVISORY', what: 'changed source file without a matching test', detail: f, source: 'untested' });
   (policy.advisory ?? []).forEach((a, n) => items.push({ id: `P${n + 1}`, level: 'ADVISORY', what: `policy check: ${a}`, source: 'policy' }));

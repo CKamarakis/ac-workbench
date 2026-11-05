@@ -2,6 +2,8 @@
 id: M14
 title: Outside test and launch
 status: planned
+changes:
+  - verify-test-timeout
 ---
 
 v1 phase E: outside testers install from the README; fixes.

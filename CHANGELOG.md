@@ -2,6 +2,11 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.5 (2026-11-05)
+- `/kit:verify` lets each test command run up to 15 minutes (was 10).
+- A test stopped by that limit is reported as "ran out after 15 min (not a test failure)", no longer as failed, with the `verify.mjs` file where you can raise `TEST_TIMEOUT_MINUTES` (a kit update resets it). A required test that runs out still blocks; an optional one stays advisory.
+- The verify skill runs the tests in the background, so the agent's shell limit doesn't cut a long suite short.
+
 ## 1.0.0-rc.4 (2026-11-01)
 - **Worktree clean-up.** After a worktree build is merged back, the kit offers to remove the worktree and its `wt/<change>` branch, on your yes. It never forces: if git refuses (uncommitted or untracked files, a branch not merged), it names what's left and removes nothing.
 - `/kit:next` reminds once when a worktree is still there after its change was archived, with the two commands to remove it.

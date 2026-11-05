@@ -23,7 +23,7 @@ If it prints `error:`, show it and stop.
 ## Steps
 
 1. **Pick the change.** The one named by the user, or the active change whose tasks are all done. Ask if it's unclear.
-2. **Run the tests and checks:** `verify.mjs run --dir . --change <name>`. It runs the policy's `npm run <script>` commands (which can take a while) and writes the report. If the change already had a `verify.md` the kit didn't write (e.g. another tool's), the script keeps it as `verify-earlier.md` and lists it (`E:report`): read it and tell the user about anything still open in it, such as unfinished tasks or sign-offs.
+2. **Run the tests and checks:** `verify.mjs run --dir . --change <name>`. It runs the policy's `npm run <script>` commands (which can take a while) and writes the report. Each command may run up to 15 minutes, and your shell tool may stop a command sooner (Claude Code's stops foreground commands at 10 minutes): run it in the background (`run_in_background`) and wait for it to finish before reading the report. A test listed as `ran out after 15 min` was stopped by the kit's limit, not failed: tell the user so, and that the item names the `verify.mjs` file where they can raise `TEST_TIMEOUT_MINUTES` (a kit update resets it). If the change already had a `verify.md` the kit didn't write (e.g. another tool's), the script keeps it as `verify-earlier.md` and lists it (`E:report`): read it and tell the user about anything still open in it, such as unfinished tasks or sign-offs.
 3. **Security review:** run `/security-review` on this change's files. For each finding, record it:
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/verify.mjs" finding --dir . --change <name> --source security --severity high|medium|low --text "<one line: what and where>"

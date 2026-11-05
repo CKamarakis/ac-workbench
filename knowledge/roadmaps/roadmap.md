@@ -80,8 +80,8 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-M17 PRD parts (active): split one PRD over a parent and part files, per-part status and change checks. Note: notes/2026-10-25-prd-parts-one-prd-split-over-several-files.md.
-After it: M14 T4, the verify spike. M14 T1 and T2 (outside test) are low priority.
+M17 PRD parts is done (prd-parts and worktree-cleanup archived 2026-11-05; kit 1.0.0-rc.4).
+Next: M14 T4, the verify spike (why /kit:verify takes 10+ minutes). M14 T1 and T2 (outside test) are low priority.
 
 ## Waiting on you
 

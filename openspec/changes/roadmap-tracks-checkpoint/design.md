@@ -38,7 +38,15 @@
 - Why `decide` over reusing `status` + `drift`: three writes the user would otherwise have to approve separately, with a risk of half-done switches.
 
 **D4. A track view in the report.** `reportRoadmap` gains `tracks`: every `active` or `paused` milestone, each with `last` (the highest-numbered done task), `next` (the lowest-numbered open task), `resume`, `checkpoint` and `reached`. Plus `checkpoints`: the reached ones. `formatReport` prints a "Tracks" block before Now when there are two or more tracks, or any reached checkpoint. `tick` output adds the same block when its tick reaches a checkpoint.
-- "Last done" is the highest-numbered done task, not the most recently ticked one. The file has no tick times; the number is a close, honest stand-in. Unverified as a fit for real use; revisit if it misleads.
+- "Last done" comes from the tick date (D8), with the highest number breaking ties and standing in for tasks ticked before this change.
+
+**D8. Tick writes a done date** (ready decision D1, 2026-11-17). `tick` writes `- [x] T<n> <text> (done <YYYY-MM-DD>)`, and `--undo` strips it. The parser treats the `(done ...)` suffix like the drop note: it goes into `t.doneDate`, not `t.text`, so `edit-task`, the report and evals see the same text as before. Undated done tasks stay valid, with no finding.
+- Why: the user wants "last done" to be the task actually done last, not a guess from its number.
+- Alternatives: the highest number only (simpler, but wrong when tasks are done out of order); a full timestamp (more noise in a hand-read file than a day's precision is worth).
+
+**D9. Rename keeps the file name** (ready decision D2). `edit --title` changes only the frontmatter. The old slug stays in the file name, so every link and git history path keeps working. Like a GitHub milestone, the ID is the key and the title is a label.
+
+**D10. `decide` guards and the follow-up offer** (ready decisions D5, D6). `decide --switch-to` refuses a `done` or `dropped` milestone, or the same ID, with an error and no write. To go back to a finished one, set its status first. After `--continue`, the skill offers once, skippably, to set the next checkpoint on that milestone.
 
 **D5. The check gains three findings.** A malformed `checkpoint:` (broken), a checkpoint naming a missing or dropped task (broken), and more than two `active` milestones (tidy-up). "Checkpoint reached" is reported as a note line, not a finding: it's a moment, not something to fix.
 
@@ -51,10 +59,26 @@
 ## Risks / Trade-offs
 
 - [Archive-reached depends on `/kit:roadmap` running after `/opsx:archive`, and that isn't reliable today (unverified)] → `/kit:status` and `check` also show it, so the next look at the project catches it.
-- [Highest-numbered done task isn't always the last one worked on] → It's named by text so the user can tell. A tick date can come later if it misleads.
+- [Tasks ticked before this change have no date] → For those, the highest number stands in, and the task is named by its text so the user can tell. The check never asks for dates to be backfilled.
+- [A `(done ...)` suffix typed by hand in the wrong shape] → It stays part of the text. The check doesn't flag it, since it's harmless.
 - [`decide` writes several things at once] → The skill shows the full write first, as with every write. The function checks everything before writing anything (as `setStatus` does for moves).
 - [Status Now grows with more tracks] → The existing 5-row cap and "+N more" still apply. The cap warning nudges toward two tracks.
 
 ## Migration Plan
 
 - No migration. Both new fields (`checkpoint:` and the `Resume:` line) are optional. Rollback is reverting the kit; a leftover `checkpoint:` field is then ignored by the old parser (it keeps unknown frontmatter).
+
+## Safeguards
+
+Written by `/kit:ready` (`ready.mjs safeguards`) on 2026-11-17. Re-run the readiness check to change it.
+
+| Dimension | Rating | Why |
+|---|---|---|
+| Reach | high | Changes the milestone task-line format (done date), adds roadmap.mjs commands and changes report/tick output that status.mjs and next.mjs read; two specs |
+| Undo | low | Reverting the commits undoes it; dated task lines still parse on the old kit as task text |
+| Safety | low | No secrets, permissions, hooks or network writes |
+
+- **Recommended:** scenario-to-test check, worktree for the build, review against the spec, edge-case probes, medium security findings block, your OK before merge
+- **Chosen:** scenario-to-test check, worktree for the build, review against the spec, edge-case probes, medium security findings block, your OK before merge
+
+<!-- kit-safeguards-data {"date":"2026-11-17","ratings":{"reach":{"level":"high","why":"Changes the milestone task-line format (done date), adds roadmap.mjs commands and changes report/tick output that status.mjs and next.mjs read; two specs"},"undo":{"level":"low","why":"Reverting the commits undoes it; dated task lines still parse on the old kit as task text"},"safety":{"level":"low","why":"No secrets, permissions, hooks or network writes"}},"recommended":["scenario-check","worktree","spec-review","probes","security-weighted","user-ok"],"chosen":["scenario-check","worktree","spec-review","probes","security-weighted","user-ok"]} -->

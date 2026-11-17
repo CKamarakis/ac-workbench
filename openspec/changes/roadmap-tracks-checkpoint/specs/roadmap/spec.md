@@ -8,7 +8,7 @@ A milestone's title and goal SHALL be changed only through the roadmap script an
 #### Scenario: Rename keeps the ID
 - **GIVEN** milestone `M4` "Board" with tasks `T1` to `T3` and a linked change
 - **WHEN** its title is edited to "Feature A"
-- **THEN** its frontmatter reads `id: M4`, `title: Feature A`, its file name, tasks and links are unchanged, and the drift log gains an entry "M4 renamed: Board -> Feature A"
+- **THEN** its frontmatter reads `id: M4`, `title: Feature A`, the file is still `milestones/m4-board.md`, its tasks and links are unchanged, and the drift log gains an entry "M4 renamed: Board -> Feature A"
 
 #### Scenario: Goal only
 - **GIVEN** milestone `M4`
@@ -36,8 +36,13 @@ A planned, active or paused milestone MAY carry one checkpoint, set and cleared 
 - **WHEN** a checkpoint is set on `M4` after `T9`, which `M4` doesn't have
 - **THEN** it fails with an error, and no file changes
 
+#### Scenario: After a task already done
+- **GIVEN** milestone `M4` with `T3` already ticked
+- **WHEN** a checkpoint is set after `T3`
+- **THEN** it is recorded and counts as reached at once, so the report shows it as reached
+
 ### Requirement: Checkpoint reached
-A checkpoint SHALL count as reached when its task is ticked, or its change is archived. Ticking that task, the check and the report SHALL then say the checkpoint is reached. The report SHALL show every active or paused milestone side by side, each with the number and text of its last done task, its next open task, and its resume note. Reaching a checkpoint SHALL NOT block any step, change any status, or switch on its own.
+A checkpoint SHALL count as reached when its task is ticked, or its change is archived. Ticking that task, the check and the report SHALL then say the checkpoint is reached. The report SHALL show every active or paused milestone side by side, each with the number and text of its last done task (see Tick date), its next open task, and its resume note. Reaching a checkpoint SHALL NOT block any step, change any status, or switch on its own.
 
 #### Scenario: Tick reaches it
 - **GIVEN** `M4` "Feature A" active with a checkpoint after `T3`, and `M1` "Feature B v1" paused with `T2` done and `T3` open
@@ -73,6 +78,39 @@ When a checkpoint is reached, `/kit:roadmap` SHALL ask the user once: continue t
 - **WHEN** the user moves on without answering
 - **THEN** no file changes, and the next report still says it is reached
 
+#### Scenario: Switch to a finished or the same milestone
+- **GIVEN** the `M4` checkpoint is reached, `M2` is `done` and `M3` is `dropped`
+- **WHEN** the answer is a switch to `M2`, `M3` or `M4`
+- **THEN** it fails with an error naming the milestone and why, and no file changes
+
+#### Scenario: Next checkpoint offered after continue
+- **GIVEN** the user chose to continue `M4`, which has `T4` and `T5` open
+- **WHEN** the answer is written
+- **THEN** `/kit:roadmap` offers once, skippably, to set the next checkpoint on `M4`, and sets it only on a yes
+
+### Requirement: Tick date
+Ticking a task SHALL record the date it was done, as `- [x] T<n> <text> (done <YYYY-MM-DD>)`. Unticking SHALL remove the date. Editing a done task's text SHALL keep its date. A milestone's last done task SHALL be the done task with the latest date, the highest number among tasks with that date, and among undated done tasks only when none has a date. The date SHALL NOT count as part of the task's text.
+
+#### Scenario: Tick writes the date
+- **GIVEN** `M4` task `T3` "List view" is open
+- **WHEN** `T3` is ticked on 2026-11-20
+- **THEN** its line reads `- [x] T3 List view (done 2026-11-20)`
+
+#### Scenario: Last done by date, not number
+- **GIVEN** `M4` has `T5` done on 2026-11-10 and `T3` done on 2026-11-20
+- **WHEN** the report shows `M4`'s track
+- **THEN** its last done task is `T3 List view`
+
+#### Scenario: Older roadmap without dates
+- **GIVEN** `M1` has `T1` and `T2` ticked before this change, with no dates
+- **WHEN** the report shows `M1`'s track
+- **THEN** its last done task is `T2`, and the check reports nothing about the missing dates
+
+#### Scenario: Untick removes the date
+- **GIVEN** `T3` reads `- [x] T3 List view (done 2026-11-20)`
+- **WHEN** `T3` is unticked
+- **THEN** its line reads `- [ ] T3 List view`
+
 ### Requirement: Resume note when switching away
 When the user pauses a milestone, or switches away from it, `/kit:roadmap` SHALL offer a one-line resume note drafted from the milestone's last done task, its next open task and any open linked change, each task named by number and text. The user SHALL be able to keep, correct or skip it. A kept note SHALL be the milestone's only `Resume:` line under its Notes, replacing an older one.
 
@@ -97,3 +135,24 @@ When more than two milestones are `active`, the check and the report SHALL add o
 - **GIVEN** `M1` and `M4` are active
 - **WHEN** `M5` is started
 - **THEN** `M5` becomes active, and the check reports one tidy-up line naming `M1`, `M4` and `M5`
+
+## MODIFIED Requirements
+
+### Requirement: Roadmap layout
+A project's roadmap SHALL live in `<knowledge>/roadmaps/`:
+- `roadmap.md`: north star, principles, the milestone order as a list of IDs, Now, and Waiting on you;
+- `milestones/<id>-<slug>.md`: one file per planned, active or paused milestone, with frontmatter `id`, `title` and `status` (and an optional `checkpoint`), a one-line goal, a task list where each task is a line `- [ ] T<n> <text>`, `- [x] T<n> <text>` or `- [x] T<n> <text> (done <YYYY-MM-DD>)` or, for a dropped task, `- [-] T<n> <text> (dropped <YYYY-MM-DD>: <reason>)`, links to its notes, PRD and change, and at most one `Resume:` line under its Notes;
+- `done/`: milestone files whose status is `done` or `dropped`, kept whole;
+- `drift-log.md`: drift entries, each with date, what, why, on-plan alternative, impact and decided by; entries are only ever added.
+
+Status SHALL be one of `planned`, `active`, `paused`, `done`, `dropped`. IDs SHALL never change and SHALL never be reused. The order SHALL be kept only in `roadmap.md`, separate from the IDs.
+
+#### Scenario: Milestone file shape
+- **GIVEN** a milestone "Acme proof" with ID `M12`
+- **WHEN** it is written
+- **THEN** `milestones/m12-acme-proof.md` has frontmatter `id: M12`, `title: Acme proof`, `status: planned`, a one-line goal and its task lines
+
+#### Scenario: Reorder keeps IDs
+- **GIVEN** the order `M12, M13`
+- **WHEN** the user moves `M13` before `M12`
+- **THEN** only the order list in `roadmap.md` changes, and both IDs and file names stay the same

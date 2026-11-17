@@ -23,16 +23,16 @@ A project often has two large, unrelated features in flight at once, e.g. Featur
           tick / check / after archive or merge
                                   v
  +--------------------------------------------------------+
- | Checkpoint reached on M4 Feature A                         |
- |   Feature A    last: T3 <text>   next: T4 <text>         |
- |   Feature B v1  last: T2 <text>   next: T3 <text>         |
- |              resume: "<note>"                          |
- |   Continue Feature A or switch to Feature B v1?               |
+ | Checkpoint reached on M4 Feature A                     |
+ |   Feature A     last: T3 <text>   next: T4 <text>      |
+ |   Feature B v1  last: T2 <text>   next: T3 <text>      |
+ |                 resume: "<note>"                       |
+ |   Continue Feature A or switch to Feature B v1?        |
  +--------------------------------------------------------+
         | continue                    | switch
         v                             v
-  drift: kept Feature A        M4 -> paused (resume note drafted, skippable)
-                             M1 -> active; drift: switched, why; Now updated
+  drift: kept Feature A       M4 -> paused (resume note drafted, skippable)
+                              M1 -> active; drift: switched, why; Now updated
 ```
 
 ## Capabilities

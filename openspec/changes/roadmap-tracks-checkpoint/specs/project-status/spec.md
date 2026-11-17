@@ -25,6 +25,11 @@ When a milestone's checkpoint is reached and not yet answered, its Now row SHALL
 - **THEN** the `M4` row's status says "checkpoint reached: continue or switch", and the last line names `/kit:roadmap`
 - **AND** no file is created or changed
 
+#### Scenario: Checkpoint on a planned milestone
+- **GIVEN** planned `M5` has a checkpoint after the archive of `a-api`, and `a-api` is archived
+- **WHEN** the user runs `/kit:status`
+- **THEN** Now has an `M5` row whose status says the checkpoint is reached, and the handoff names `/kit:roadmap`
+
 ## MODIFIED Requirements
 
 ### Requirement: Facts from their owners

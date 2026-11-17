@@ -56,6 +56,16 @@
 - `/kit:roadmap`: new table rows for `edit`, `checkpoint`, `decide` and `resume`. A new moment: "a checkpoint is reached". Show the track block, ask "Continue X or switch to Y?" once, and on switch draft the resume note from `last`, `next` and open linked changes, then keep, correct or skip. Also offer the resume note on a plain pause.
 - `/kit:status`: describes the track rows and the checkpoint handoff.
 
+**D11. Rules found at verify** (the review against the spec and the code review, 2026-11-17; fixed in `b39ad0a`).
+- **The goal is the first plain line before any heading.** Before this, a milestone with no goal took its first note or link line as the goal, and `edit --goal` overwrote it. Lines inside a multi-line comment are skipped.
+- **The resume note is read and written only under `## Notes`.** A `Resume:` line in another section is the user's own text and stays. The write touches only the Notes section, not spacing elsewhere.
+- **A switch pauses only an active source.** A planned source (one whose archive checkpoint was reached before work started) stays planned, so it doesn't show as a paused track that never started.
+- **A switch target needs a task,** and a finished source is refused. Both are checked before writing, like every other write, so a switch never leaves the roadmap broken.
+- **Re-ticking a done task changes nothing:** no new date and no second checkpoint question. A re-tick is usually a mistake, and dating an old undated task would make it the "last done" wrongly.
+- **"Other choice" is the next planned milestone after the track**, falling back to the first planned one. The milestone that comes next in the order is the natural alternative.
+- **Callers pass the archived change names to `reportRoadmap`** (`report`, `check`, `tick`, `/kit:status`, `/kit:next`). The parser has the knowledge folder, not the project folder, so it can't find `openspec/changes/archive` on its own.
+- **Status Left for a track:** the last done task, then every open task (the first is next), then the resume note. Every open task is listed, not only the next one, so the existing "Project with a roadmap" scenario still holds.
+
 ## Risks / Trade-offs
 
 - [Archive-reached depends on `/kit:roadmap` running after `/opsx:archive`, and that isn't reliable today (unverified)] → `/kit:status` and `check` also show it, so the next look at the project catches it.

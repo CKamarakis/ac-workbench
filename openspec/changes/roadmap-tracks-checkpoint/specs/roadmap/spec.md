@@ -19,6 +19,11 @@ A milestone's title and goal SHALL be changed only through the roadmap script an
 - **WHEN** `edit` runs for `M4` with no `--title` and no `--goal`
 - **THEN** it fails with an error naming both options, and no file changes
 
+#### Scenario: Goal added when missing
+- **GIVEN** milestone `M3` has no goal line, and a Notes line "talk to the designer"
+- **WHEN** its goal is edited to "Ship X"
+- **THEN** "Ship X" is added before the first heading, and the note is unchanged
+
 ### Requirement: Checkpoint on a milestone
 A planned, active or paused milestone MAY carry one checkpoint, set and cleared through the roadmap script on the user's yes: after one of its tasks (the default form), or after a named OpenSpec change is archived. A checkpoint naming a task the milestone doesn't have, or a dropped task, SHALL fail with an error. The check SHALL report a checkpoint in the wrong shape under broken.
 
@@ -88,6 +93,16 @@ When a checkpoint is reached, `/kit:roadmap` SHALL ask the user once: continue t
 - **WHEN** the answer is written
 - **THEN** `/kit:roadmap` offers once, skippably, to set the next checkpoint on `M4`, and sets it only on a yes
 
+#### Scenario: Refused before writing
+- **GIVEN** the `M4` checkpoint is reached
+- **WHEN** the answer switches to a milestone with no tasks, answers a checkpoint on a `done` or `dropped` milestone, or gives a resume note with continue
+- **THEN** it fails with an error saying why, and no file changes
+
+#### Scenario: Switch from a planned milestone
+- **GIVEN** planned `M5`'s checkpoint after the archive of `a-api` is reached
+- **WHEN** the user switches to `M6`
+- **THEN** `M5` stays `planned`, `M6` becomes `active`, and the checkpoint is cleared
+
 ### Requirement: Tick date
 Ticking a task SHALL record the date it was done, as `- [x] T<n> <text> (done <YYYY-MM-DD>)`. Unticking SHALL remove the date. Editing a done task's text SHALL keep its date. A milestone's last done task SHALL be the done task with the latest date, the highest number among tasks with that date, and among undated done tasks only when none has a date. The date SHALL NOT count as part of the task's text.
 
@@ -110,6 +125,15 @@ Ticking a task SHALL record the date it was done, as `- [x] T<n> <text> (done <Y
 - **GIVEN** `T3` reads `- [x] T3 List view (done 2026-11-20)`
 - **WHEN** `T3` is unticked
 - **THEN** its line reads `- [ ] T3 List view`
+
+#### Scenario: Tick a done task again
+- **GIVEN** `T1` is done
+- **WHEN** `T1` is ticked again
+- **THEN** its line is unchanged, and no checkpoint question is shown
+
+#### Scenario: Date in another shape
+- **WHEN** `tick --date 17/11/2026` runs
+- **THEN** it fails with an error asking for YYYY-MM-DD, and nothing is written
 
 ### Requirement: Resume note when switching away
 When the user pauses a milestone, or switches away from it, `/kit:roadmap` SHALL offer a one-line resume note drafted from the milestone's last done task, its next open task and any open linked change, each task named by number and text. The user SHALL be able to keep, correct or skip it. A kept note SHALL be the milestone's only `Resume:` line under its Notes, replacing an older one.

@@ -2,6 +2,13 @@
 
 What changed in the `kit` plugin, newest first. Versions follow `plugin.json`. The public history restarts at 0.21.0: earlier commits are kept privately, so the entries below are the record.
 
+## 1.0.0-rc.6 (2026-11-17)
+- **Parallel tracks.** `/kit:roadmap` can set a checkpoint on a milestone (after a task, or after a change is archived). When it's reached, the kit shows each track side by side (last done task, next task, resume note) and asks once: continue or switch. Your answer goes in the drift log; it never switches on its own.
+- **Rename a milestone** with `roadmap.mjs edit`: the ID, file, tasks and links stay; the old title is logged.
+- Ticking a task writes its date (`(done YYYY-MM-DD)`), so "last done" is the task done last. Older undated tasks still work.
+- A resume note (`Resume:` under Notes) is drafted when you switch away or pause, on your yes.
+- `/kit:status` lists every active track (and paused ones with progress) under Now, and points to `/kit:roadmap` when a checkpoint is reached. More than two active milestones gives one tidy-up line, never a block.
+
 ## 1.0.0-rc.5 (2026-11-05)
 - `/kit:verify` lets each test command run up to 15 minutes (was 10).
 - A test stopped by that limit is reported as "ran out after 15 min (not a test failure)", no longer as failed, with the `verify.mjs` file where you can raise `TEST_TIMEOUT_MINUTES` (a kit update resets it). A required test that runs out still blocks; an optional one stays advisory.

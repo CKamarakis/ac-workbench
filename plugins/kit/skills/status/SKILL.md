@@ -28,11 +28,13 @@ The strategic view: **which item** to work on. `/kit:next` is the tactical one: 
      - A section with `more` gets a "+N more" row. An empty section: one row with `note` in Item (e.g. "none yet", or "none").
      - Loose ends: the rows are the important ones and those blocking current work; then, under the table, one line with the `counts` per kind (e.g. "+ 3 idea, 2 cleanup") and `/kit:loose-ends`.
      - Now can hold explore rows (`kind: explore`): Left is the number of open questions, or "ready for a PRD".
+     - Now lists every **track** (`kind: milestone`): each active milestone, and each paused one with a done task or a resume note. For a track, Left is short too: the last done and the next task with their text, and the resume note when there is one ("last: T3 List view; next: T4 Save; resume: weights open"). Status keeps "checkpoint reached: continue or switch" when the row has it.
      - Next with `noteCount`: one plain line "N notes", with no suggestion to read them (spec: project-status, flexible-handoffs). Never list notes as rows.
      - When rows have an `age` and there's no roadmap, show it as a hint ("waited 16 days"). Never sort or pick by it.
    - **Doesn't match:** only when `mismatches` isn't empty. One line each: what, the sources involved, the fix. Never say which source is right.
    - **Missing:** one line per `missing` entry, with its fix. When `roadmap` is false, mention once that `/kit:roadmap` can set the order (optional).
    - **Last line (handoff):**
+     - `handoff.checkpoint` set (a checkpoint is reached): "Checkpoint reached on <item> (after <after>): continue or switch? Run `/kit:roadmap`." Don't answer it here and don't suggest which track to pick.
      - One item in `handoff.underWay`: "Working on: <item>. Run `/kit:next` for the next step."
      - Several: list them; "Run `/kit:next`; it asks which one."
      - None: name the first of `handoff.candidates` and ask the user to pick the next item, then run `/kit:next`.

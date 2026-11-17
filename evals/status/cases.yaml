@@ -72,3 +72,19 @@ cases:
       - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'Project not described yet' }
       - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'handoff\.fresh' }
       - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: '/kit:capture. to save ideas and notes, or ./opsx:explore' }
+
+  # roadmap-tracks-checkpoint 4.2 (spec: project-status "Tracks in Now", "Pending checkpoint in status")
+  - id: two-tracks-with-a-reached-checkpoint
+    description: Two tracks are both in Now with last and next task; a reached checkpoint hands off to /kit:roadmap
+    setup:
+      files:
+        PRODUCT.md: "# Acme\n"
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n\n## Notes\n\nResume: weights still open\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T1\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n"
+    checks:
+      - kind: command-exit
+        command: node "{{kit}}/scripts/status.mjs" --dir .
+        stdout_match: 'Feature B v1 \| last done: T1 Import; T2 Scoring; resume: weights still open \| paused[\s\S]*Feature A \| last done: T1 Model; T2 List view \| active, 1 of 2 done; checkpoint reached: continue or switch[\s\S]*Checkpoint reached on Feature A \(after T1\): continue or switch\? Run /kit:roadmap\.'
+      - { kind: content-match, path: '{{kit}}/skills/status/SKILL.md', pattern: 'handoff\.checkpoint' }

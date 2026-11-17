@@ -15,7 +15,7 @@ import { verifyStatus } from './verify.mjs';
 import { decisionStatus, openLine, archivedOpen, archivedLine } from './decisions.mjs';
 import { readLooseEnds, isOpen as looseOpen } from './loose-ends.mjs';
 import { listRecords, OPEN as OPEN_EXPLORE } from './explore.mjs';
-import { parseRoadmap, reportRoadmap } from './roadmap.mjs';
+import { parseRoadmap, reportRoadmap, archivedNames } from './roadmap.mjs';
 
 const lane = (map, phase) => map.lanes.find(l => l.phase === phase) ?? { phase, owner: null, alternatives: [] };
 // The command a reason names for a phase: its lane owner's, not a hard-coded one; null when no tool owns it, and the
@@ -434,7 +434,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const st = openspecJson(`status --change "${name}" --json`, dir);
     const files = planningFromFiles(path.join(dir, 'openspec', 'changes', name));
     return st ? { ...st, files } : { isPlanningComplete: files.complete, files }; // status failed: the files decide
-  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir), explores: (() => { try { return listRecords(dir); } catch { return []; } })(), explore, roadmap: (() => { try { const p = parseRoadmap(knowledgeDir(dir)); return p.exists ? reportRoadmap(p) : null; } catch { return null; } })() });
+  }, map: laneMap(registry), knowledge: readKnowledge(dir), changedSince: gitChangedSince(dir), verifyOf: name => { try { return verifyStatus({ dir, change: name }).status; } catch { return null; } }, decisionsOf: name => decisionStatus({ dir, change: name }), docs, archived: archivedOpen(dir), change, ...looseFor(dir), explores: (() => { try { return listRecords(dir); } catch { return []; } })(), explore, roadmap: (() => { try { const p = parseRoadmap(knowledgeDir(dir)); return p.exists ? reportRoadmap(p, undefined, { archived: archivedNames(dir) }) : null; } catch { return null; } })() });
   console.log(args.includes('--json') ? JSON.stringify(s, null, 2) : format(s));
   if (wt && s.worktree) wts.remember(wt.names);
 }

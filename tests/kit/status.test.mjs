@@ -131,7 +131,8 @@ test('sections with a roadmap: Now by title with Left and Source; Next and After
   const s = run(withRoadmap());
   const now = s.sections.now.rows[0];
   assert.equal(now.item, 'Kit workflow');
-  assert.deepEqual(now.left, ['T2 Status', 'T3 Backlog']);
+  // The last done task leads Left (spec "Tracks in Now"), then the tasks left.
+  assert.deepEqual(now.left, ['last done: T1 Roadmap', 'T2 Status', 'T3 Backlog']);
   assert.equal(now.source, 'knowledge/roadmaps/milestones/m12a-kit-workflow.md');
   assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Acme proof']);
   assert.deepEqual(s.sections.after.rows.map(r => r.item), ['Release prep', 'Launch']);
@@ -403,4 +404,72 @@ test('prd-parts 4.1: a Ready part is named "<parent> › <part>"; its Ready pare
   });
   const s = run(d);
   assert.deepEqual(s.sections.next.rows.map(r => r.item), ['Acme v1 › Part B']);
+});
+
+// ---------- tracks in Now (change roadmap-tracks-checkpoint) ----------
+
+const tracks = (m4extra = '', m1notes = '') => project({
+  'PRODUCT.md': '# Acme\n',
+  'knowledge/roadmaps/roadmap.md': roadmap({ order: ['M1', 'M2', 'M3', 'M4'] }),
+  'knowledge/roadmaps/drift-log.md': '# Drift log\n',
+  'knowledge/roadmaps/milestones/m1-b.md': ms('M1', 'Feature B v1', 'paused', ['- [x] T1 Import', '- [x] T2 Data import', '- [ ] T3 Scoring']) + m1notes,
+  'knowledge/roadmaps/milestones/m2-c.md': ms('M2', 'Feature B v2', 'paused', ['- [ ] T1 Later']),
+  'knowledge/roadmaps/milestones/m3-d.md': ms('M3', 'Feature D', 'planned', ['- [ ] T1 Later']),
+  'knowledge/roadmaps/milestones/m4-a.md': ms('M4', 'Feature A', 'active', ['- [x] T1 Model', '- [x] T2 Editor', '- [x] T3 List view', '- [ ] T4 Save to the API'], m4extra),
+});
+
+test('tracks in Now: one active and one paused, each with last done, next and resume note; not again in Next or After', () => {
+  const s = run(tracks('', '\n## Notes\n\nResume: scoring weights still open\n'));
+  const rows = s.sections.now.rows.filter(r => r.kind === 'milestone');
+  assert.deepEqual(rows.map(r => [r.item, r.left]), [
+    ['Feature B v1', ['last done: T2 Data import', 'T3 Scoring', 'resume: scoring weights still open']],
+    ['Feature A', ['last done: T3 List view', 'T4 Save to the API']],
+  ]);
+  assert.match(rows[0].status, /^paused/);
+  const later = [...s.sections.next.rows, ...s.sections.after.rows].map(r => r.item);
+  assert.ok(!later.includes('Feature A') && !later.includes('Feature B v1'));
+});
+
+test('tracks in Now: a paused milestone never started stays in Next or After, in roadmap order', () => {
+  const s = run(tracks());
+  assert.ok(!s.sections.now.rows.some(r => r.item === 'Feature B v2'));
+  assert.deepEqual([...s.sections.next.rows, ...s.sections.after.rows].map(r => r.item), ['Feature B v2', 'Feature D']);
+});
+
+test('pending checkpoint in status: the row says so, the handoff names /kit:roadmap, and no file changes', () => {
+  const d = tracks('checkpoint: T3\n');
+  const before = fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m4-a.md'), 'utf8');
+  const s = run(d);
+  const a = s.sections.now.rows.find(r => r.item === 'Feature A');
+  assert.match(a.status, /checkpoint reached: continue or switch/);
+  assert.equal(s.handoff.command, '/kit:roadmap');
+  const out = format(s).split('\n');
+  assert.match(out.at(-1), /Checkpoint reached on Feature A \(after T3\): continue or switch\? Run \/kit:roadmap\./);
+  assert.equal(fs.readFileSync(path.join(d, 'knowledge/roadmaps/milestones/m4-a.md'), 'utf8'), before);
+});
+
+test('pending checkpoint in status: a checkpoint after an archive is reached once that change is archived', () => {
+  const d = tracks('checkpoint: archive a-editor\n');
+  assert.equal(run(d).handoff.command, '/kit:next');
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-20-a-editor'), { recursive: true });
+  assert.equal(run(d).handoff.command, '/kit:roadmap');
+});
+
+test('verify fix: with nothing active, a paused never-started milestone is not in Now; a reached checkpoint on a planned one gets a Now row', () => {
+  const d = project({
+    'PRODUCT.md': '# Acme\n',
+    'knowledge/roadmaps/roadmap.md': roadmap({ order: ['M2', 'M3', 'M5'] }),
+    'knowledge/roadmaps/drift-log.md': '# Drift log\n',
+    'knowledge/roadmaps/milestones/m2-a.md': ms('M2', 'Paused early', 'paused', ['- [ ] T1 One']),
+    'knowledge/roadmaps/milestones/m3-b.md': ms('M3', 'Planned next', 'planned', ['- [ ] T1 One']),
+    'knowledge/roadmaps/milestones/m5-c.md': ms('M5', 'After the API', 'planned', ['- [ ] T1 One'], 'checkpoint: archive a-api\n'),
+  });
+  let s = run(d);
+  assert.ok(!s.sections.now.rows.some(r => r.item === 'Paused early'));
+  assert.deepEqual([...s.sections.next.rows, ...s.sections.after.rows].map(r => r.item), ['Paused early', 'Planned next', 'After the API']);
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-20-a-api'), { recursive: true });
+  s = run(d);
+  const row = s.sections.now.rows.find(r => r.item === 'After the API');
+  assert.match(row.status, /checkpoint reached: continue or switch/);
+  assert.equal(s.handoff.command, '/kit:roadmap');
 });

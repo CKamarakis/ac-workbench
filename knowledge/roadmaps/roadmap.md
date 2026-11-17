@@ -81,8 +81,9 @@ Every decision is checked against these.
 ## Now
 
 <!-- Up to 5 lines: what's being worked on and where it stopped. -->
-M17 PRD parts is done (kit 1.0.0-rc.4). verify-test-timeout archived 2026-11-06 (kit 1.0.0-rc.5).
-Next: M18 Parallel tracks (change roadmap-tracks-checkpoint, proposal written 2026-11-17), then M14 T4, the verify spike. M14 T1 and T2 (outside test) are low priority.
+M18 Parallel tracks is done: roadmap-tracks-checkpoint archived 2026-11-17 (milestone edit, checkpoints, continue or switch, resume notes, tracks in /kit:status).
+Next: M14 T4, the verify spike (why /kit:verify takes 10+ minutes). M14 T1 and T2 (outside test) are low priority.
+Open: L37 clear an old resume note when a track becomes active again.
 
 ## Waiting on you
 

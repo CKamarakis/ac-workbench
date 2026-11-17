@@ -267,3 +267,87 @@ test('CLI: edit, checkpoint, decide and resume run end to end', () => {
   assert.equal(bad.status, 1);
   assert.match(bad.stderr + bad.stdout, /no checkpoint/);
 });
+
+// ---------- verify findings (fixed) ----------
+
+test('verify fix: edit --goal on a milestone with no goal line adds one and keeps notes, links and comments', () => {
+  const body = '---\nid: M3\ntitle: C\nstatus: planned\n---\n\n<!--\nkept comment\n-->\n## Tasks\n\n- [ ] T1 a\n\n## Notes\n\n- talk to the designer\n- notes/a.md\n';
+  const d = project({ order: ['M3'], milestones: { 'm3-c.md': body } });
+  assert.equal(parseRoadmap(kroot(d)).milestones[0].goal, null);
+  editMilestone(kroot(d), { id: 'M3', goal: 'Ship X' });
+  const f = readR(d, 'milestones/m3-c.md');
+  assert.match(f, /Ship X\n\n## Tasks/);
+  assert.match(f, /- talk to the designer\n- notes\/a\.md\n$/);
+  assert.match(f, /<!--\nkept comment\n-->/);
+  assert.equal(parseRoadmap(kroot(d)).milestones[0].goal, 'Ship X');
+});
+
+test('verify fix: tick --date must be YYYY-MM-DD; a "(done ...)" already in an open task is not written twice', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': msx('M1', 'A', 'active', ['- [ ] T1 Save (done 2026-11-01)', '- [ ] T2 Other']) } });
+  const snap = snapshot(d);
+  assert.throws(() => tick(kroot(d), { id: 'M1', task: 'T2', date: '17/11/2026' }), /--date must be YYYY-MM-DD/);
+  assert.deepEqual(snapshot(d), snap);
+  tick(kroot(d), { id: 'M1', task: 'T1', date: '2026-11-20' });
+  assert.match(readR(d, 'milestones/m1-a.md'), /^- \[x\] T1 Save \(done 2026-11-20\)$/m);
+});
+
+test('verify fix: ticking a done task again changes nothing and does not ask the checkpoint question again', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': msx('M1', 'A', 'active', ['- [x] T1 Old', '- [ ] T2 Two'], { checkpoint: 'T1' }) } });
+  const snap = snapshot(d);
+  const r = tick(kroot(d), { id: 'M1', task: 'T1' });
+  assert.equal(r.already, true);
+  assert.equal(r.checkpoint, undefined);
+  assert.deepEqual(snapshot(d), snap, 'an undated done task stays undated');
+});
+
+test('verify fix: decide refuses a target with no tasks, and a finished source, before writing', () => {
+  const d = project({ order: ['M1', 'M2', 'M3'], milestones: {
+    'm1-a.md': msx('M1', 'A', 'active', ['- [x] T1 One', '- [ ] T2 Two'], { checkpoint: 'T1' }),
+    'm2-b.md': '---\nid: M2\ntitle: B\nstatus: planned\n---\n\nGoal.\n',
+  }, done: { 'm3-c.md': msx('M3', 'C', 'done', ['- [x] T1 One'], { checkpoint: 'T1' }) } });
+  const snap = snapshot(d);
+  assert.throws(() => decide(kroot(d), { id: 'M1', switchTo: 'M2', why: 'x' }), /M2 has no tasks yet/);
+  assert.throws(() => decide(kroot(d), { id: 'M3', cont: true, why: 'x' }), /M3 is done; its checkpoint no longer applies/);
+  assert.deepEqual(snapshot(d), snap);
+});
+
+test('verify fix: a switch from a planned milestone (archive checkpoint) leaves it planned', () => {
+  const d = project({ order: ['M5', 'M6'], milestones: {
+    'm5-a.md': msx('M5', 'A', 'planned', ['- [ ] T1 One'], { checkpoint: 'archive a-api' }),
+    'm6-b.md': msx('M6', 'B', 'planned', ['- [ ] T1 One']),
+  } });
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-20-a-api'), { recursive: true });
+  decide(kroot(d), { id: 'M5', switchTo: 'M6', why: 'api done', archived: archivedNames(d) });
+  const by = id => parseRoadmap(kroot(d)).milestones.find(m => m.id === id);
+  assert.deepEqual([by('M5').status, by('M6').status, by('M5').checkpoint], ['planned', 'active', null]);
+  assert.match(driftRows(d).at(-1), /M5 stays planned, M6 active/);
+});
+
+test('verify fix: resume touches only the Notes section; a "Resume:" line elsewhere and spacing elsewhere stay', () => {
+  const body = '---\nid: M1\ntitle: A\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 One\n\n\n## Log\n\nResume: check with design team\n\n## Notes\n\nMy note.\nResume: old\n';
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': body } });
+  setResume(kroot(d), { id: 'M1', text: 'new note' });
+  const f = readR(d, 'milestones/m1-a.md');
+  assert.match(f, /- \[x\] T1 One\n\n\n## Log\n\nResume: check with design team\n/);
+  assert.match(f, /## Notes\n\nResume: new note\n\nMy note\.\n$/);
+  assert.equal(parseRoadmap(kroot(d)).milestones[0].resume, 'new note');
+});
+
+test('verify fix: checkpoint T0 is a task checkpoint, labelled T0, and reached when T0 is ticked', () => {
+  const d = project({ order: ['M1'], milestones: { 'm1-a.md': msx('M1', 'A', 'active', ['- [x] T0 Setup', '- [ ] T1 One'], { checkpoint: 'T0' }) } });
+  const r = reportRoadmap(parseRoadmap(kroot(d)));
+  assert.deepEqual(r.checkpoints.map(c => c.after), ['T0']);
+  const gone = project({ order: ['M1'], milestones: { 'm1-a.md': msx('M1', 'A', 'active', ['- [ ] T1 One'], { checkpoint: 'T0' }) } });
+  assert.ok(has(check(gone).broken, /checkpoint after T0, which this milestone doesn't have/));
+});
+
+test('verify fix: a planned milestone shows its checkpoint on its row; the other choice is the next planned one after the track', () => {
+  const d = project({ order: ['M2', 'M4', 'M5'], milestones: {
+    'm2-x.md': msx('M2', 'Before', 'planned', ['- [ ] T1 One'], { checkpoint: 'archive a-api' }),
+    'm4-a.md': msx('M4', 'Feature A', 'active', ['- [x] T1 One', '- [ ] T2 Two'], { checkpoint: 'T1' }),
+    'm5-b.md': msx('M5', 'After', 'planned', ['- [ ] T1 One']),
+  } });
+  const r = reportRoadmap(parseRoadmap(kroot(d)));
+  assert.match(formatReport(r), /M2 · Before · planned · 0 of 1 done · checkpoint after the archive of a-api/);
+  assert.equal(r.alternative.id, 'M5');
+});

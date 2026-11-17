@@ -1,7 +1,7 @@
 ---
 id: M18
 title: Parallel tracks
-status: planned
+status: active
 changes:
   - roadmap-tracks-checkpoint
 ---

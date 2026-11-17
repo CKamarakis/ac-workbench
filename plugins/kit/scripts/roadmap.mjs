@@ -82,19 +82,25 @@ function readMilestone(file, folder) {
   const fm = parseFrontmatter(raw);
   const offset = fm.hasFrontmatter ? raw.slice(0, raw.length - fm.body.length).split('\n').length - 1 : 0;
   const tasks = [], badTasks = [];
-  let goal = null, goalLine = null, resume = null;
+  let goal = null, goalLine = null, resume = null, heading = null, inComment = false;
   fm.body.split('\n').forEach((l, k) => {
     const line = offset + k + 1;
+    // Lines inside a multi-line <!-- ... --> comment are nobody's goal (verify finding).
+    if (inComment) { if (/-->/.test(l)) inComment = false; return; }
+    if (/^\s*<!--/.test(l) && !/-->/.test(l)) { inComment = true; return; }
+    const h = /^##\s+(.+?)\s*$/.exec(l);
+    if (h) heading = h[1];
     const t = TASK.exec(l);
-    const r = RESUME.exec(l);
     // A dropped task (`- [-]`) is neither done nor left (kit-debt-fixes D1). A done task's date is not its text (D8).
     if (t) {
       const done = /[xX]/.test(t[1]);
       const date = done ? DONE_NOTE.exec(t[3]) : null;
       tasks.push({ n: Number(t[2]), done, dropped: t[1] === '-', text: date ? t[3].replace(DONE_NOTE, '') : t[3], doneDate: date?.[1] ?? null, line });
     } else if (/^\s*- \[/.test(l)) badTasks.push({ text: l, line });
-    else if (r) resume = r[1].trim();
-    else if (!goal && l.trim() && !/^#/.test(l) && !isComment(l)) { goal = l.trim(); goalLine = k; }
+    // The resume note is the `Resume:` line under ## Notes only; the same words elsewhere are the user's (verify finding).
+    else if (heading === 'Notes' && RESUME.test(l)) resume = RESUME.exec(l)[1].trim();
+    // The goal is the first plain line before any heading, so a note or a link line is never taken for it (verify finding).
+    else if (!goal && heading === null && l.trim() && !/^#/.test(l) && !isComment(l)) { goal = l.trim(); goalLine = k; }
   });
   const d = fm.data ?? {};
   const list = v => (Array.isArray(v) ? v : v ? [v] : []);
@@ -112,15 +118,17 @@ function parseCheckpoint(v) {
   const raw = String(v).trim();
   const m = CHECKPOINT.exec(raw);
   if (!m) return { raw, bad: true };
-  return m[1] ? { raw, task: Number(m[1]) } : { raw, change: m[2] };
+  return m[1] !== undefined ? { raw, task: Number(m[1]) } : { raw, change: m[2] };
 }
-const checkpointLabel = c => (c.task ? `T${c.task}` : `the archive of ${c.change}`);
+// `task` can be 0 (T0), so test for its presence, not its truth (verify finding).
+const isTaskCp = c => c.task != null;
+const checkpointLabel = c => (isTaskCp(c) ? `T${c.task}` : `the archive of ${c.change}`);
 
 /** Whether a milestone's checkpoint is reached: its task is ticked, or its change is in `archived` (tracks D2). */
 export function checkpointReached(m, archived = new Set()) {
   const c = m.checkpoint;
   if (!c || c.bad) return false;
-  if (c.task) return Boolean(m.tasks.find(t => t.n === c.task && t.done));
+  if (isTaskCp(c)) return Boolean(m.tasks.find(t => t.n === c.task && t.done));
   return archived.has(c.change);
 }
 
@@ -188,7 +196,7 @@ export function checkRoadmap(p) {
     else if (m.status === 'active' && m.tasks.every(t => t.dropped)) tidy.push(finding(m.file, null, 'status is active but every task is dropped', 'mark it done or dropped ("roadmap.mjs status"), or add a task'));
     // A checkpoint in the wrong shape, or naming a task that's missing or dropped (tracks D5).
     if (m.checkpoint?.bad) broken.push(finding(m.file, null, `checkpoint "${m.checkpoint.raw}" in the wrong shape`, 'write it as "checkpoint: T<n>" or "checkpoint: archive <change>", or use "roadmap.mjs checkpoint"'));
-    else if (m.checkpoint?.task) {
+    else if (m.checkpoint && isTaskCp(m.checkpoint)) {
       const t = m.tasks.find(x => x.n === m.checkpoint.task);
       if (!t) broken.push(finding(m.file, null, `checkpoint after T${m.checkpoint.task}, which this milestone doesn't have`, 'set it after an existing task ("roadmap.mjs checkpoint"), or clear it (--clear)'));
       else if (t.dropped) broken.push(finding(m.file, t.line, `checkpoint after T${t.n}, which is dropped`, 'set it after an open task ("roadmap.mjs checkpoint"), or clear it (--clear)'));
@@ -290,14 +298,21 @@ export function reportRoadmap(p, check = checkRoadmap(p), { archived = new Set()
       checkpoint: cp ? { after: checkpointLabel(cp), raw: cp.raw, reached: checkpointReached(m, archived) } : null,
     };
   });
-  // A checkpoint on a planned milestone can be reached too (it is set "after an archive" before the work starts).
-  const checkpoints = base.rows.filter(r => !FINISHED.includes(r.status)).map(r => byId.get(r.id))
-    .filter(m => m?.checkpoint && !m.checkpoint.bad && checkpointReached(m, archived))
-    .map(m => ({ id: m.id, title: m.title, after: checkpointLabel(m.checkpoint) }));
+  // Every open milestone's checkpoint, for its report row: a planned one can carry one too (verify finding).
+  const marks = base.rows.filter(r => !FINISHED.includes(r.status)).map(r => byId.get(r.id))
+    .filter(m => m?.checkpoint && !m.checkpoint.bad)
+    .map(m => ({ id: m.id, title: m.title, status: m.status, after: checkpointLabel(m.checkpoint), reached: checkpointReached(m, archived) }));
+  const checkpoints = marks.filter(k => k.reached).map(({ id, title, status, after: a }) => ({ id, title, status, after: a }));
   const ids = new Set(tracks.map(t => t.id));
-  // With one track only, the other choice is the next planned milestone in the order (spec "No other track").
-  const alt = tracks.length === 1 ? base.rows.find(r => r.status === 'planned' && !ids.has(r.id)) : null;
-  return { ...base, tracks, checkpoints, alternative: alt ? { id: alt.id, title: alt.title, status: alt.status } : null };
+  // With one track only, the other choice is the next planned milestone after it in the order, else the first one
+  // (spec "No other track"; verify finding).
+  let alt = null;
+  if (tracks.length === 1) {
+    const at = base.rows.findIndex(r => r.id === tracks[0].id);
+    const planned = r => r.status === 'planned' && !ids.has(r.id);
+    alt = base.rows.slice(at + 1).find(planned) ?? base.rows.find(planned) ?? null;
+  }
+  return { ...base, tracks, marks, checkpoints, alternative: alt ? { id: alt.id, title: alt.title, status: alt.status } : null };
 }
 
 function baseReport(p, check) {
@@ -450,16 +465,19 @@ function writeTask(root, m, t, mark, text) {
 }
 
 export function tick(root, { id, task, undo = false, date = today(), archived = new Set() }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date))) throw new Error(`--date must be YYYY-MM-DD (got "${date}"); nothing written`);
   const p = need(root);
   const m = milestoneOf(p, id);
   // --undo also reopens a dropped task and removes its drop note; ticking a dropped task fails (C3).
   const t = taskOf(m, id, task, { dropped: undo });
-  // A tick records its date; an untick removes it (tracks D8). Ticking a done task again keeps its first date.
-  const text = t.dropped ? t.text.replace(DROP_NOTE, '') : t.text;
-  writeTask(root, m, t, undo ? ' ' : 'x', undo ? text : `${text} (done ${t.doneDate ?? date})`);
+  // Ticking a done task again changes nothing: no new date, no second checkpoint question (verify findings).
+  if (!undo && t.done) return { id: m.id, task: `T${t.n}`, done: true, already: true, ...after(root) };
+  // A tick records its date; an untick removes it (tracks D8). A "(done ...)" typed into an open task's text is not kept twice.
+  const text = (t.dropped ? t.text.replace(DROP_NOTE, '') : t.text).replace(DONE_NOTE, '');
+  writeTask(root, m, t, undo ? ' ' : 'x', undo ? text : `${text} (done ${date})`);
   const out = { id: m.id, task: `T${t.n}`, done: !undo, ...after(root) };
   // This tick reaches the milestone's checkpoint: say so, with the tracks side by side (spec "Checkpoint reached").
-  if (!undo && m.checkpoint?.task === t.n) {
+  if (!undo && m.checkpoint && isTaskCp(m.checkpoint) && m.checkpoint.task === t.n) {
     const r = reportRoadmap(parseRoadmap(root), undefined, { archived });
     out.checkpoint = { id: m.id, after: `T${t.n}`, reached: true };
     out.tracks = r.tracks;
@@ -475,7 +493,7 @@ export function dropTask(root, { id, task, reason, date = today() }) {
   const m = milestoneOf(p, id);
   const t = taskOf(m, id, task);
   if (t.done) throw new Error(`T${t.n} is done; only an open task can be dropped`);
-  writeTask(root, m, t, '-', `${t.text} (dropped ${date}: ${String(reason).trim().replace(/\r?\n/g, ' ')})`);
+  writeTask(root, m, t, '-', `${t.text} (dropped ${date}: ${oneLine(reason)})`);
   return { id, task: `T${t.n}`, dropped: true, ...after(root) };
 }
 
@@ -486,11 +504,15 @@ export function editTask(root, { id, task, text }) {
   const m = milestoneOf(p, id);
   const t = taskOf(m, id, task);
   if (ownNumber(text, t.n)) throw new Error(`pass the task text without the task number (T${t.n} stays)`);
-  const clean = text.trim().replace(/\r?\n/g, ' ');
+  const clean = oneLine(text);
   // A done task keeps its date (spec "Tick date").
   writeTask(root, m, t, t.done ? 'x' : ' ', t.doneDate ? `${clean} (done ${t.doneDate})` : clean);
   return { id, task: `T${t.n}`, edited: true, ...after(root) };
 }
+
+// One-line text for a write, and a resume note without its "Resume:" label (shared; verify finding).
+const oneLine = v => String(v ?? '').trim().replace(/\r?\n/g, ' ');
+const resumeText = v => oneLine(v).replace(/^Resume:\s*/i, '');
 
 /** New title and/or goal for a milestone; its ID, file name, status, tasks and links stay (spec "Edit a milestone"; D9). */
 export function editMilestone(root, { id, title, goal, date = today() }) {
@@ -498,7 +520,6 @@ export function editMilestone(root, { id, title, goal, date = today() }) {
   for (const [k, v] of [['title', title], ['goal', goal]]) if (v !== undefined && !String(v).trim()) throw new Error(`--${k} is empty; nothing written`);
   const p = need(root);
   const m = milestoneOf(p, id);
-  const oneLine = v => String(v).trim().replace(/\r?\n/g, ' ');
   let body = m.body;
   if (goal !== undefined) {
     const lines = body.split('\n');
@@ -539,7 +560,7 @@ export function setCheckpoint(root, { id, after: task, archive, clear = false, a
 
 /** Sets the one `Resume:` line under ## Notes, replacing an older one (spec "Resume note when switching away"). */
 export function setResume(root, { id, text }) {
-  const note = String(text ?? '').trim().replace(/\r?\n/g, ' ').replace(/^Resume:\s*/i, '');
+  const note = resumeText(text);
   if (!note) throw new Error('--text is required; nothing written');
   const p = need(root);
   const m = milestoneOf(p, id);
@@ -547,13 +568,22 @@ export function setResume(root, { id, text }) {
   return { id: m.id, resume: note, ...after(root) };
 }
 
+/** The body with one `Resume:` line right under ## Notes. Only the Notes section is touched; every other line stays as it was
+ *  (spec "Roadmap writes never lose the user's text"; verify finding). */
 function withResume(body, note) {
-  // Every other line, the user's notes included, stays where it was (spec "Roadmap writes never lose the user's text").
-  const lines = body.split('\n').filter(l => !RESUME.test(l));
+  const lines = body.split('\n');
   const h = lines.findIndex(l => /^##\s+Notes\s*$/.test(l));
-  if (h < 0) return `${lines.join('\n').replace(/\s*$/, '')}\n\n## Notes\n\nResume: ${note}\n`;
-  lines.splice(h + 1, 0, '', `Resume: ${note}`);
-  return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+  if (h < 0) return `${body.replace(/\s*$/, '')}\n\n## Notes\n\nResume: ${note}\n`;
+  let end = lines.findIndex((l, i) => i > h && /^##\s/.test(l));
+  if (end < 0) end = lines.length;
+  // The Notes section without its old Resume line (and the blank line after it), and without its leading blank lines.
+  const rest = lines.slice(h + 1, end);
+  const old = rest.findIndex(l => RESUME.test(l));
+  // The blank line after it goes too, unless it is the file's last line (the final newline stays).
+  if (old >= 0) rest.splice(old, rest[old + 1] === '' && old + 2 < rest.length ? 2 : 1);
+  while (rest[0] === '') rest.shift();
+  // ## Notes, a blank line, the note, a blank line, then the user's notes as they were.
+  return [...lines.slice(0, h + 1), '', `Resume: ${note}`, '', ...rest, ...lines.slice(end)].join('\n');
 }
 
 /** The answer at a reached checkpoint: continue, or switch to another milestone (spec "Continue or switch at a checkpoint"; D3, D10). */
@@ -562,6 +592,7 @@ export function decide(root, { id, cont = false, switchTo, why, resume, date = t
   if (!String(why ?? '').trim()) throw new Error('--why is required; nothing written');
   const p = need(root);
   const m = milestoneOf(p, id);
+  if (FINISHED.includes(m.status)) throw new Error(`${m.id} is ${m.status}; its checkpoint no longer applies (clear it with "roadmap.mjs checkpoint --clear")`);
   if (!m.checkpoint || m.checkpoint.bad) throw new Error(`${m.id} has no checkpoint to answer`);
   if (!checkpointReached(m, archived)) throw new Error(`the ${m.id} checkpoint (after ${checkpointLabel(m.checkpoint)}) isn't reached yet; nothing written`);
   // Everything that can fail is checked before anything is written.
@@ -570,17 +601,21 @@ export function decide(root, { id, cont = false, switchTo, why, resume, date = t
     target = milestoneOf(p, switchTo);
     if (target.id === m.id) throw new Error(`can't switch from ${m.id} to itself; use --continue`);
     if (FINISHED.includes(target.status)) throw new Error(`${target.id} is ${target.status}; set its status first to reopen it ("roadmap.mjs status")`);
+    // An active milestone needs tasks; refuse before writing rather than leave the roadmap broken (verify finding).
+    if (!target.tasks.some(t => !t.dropped)) throw new Error(`${target.id} has no tasks yet; add one first ("roadmap.mjs task --id ${target.id} --text ...")`);
   }
   if (resume !== undefined && !target) throw new Error('--resume goes with --switch-to (the note is for the milestone you leave); use "roadmap.mjs resume" otherwise');
   if (resume !== undefined && !String(resume).trim()) throw new Error('--resume is empty; leave it out to skip the note');
   const { checkpoint: _cp, ...rest } = m.data;
   const label = `Checkpoint ${m.id} after ${checkpointLabel(m.checkpoint)}`;
   if (target) {
-    const body = resume !== undefined ? withResume(m.body, String(resume).trim().replace(/\r?\n/g, ' ').replace(/^Resume:\s*/i, '')) : m.body;
-    writeMilestone(root, m, { ...rest, status: 'paused' }, body);
+    const body = resume !== undefined ? withResume(m.body, resumeText(resume)) : m.body;
+    // Only an active milestone is paused; a planned one (an archive checkpoint before work started) stays planned (verify finding).
+    writeMilestone(root, m, { ...rest, status: m.status === 'active' ? 'paused' : m.status }, body);
     writeMilestone(root, target, { ...target.data, status: 'active' }, target.body);
   } else writeMilestone(root, m, rest, m.body);
-  addDrift(root, { date, what: `${label}: ${target ? `switched to ${target.id}` : `continued ${m.id}`}`, why, alt: target ? `continue ${m.id}` : 'switch to another track', impact: target ? `${m.id} paused, ${target.id} active` : '-', by: 'user' });
+  const left = m.status === 'active' ? `${m.id} paused` : `${m.id} stays ${m.status}`;
+  addDrift(root, { date, what: `${label}: ${target ? `switched to ${target.id}` : `continued ${m.id}`}`, why, alt: target ? `continue ${m.id}` : 'switch to another track', impact: target ? `${left}, ${target.id} active` : '-', by: 'user' });
   return { id: m.id, choice: target ? 'switch' : 'continue', to: target?.id ?? m.id, resume: resume !== undefined, ...after(root) };
 }
 
@@ -697,7 +732,7 @@ export function formatReport(r, g = { tidy: [], unplanned: [], notes: [] }) {
   const out = [];
   if (r.check.broken.length) { out.push(`BROKEN (${r.check.broken.length}) - fix first:`); for (const f of r.check.broken) out.push(`  ${where(f)}: ${f.problem}`); out.push(''); }
   out.push('Milestones');
-  const cps = new Map((r.tracks ?? []).filter(t => t.checkpoint).map(t => [t.id, t.checkpoint]));
+  const cps = new Map((r.marks ?? []).map(k => [k.id, k]));
   r.rows.forEach((x, i) => {
     const mark = x.id === r.current ? '  <- current' : '';
     const cp = cps.get(x.id);

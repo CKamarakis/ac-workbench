@@ -140,11 +140,19 @@ const row = (item, left, status, source, extra = {}) => ({ item, left, status, s
 /** The milestones Now lists: every active one, and each paused one with a done task or a resume note (spec "Tracks in Now"). */
 export function nowTracks(report) {
   if (!report?.exists) return [];
+  const plain = r => ({ id: r.id, status: r.status, done: r.done, total: r.total, last: null, resume: null, checkpoint: null });
   const tracks = (report.tracks ?? []).filter(t => t.status === 'active' || t.last || t.resume);
-  if (tracks.length) return tracks;
-  // No track: the current milestone, as before (the first open one when none is active).
+  // A reached checkpoint gets its row even on a milestone that isn't a track yet, e.g. a planned one (verify finding).
+  for (const k of report.checkpoints ?? []) {
+    if (tracks.some(t => t.id === k.id)) continue;
+    const r = report.rows.find(x => x.id === k.id);
+    if (r) tracks.push({ ...((report.tracks ?? []).find(t => t.id === k.id) ?? plain(r)), checkpoint: { after: k.after, reached: true } });
+  }
+  if (tracks.length) return report.rows.map(r => tracks.find(t => t.id === r.id)).filter(Boolean);
+  // No track: the current milestone, as before (the first open one when none is active), unless it is paused and was
+  // never started: that one stays in Next or After (spec "Paused but never started"; verify finding).
   const r = report.current && report.rows.find(x => x.id === report.current);
-  return r ? [{ id: r.id, status: r.status, done: r.done, total: r.total, last: null, resume: null, checkpoint: null }] : [];
+  return r && r.status !== 'paused' ? [plain(r)] : [];
 }
 
 function nowRows({ roadmap, report, changes, roadmapRel, last, now }) {
@@ -321,6 +329,7 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
   ];
   // Every active change, not only those left after the section cap (verify C5).
   const underWay = nowAll.filter(r => r.kind === 'change' || r.kind === 'explore');
+  const underWayList = underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) }));
   const builtNow = built(dir, archived);
   // The same new-project test as /kit:next (first-run-guidance D1); shown only when nothing is under way or queued.
   const fresh = isNewProject({ knowledge, explores });
@@ -338,9 +347,9 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     missing,
     // A reached checkpoint is answered in /kit:roadmap; status never answers it (spec "Pending checkpoint in status").
     handoff: report.checkpoints?.length
-      ? { checkpoint: report.checkpoints.map(c => ({ id: c.id, item: c.title, after: c.after })), underWay: underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) })), command: '/kit:roadmap' }
+      ? { checkpoint: report.checkpoints.map(c => ({ id: c.id, item: c.title, after: c.after })), underWay: underWayList, command: '/kit:roadmap' }
       : underWay.length
-      ? { underWay: underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) })), command: '/kit:next' }
+      ? { underWay: underWayList, command: '/kit:next' }
       : { underWay: [], candidates: sections.next.rows.map(r => ({ item: r.item, source: r.source, age: r.age ?? null })), command: '/kit:next', fresh },
   };
 }

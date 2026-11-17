@@ -454,3 +454,22 @@ test('pending checkpoint in status: a checkpoint after an archive is reached onc
   fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-20-a-editor'), { recursive: true });
   assert.equal(run(d).handoff.command, '/kit:roadmap');
 });
+
+test('verify fix: with nothing active, a paused never-started milestone is not in Now; a reached checkpoint on a planned one gets a Now row', () => {
+  const d = project({
+    'PRODUCT.md': '# Acme\n',
+    'knowledge/roadmaps/roadmap.md': roadmap({ order: ['M2', 'M3', 'M5'] }),
+    'knowledge/roadmaps/drift-log.md': '# Drift log\n',
+    'knowledge/roadmaps/milestones/m2-a.md': ms('M2', 'Paused early', 'paused', ['- [ ] T1 One']),
+    'knowledge/roadmaps/milestones/m3-b.md': ms('M3', 'Planned next', 'planned', ['- [ ] T1 One']),
+    'knowledge/roadmaps/milestones/m5-c.md': ms('M5', 'After the API', 'planned', ['- [ ] T1 One'], 'checkpoint: archive a-api\n'),
+  });
+  let s = run(d);
+  assert.ok(!s.sections.now.rows.some(r => r.item === 'Paused early'));
+  assert.deepEqual([...s.sections.next.rows, ...s.sections.after.rows].map(r => r.item), ['Paused early', 'Planned next', 'After the API']);
+  fs.mkdirSync(path.join(d, 'openspec/changes/archive/2026-11-20-a-api'), { recursive: true });
+  s = run(d);
+  const row = s.sections.now.rows.find(r => r.item === 'After the API');
+  assert.match(row.status, /checkpoint reached: continue or switch/);
+  assert.equal(s.handoff.command, '/kit:roadmap');
+});

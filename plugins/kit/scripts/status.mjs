@@ -137,12 +137,26 @@ function gitRun(git, dir) {
 
 const row = (item, left, status, source, extra = {}) => ({ item, left, status, source, ...extra });
 
+/** The milestones Now lists: every active one, and each paused one with a done task or a resume note (spec "Tracks in Now"). */
+export function nowTracks(report) {
+  if (!report?.exists) return [];
+  const tracks = (report.tracks ?? []).filter(t => t.status === 'active' || t.last || t.resume);
+  if (tracks.length) return tracks;
+  // No track: the current milestone, as before (the first open one when none is active).
+  const r = report.current && report.rows.find(x => x.id === report.current);
+  return r ? [{ id: r.id, status: r.status, done: r.done, total: r.total, last: null, resume: null, checkpoint: null }] : [];
+}
+
 function nowRows({ roadmap, report, changes, roadmapRel, last, now }) {
   const rows = [];
-  if (report?.exists && report.current) {
-    const m = roadmap.milestones.find(x => x.id === report.current);
-    const r = report.rows.find(x => x.id === report.current);
-    if (m && r) rows.push(row(m.title, r.left.map(t => `T${t.n} ${t.text}`), `${r.status}, ${r.done} of ${r.total} done`, `${roadmapRel}/${m.file}`, { kind: 'milestone', id: m.id }));
+  for (const t of nowTracks(report)) {
+    const m = roadmap.milestones.find(x => x.id === t.id);
+    const r = report.rows.find(x => x.id === t.id);
+    if (!m || !r) continue;
+    // Last done, the tasks left (the first is next), and the resume note (spec "Tracks in Now").
+    const left = [...(t.last ? [`last done: T${t.last.n} ${t.last.text}`] : []), ...r.left.map(x => `T${x.n} ${x.text}`), ...(t.resume ? [`resume: ${t.resume}`] : [])];
+    const reached = t.checkpoint?.reached ? '; checkpoint reached: continue or switch' : '';
+    rows.push(row(m.title, left, `${r.status}, ${r.done} of ${r.total} done${reached}`, `${roadmapRel}/${m.file}`, { kind: 'milestone', id: m.id, ...(reached ? { checkpoint: t.checkpoint.after } : {}) }));
   }
   for (const c of changes) {
     const open = c.tasks.total - c.tasks.done;
@@ -155,7 +169,9 @@ function nowRows({ roadmap, report, changes, roadmapRel, last, now }) {
 
 function nextAndAfter({ roadmap, report, knowledge, changes, roadmapRel, now }) {
   if (report?.exists) {
-    const open = report.rows.filter(r => !FINISHED.includes(r.status) && r.id !== report.current);
+    // A milestone already in Now is not listed again (spec "Tracks in Now").
+    const inNow = new Set(nowTracks(report).map(t => t.id));
+    const open = report.rows.filter(r => !FINISHED.includes(r.status) && !inNow.has(r.id));
     const asRow = r => {
       const m = roadmap.milestones.find(x => x.id === r.id);
       return row(r.title, r.left.map(t => `T${t.n} ${t.text}`), `${r.status}${r.total ? `, ${r.done} of ${r.total} done` : ''}`, m ? `${roadmapRel}/${m.file}` : `${roadmapRel}/roadmap.md`, { kind: 'milestone', id: r.id });
@@ -264,7 +280,8 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
   const archived = archivedChanges(dir);
   const changes = activeChanges(dir, knowledge);
   const roadmap = parseRoadmap(kroot);
-  const report = roadmap.exists ? reportRoadmap(roadmap, checkRoadmap(roadmap)) : { exists: false };
+  // Archived change names, so a checkpoint "after the archive of <change>" counts as reached (tracks D6).
+  const report = roadmap.exists ? reportRoadmap(roadmap, checkRoadmap(roadmap), { archived: new Set(archived.map(a => a.change)) }) : { exists: false };
   const g = gitRun(git, dir);
   const isRepo = g(['rev-parse', '--is-inside-work-tree']) === 'true';
   const run = isRepo ? g : () => null;
@@ -319,7 +336,10 @@ export function projectStatus(dir, { git = locate('git')?.path ?? null, openspec
     mismatches: mismatches({ roadmap, report, changes, knowledge, archived, branches, findings, roadmapRel, loose }),
     notes: [...(findings?.notes ?? []), ...explores.filter(r => r.state === 'unreadable').map(r => r.error)],
     missing,
-    handoff: underWay.length
+    // A reached checkpoint is answered in /kit:roadmap; status never answers it (spec "Pending checkpoint in status").
+    handoff: report.checkpoints?.length
+      ? { checkpoint: report.checkpoints.map(c => ({ id: c.id, item: c.title, after: c.after })), underWay: underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) })), command: '/kit:roadmap' }
+      : underWay.length
       ? { underWay: underWay.map(r => ({ item: r.item, ...(r.change ? { change: r.change } : { explore: r.explore }) })), command: '/kit:next' }
       : { underWay: [], candidates: sections.next.rows.map(r => ({ item: r.item, source: r.source, age: r.age ?? null })), command: '/kit:next', fresh },
   };
@@ -350,7 +370,9 @@ export function format(s) {
   for (const m of s.missing) out.push(`Missing: ${m.source} (${m.fix})`);
   for (const n of s.notes) out.push(`Note: ${n}`);
   const h = s.handoff;
-  out.push('', h.underWay.length
+  out.push('', h.checkpoint?.length
+    ? `-> Checkpoint reached on ${h.checkpoint.map(c => `${c.item} (after ${c.after})`).join(', ')}: continue or switch? Run ${h.command}.`
+    : h.underWay.length
     ? `-> Working on: ${h.underWay.map(u => u.item).join(', ')}. Run ${h.command}${h.underWay.length > 1 ? ' (it asks which one)' : ''}.`
     : h.candidates.length ? `-> Nothing under way. Pick the next item (first: ${h.candidates[0].item}), then run ${h.command}.` : h.fresh ? `-> Nothing here yet. Start with /kit:capture to save ideas and notes, or /opsx:explore to explore an idea you already have.`
         : `-> Nothing under way and nothing queued. Capture an idea (/kit:capture) or plan one (/kit:roadmap).`);

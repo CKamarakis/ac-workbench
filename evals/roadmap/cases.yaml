@@ -84,3 +84,113 @@ cases:
     checks:
       - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'Never edit the roadmap files by hand' }
       - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'Order and scope are the user' }
+
+  # ---------- tracks and checkpoints (change roadmap-tracks-checkpoint) ----------
+
+  - id: rename-keeps-id
+    description: edit renames a milestone; ID and file name stay, the old title goes in the drift log
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m4-board.md: "---\nid: M4\ntitle: Board\nstatus: active\n---\n\nGoal.\n\n## Tasks\n\n- [ ] T1 One\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" edit --id M4 --title "Feature A" --dir .
+        stdout_match: 'M4: renamed Board -> Feature A'
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m4-board.md', pattern: 'title: Feature A' }
+      - { kind: content-match, path: 'knowledge/roadmaps/drift-log.md', pattern: 'M4 renamed: Board -> Feature A' }
+
+  - id: checkpoint-reached-on-tick
+    description: Ticking the checkpoint task says it is reached and shows both tracks with last and next task text
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n\n## Notes\n\nResume: scoring weights still open\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T2\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n- [ ] T3 Save\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" tick --id M4 --task T2 --dir .
+        stdout_match: 'Checkpoint reached on M4 \(after T2\)\. Continue or switch\?[\s\S]*last done: T1 Import[\s\S]*resume: +scoring weights still open[\s\S]*last done: T2 List view[\s\S]*next: +T3 Save'
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m4-a.md', pattern: 'status: active' }
+
+  - id: decide-switch-logs-and-saves-note
+    description: decide --switch-to pauses one, starts the other, saves the resume note and logs the answer
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T1\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n"
+    checks:
+      - kind: command-exit
+        command: node "{{r}}" decide --id M4 --switch-to M1 --why "demo next week" --resume "stopped after T1 Model; next T2 List view" --dir .
+        stdout_match: 'M4: switched to M1 \(M4 paused, resume note saved\)'
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m4-a.md', pattern: 'status: paused' }
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m4-a.md', pattern: 'checkpoint:', negate: true }
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m4-a.md', pattern: 'Resume: stopped after T1 Model; next T2 List view' }
+      - { kind: content-match, path: 'knowledge/roadmaps/milestones/m1-b.md', pattern: 'status: active' }
+      - { kind: content-match, path: 'knowledge/roadmaps/drift-log.md', pattern: 'Checkpoint M4 after T1: switched to M1 \| demo next week' }
+
+  - id: checkpoint-moment-in-skill
+    description: The skill asks once at a reached checkpoint, drafts the resume note, and never switches on its own
+    checks:
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'A checkpoint is reached' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'Never switch on your own' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: 'keep, correct or skip' }
+      - { kind: content-match, path: '{{kit}}/skills/roadmap/SKILL.md', pattern: '^description: .*checkpoint' }
+
+  - id: checkpoint-asks-once-with-both-tracks
+    description: At a reached checkpoint the agent shows both tracks and asks continue or switch once, writing nothing without an answer
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T1\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n"
+    input:
+      prompt: "/kit:roadmap where are we?  (then say nothing more)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: both-tracks
+            description: Shows M4 and M1 with each one's last done and next task by number and text
+          - name: asks-once
+            description: Asks "continue Feature A or switch to Feature B v1?" once, not repeatedly
+          - name: writes-nothing
+            description: No milestone or drift-log file changed without an answer
+
+  - id: switch-drafts-resume-note
+    description: On a switch the agent drafts the resume note from last, next and open change, and offers keep, correct or skip
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T1\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n"
+    input:
+      prompt: "/kit:roadmap I want to switch to Feature B now, the demo needs it  (answer: yes to the note as drafted)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: drafts-note
+            description: Drafts a note naming T1 Model as last done and T2 List view as next, and offers keep, correct or skip
+          - name: one-decide
+            description: Writes with one decide --switch-to M1 call with --why and --resume; M4 paused, M1 active, drift entry added
+
+  - id: skipped-resume-note
+    description: When the user skips the note, the switch still happens and the Notes are unchanged
+    setup:
+      files:
+        knowledge/roadmaps/roadmap.md: "# Roadmap\n\n## North star\n\nX.\n\n## Principles\n\n- Y.\n\n## Order\n\n- M1\n- M4\n\n## Now\n\nM4.\n\n## Waiting on you\n\n"
+        knowledge/roadmaps/drift-log.md: "# Drift log\n\n| Date | What changed | Why | On-plan alternative | Impact | Decided by |\n|---|---|---|---|---|---|\n"
+        knowledge/roadmaps/milestones/m1-b.md: "---\nid: M1\ntitle: Feature B v1\nstatus: paused\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Import\n- [ ] T2 Scoring\n"
+        knowledge/roadmaps/milestones/m4-a.md: "---\nid: M4\ntitle: Feature A\nstatus: active\ncheckpoint: T1\n---\n\nGoal.\n\n## Tasks\n\n- [x] T1 Model\n- [ ] T2 List view\n"
+    input:
+      prompt: "/kit:roadmap switch to Feature B  (answer: skip the note)"
+    checks:
+      - kind: rubric
+        criteria:
+          - name: switch-without-note
+            description: decide --switch-to M1 runs without --resume; M4 has no Resume line
